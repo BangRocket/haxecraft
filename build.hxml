@@ -1,0 +1,6 @@
+-lib heaps
+-lib hlsdl
+-cp src
+-main com.mojang.ld22.Game
+-hl minicraft.hl
+-D resourcesPath=res

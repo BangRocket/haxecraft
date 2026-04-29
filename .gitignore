@@ -1,0 +1,8 @@
+# Build artifacts
+minicraft.hl
+
+# macOS
+.DS_Store
+
+# Original Java reference (not part of port)
+Minicraft-master/
