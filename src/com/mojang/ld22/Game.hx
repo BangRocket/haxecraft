@@ -25,7 +25,7 @@ class Game extends hxd.App {
 	public static inline var NAME = "Minicraft";
 	public static inline var HEIGHT = 240;
 	public static inline var WIDTH = 320;
-	static inline var SCALE = 2;
+	public static inline var SCALE = 2;
 
 	var bitmap:Bitmap;
 	var frameTexture:Texture;
