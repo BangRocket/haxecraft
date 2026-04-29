@@ -11,6 +11,10 @@ class InputHandler {
 	public var right:InputKey;
 	public var attack:InputKey;
 	public var menu:InputKey;
+	public var mouseAttack:InputKey;
+	public var mouseUse:InputKey;
+
+	public var mouseDir:Int = 0;
 
 	public function new() {
 		up = new InputKey(this);
@@ -19,6 +23,8 @@ class InputHandler {
 		right = new InputKey(this);
 		attack = new InputKey(this);
 		menu = new InputKey(this);
+		mouseAttack = new InputKey(this);
+		mouseUse = new InputKey(this);
 	}
 
 	public function releaseAll() {
@@ -34,6 +40,19 @@ class InputHandler {
 	}
 
 	public function updateKeys() {
+		var window = hxd.Window.getInstance();
+		var mx = window.mouseX / Game.SCALE;
+		var my = window.mouseY / Game.SCALE;
+		var cx = Game.WIDTH / 2;
+		var cy = (Game.HEIGHT - 8) / 2;
+		var dx = mx - cx;
+		var dy = my - cy;
+		if (Math.abs(dx) > Math.abs(dy)) {
+			mouseDir = dx > 0 ? 3 : 2;
+		} else {
+			mouseDir = dy > 0 ? 0 : 1;
+		}
+
 		up.toggle(HxdKey.isDown(HxdKey.NUMPAD_8) || HxdKey.isDown(HxdKey.W) || HxdKey.isDown(HxdKey.UP));
 		down.toggle(HxdKey.isDown(HxdKey.NUMPAD_2) || HxdKey.isDown(HxdKey.S) || HxdKey.isDown(HxdKey.DOWN));
 		left.toggle(HxdKey.isDown(HxdKey.NUMPAD_4) || HxdKey.isDown(HxdKey.A) || HxdKey.isDown(HxdKey.LEFT));
@@ -41,6 +60,9 @@ class InputHandler {
 
 		menu.toggle(HxdKey.isDown(HxdKey.TAB) || HxdKey.isDown(HxdKey.ALT) || HxdKey.isDown(HxdKey.ENTER) || HxdKey.isDown(HxdKey.X));
 		attack.toggle(HxdKey.isDown(HxdKey.SPACE) || HxdKey.isDown(HxdKey.CTRL) || HxdKey.isDown(HxdKey.NUMPAD_0) || HxdKey.isDown(HxdKey.INSERT) || HxdKey.isDown(HxdKey.C));
+
+		mouseAttack.toggle(HxdKey.isDown(HxdKey.MOUSE_LEFT));
+		mouseUse.toggle(HxdKey.isDown(HxdKey.MOUSE_RIGHT));
 	}
 }
 

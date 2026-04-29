@@ -95,7 +95,16 @@ class Player extends Mob {
 			move(xa, ya);
 		}
 
-		if (input.attack.clicked) {
+		if (input.mouseAttack.clicked) {
+			dir = input.mouseDir;
+			if (stamina == 0) {
+
+			} else {
+				stamina--;
+				staminaRecharge = 0;
+				attack();
+			}
+		} else if (input.attack.clicked) {
 			if (stamina == 0) {
 
 			} else {
@@ -104,7 +113,10 @@ class Player extends Mob {
 				attack();
 			}
 		}
-		if (input.menu.clicked) {
+		if (input.mouseUse.clicked) {
+			dir = input.mouseDir;
+			tryUse();
+		} else if (input.menu.clicked) {
 			if (!tryUse()) {
 				game.setMenu(new InventoryMenu(this));
 			}

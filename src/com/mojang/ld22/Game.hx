@@ -23,9 +23,9 @@ import hxd.Window;
 
 class Game extends hxd.App {
 	public static inline var NAME = "Minicraft";
-	public static inline var HEIGHT = 120;
-	public static inline var WIDTH = 160;
-	static inline var SCALE = 3;
+	public static inline var HEIGHT = 240;
+	public static inline var WIDTH = 320;
+	static inline var SCALE = 2;
 
 	var bitmap:Bitmap;
 	var frameTexture:Texture;
@@ -183,8 +183,10 @@ class Game extends hxd.App {
 		if (yScroll > level.h * 16 - screen.h - 16) yScroll = level.h * 16 - screen.h - 16;
 		if (currentLevel > 3) {
 			var col = Color.get(20, 20, 121, 121);
-			for (y in 0...14) {
-				for (x in 0...24) {
+			var rows = Std.int((screen.h + 15) / 8) + 1;
+			var cols = Std.int((screen.w + 15) / 8) + 1;
+			for (y in 0...rows) {
+				for (x in 0...cols) {
 					screen.render(x * 8 - ((Std.int(xScroll / 4)) & 7), y * 8 - ((Std.int(yScroll / 4)) & 7), 0, col, 0);
 				}
 			}
