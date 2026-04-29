@@ -6,6 +6,7 @@ class Random {
 	static final multiplier:Int64 = Int64.parseString("25214903917");
 	static final addend:Int64 = Int64.ofInt(11);
 	static final mask:Int64 = Int64.parseString("281474976710655"); // (1L << 48) - 1
+	static var instanceCounter:Int = 0;
 
 	var seed:Int64;
 	var nextNextGaussian:Float;
@@ -16,7 +17,8 @@ class Random {
 			setSeed(seed);
 		} else {
 			var time = Std.int(Sys.time() * 1000);
-			this.seed = Int64.ofInt(time);
+			instanceCounter++;
+			this.seed = Int64.ofInt(time + instanceCounter);
 			this.seed = (this.seed ^ multiplier) & mask;
 		}
 	}
