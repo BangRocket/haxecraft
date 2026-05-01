@@ -20,6 +20,8 @@ class Player extends Mob {
 
 	public var game:Game;
 	public var inventory:Inventory = new Inventory();
+	public var hotbar:Array<Item> = [];
+	public var hotbarSelection:Int = 0;
 	public var attackItem:Item;
 	public var activeItem:Item;
 	public var stamina:Int;
@@ -40,6 +42,8 @@ class Player extends Mob {
 
 		inventory.add(new FurnitureItem(new Workbench()));
 		inventory.add(new PowerGloveItem());
+
+		for (i in 0...8) hotbar.push(null);
 	}
 
 	override public function tick() {
@@ -119,6 +123,22 @@ class Player extends Mob {
 		} else if (input.menu.clicked) {
 			if (!tryUse()) {
 				game.setMenu(new InventoryMenu(this));
+			}
+		}
+		for (i in 0...8) {
+			if (input.hotbar[i].clicked) {
+				hotbarSelection = i;
+				// Return current activeItem to inventory if it exists
+				if (activeItem != null) {
+					inventory.add(activeItem);
+					activeItem = null;
+				}
+				// Equip hotbar slot
+				if (hotbar[i] != null) {
+					activeItem = hotbar[i];
+					hotbar[i] = null;
+				}
+				break;
 			}
 		}
 		if (attackTime > 0) attackTime--;
