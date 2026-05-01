@@ -16,6 +16,8 @@ class InputHandler {
 
 	public var mouseDir:Int = 0;
 
+	public var hotbar:Array<InputKey>;
+
 	public function new() {
 		up = new InputKey(this);
 		down = new InputKey(this);
@@ -25,6 +27,8 @@ class InputHandler {
 		menu = new InputKey(this);
 		mouseAttack = new InputKey(this);
 		mouseUse = new InputKey(this);
+		hotbar = [];
+		for (i in 0...8) hotbar.push(new InputKey(this));
 	}
 
 	public function releaseAll() {
@@ -63,6 +67,7 @@ class InputHandler {
 
 		mouseAttack.toggle(HxdKey.isDown(HxdKey.MOUSE_LEFT));
 		mouseUse.toggle(HxdKey.isDown(HxdKey.MOUSE_RIGHT));
+		for (i in 0...8) hotbar[i].toggle(HxdKey.isDown(HxdKey.NUMPAD_1 + i) || HxdKey.isDown(HxdKey.NUMBER_1 + i));
 	}
 }
 
