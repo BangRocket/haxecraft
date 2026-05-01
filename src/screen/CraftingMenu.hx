@@ -66,14 +66,14 @@ class CraftingMenu extends Menu {
 			var recipe = recipes[selected];
 			var hasResultItems = player.inventory.count(recipe.resultTemplate);
 			var xo = 13 * 8;
-			screen.render(xo, 2 * 8, recipe.resultTemplate.getSprite(), recipe.resultTemplate.getColor(), 0);
+			screen.render(xo, 2 * 8, recipe.resultTemplate.getSprite(), 0);
 			Font.draw("" + hasResultItems, screen, xo + 8, 2 * 8, Color.get(-1, 555, 555, 555));
 
 			var costs = recipe.costs;
 			for (i in 0...costs.length) {
 				var item = costs[i];
 				var yo = (5 + i) * 8;
-				screen.render(xo, yo, item.getSprite(), item.getColor(), 0);
+				screen.render(xo, yo, item.getSprite(), 0);
 				var requiredAmt = 1;
 				if (Std.isOfType(item, ResourceItem)) {
 					requiredAmt = cast(item, ResourceItem).count;

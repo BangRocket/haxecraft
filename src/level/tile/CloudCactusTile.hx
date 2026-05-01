@@ -18,14 +18,15 @@ import level.Level;
 class CloudCactusTile extends Tile {
 	public function new(id:Int) {
 		super(id);
+		isTall = true;
 	}
 
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		var color = Color.get(444, 111, 333, 555);
-		screen.render(x * 16 + 0, y * 16 + 0, 17 + 1 * 32, color, 0);
-		screen.render(x * 16 + 8, y * 16 + 0, 18 + 1 * 32, color, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, 17 + 2 * 32, color, 0);
-		screen.render(x * 16 + 8, y * 16 + 8, 18 + 2 * 32, color, 0);
+		screen.render(x * 16 + 0, y * 16 + 0, 17 + 1 * 32, 0);
+		screen.render(x * 16 + 8, y * 16 + 0, 18 + 1 * 32, 0);
+		screen.render(x * 16 + 0, y * 16 + 8, 17 + 2 * 32, 0);
+		screen.render(x * 16 + 8, y * 16 + 8, 18 + 2 * 32, 0);
 	}
 
 	override public function mayPass(level:Level, x:Int, y:Int, e:Entity):Bool {

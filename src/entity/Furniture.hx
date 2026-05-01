@@ -37,10 +37,10 @@ class Furniture extends Entity {
 	}
 
 	override public function render(screen:Screen) {
-		screen.render(x - 8, y - 8 - 4, sprite * 2 + 8 * 32, col, 0);
-		screen.render(x - 0, y - 8 - 4, sprite * 2 + 8 * 32 + 1, col, 0);
-		screen.render(x - 8, y - 0 - 4, sprite * 2 + 8 * 32 + 32, col, 0);
-		screen.render(x - 0, y - 0 - 4, sprite * 2 + 8 * 32 + 33, col, 0);
+		screen.render(x - 8, y - 8 - 4, sprite * 2 + 8 * 32, 0);
+		screen.render(x - 0, y - 8 - 4, sprite * 2 + 8 * 32 + 1, 0);
+		screen.render(x - 8, y - 0 - 4, sprite * 2 + 8 * 32 + 32, 0);
+		screen.render(x - 0, y - 0 - 4, sprite * 2 + 8 * 32 + 33, 0);
 	}
 
 	override public function blocks(e:Entity):Bool {

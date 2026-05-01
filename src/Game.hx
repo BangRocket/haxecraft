@@ -24,8 +24,8 @@ import hxd.Window;
 
 class Game extends hxd.App {
 	public static inline var NAME = "Haxecraft";
-	public static inline var HEIGHT = 240;
-	public static inline var WIDTH = 320;
+	public static inline var HEIGHT = 480;
+	public static inline var WIDTH = 640;
 	public static var SCALE:Float = 4;
 	public static var displayOffsetX = 0;
 	public static var displayOffsetY = 0;
@@ -36,7 +36,6 @@ class Game extends hxd.App {
 	var screen:Screen;
 	var lightScreen:Screen;
 	var input = new InputHandler();
-	var colors:Array<Int> = [];
 	var tickCount = 0;
 	var level:Level;
 	var levels:Array<Level> = [];
@@ -60,12 +59,22 @@ class Game extends hxd.App {
 		var window = Window.getInstance();
 		window.title = NAME;
 
-		initPalette();
-		var icons = hxd.Res.load("icons.png").toImage().getPixels();
-		var sprites = hxd.Res.load("sprites.png").toImage().getPixels();
+		var icons = hxd.Res.load("sprites/icons.png").toImage().getPixels();
+		var sprites = hxd.Res.load("sprites/sprites.png").toImage().getPixels();
+		var terrainSprites = hxd.Res.load("sprites/sprites_terrain.png").toImage().getPixels();
+		var itemSprites = hxd.Res.load("sprites/sprites_items.png").toImage().getPixels();
+		var uiSprites = hxd.Res.load("sprites/sprites_ui.png").toImage().getPixels();
+		var playerSprites = hxd.Res.load("sprites/sprites_player.png").toImage().getPixels();
+		var monsterSprites = hxd.Res.load("sprites/sprites_monsters.png").toImage().getPixels();
 		var iconSheet = new SpriteSheet(icons);
 		var spriteSheet = new SpriteSheet(sprites);
+		var terrainSheet = new SpriteSheet(terrainSprites);
+		var itemSheet = new SpriteSheet(itemSprites);
+		var uiSheet = new SpriteSheet(uiSprites);
+		var playerSheet = new SpriteSheet(playerSprites);
+		var monsterSheet = new SpriteSheet(monsterSprites);
 		screen = new Screen(WIDTH, HEIGHT, iconSheet, spriteSheet);
+		screen.setCategorySheets(terrainSheet, itemSheet, uiSheet, playerSheet, monsterSheet);
 		lightScreen = new Screen(WIDTH, HEIGHT, iconSheet);
 		framePixels = Pixels.alloc(WIDTH, HEIGHT, PixelFormat.RGBA);
 		frameTexture = new Texture(WIDTH, HEIGHT, [TextureFlags.Dynamic], h3d.mat.Texture.nativeFormat);
@@ -77,25 +86,6 @@ class Game extends hxd.App {
 		Crafting.init();
 		resetGame();
 		setMenu(new TitleMenu());
-	}
-
-	function initPalette() {
-		var pp = 0;
-		for (r in 0...6) {
-			for (g in 0...6) {
-				for (b in 0...6) {
-					var rr = Std.int(r * 255 / 5);
-					var gg = Std.int(g * 255 / 5);
-					var bb = Std.int(b * 255 / 5);
-					var mid = Std.int((rr * 30 + gg * 59 + bb * 11) / 100);
-
-					var r1 = Std.int(((rr + mid) / 2) * 230 / 255 + 10);
-					var g1 = Std.int(((gg + mid) / 2) * 230 / 255 + 10);
-					var b1 = Std.int(((bb + mid) / 2) * 230 / 255 + 10);
-					colors[pp++] = 0xff000000 | (r1 << 16) | (g1 << 8) | b1;
-				}
-			}
-		}
 	}
 
 	public function setMenu(menu:Menu) {
@@ -187,12 +177,11 @@ class Game extends hxd.App {
 		if (xScroll > level.w * 16 - screen.w - 16) xScroll = level.w * 16 - screen.w - 16;
 		if (yScroll > level.h * 16 - screen.h - 16) yScroll = level.h * 16 - screen.h - 16;
 		if (currentLevel > 3) {
-			var col = Color.get(20, 20, 121, 121);
 			var rows = Std.int((screen.h + 15) / 8) + 1;
 			var cols = Std.int((screen.w + 15) / 8) + 1;
 			for (y in 0...rows) {
 				for (x in 0...cols) {
-					screen.render(x * 8 - ((Std.int(xScroll / 4)) & 7), y * 8 - ((Std.int(yScroll / 4)) & 7), 0, col, 0);
+					screen.render(x * 8 - ((Std.int(xScroll / 4)) & 7), y * 8 - ((Std.int(yScroll / 4)) & 7), 0, 0);
 				}
 			}
 		}
@@ -201,7 +190,7 @@ class Game extends hxd.App {
 		level.renderSprites(screen, xScroll, yScroll);
 
 		if (currentLevel < 3) {
-			lightScreen.clear(0);
+			lightScreen.clearLight(0);
 			level.renderLight(lightScreen, xScroll, yScroll);
 			screen.overlay(lightScreen, xScroll, yScroll);
 		}
@@ -214,25 +203,25 @@ class Game extends hxd.App {
 	function renderGui() {
 		for (y in 0...2) {
 			for (x in 0...20) {
-				screen.render(x * 8, screen.h - 16 + y * 8, 0 + 12 * 32, Color.get(0, 0, 0, 0), 0);
+				screen.render(x * 8, screen.h - 16 + y * 8, 0 + 12 * 32, 0);
 			}
 		}
 
 		for (i in 0...10) {
 			if (i < player.health)
-				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 200, 500, 533), 0);
+				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, 0);
 			else
-				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 100, 0, 0), 0);
+				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, 0);
 
 			if (player.staminaRechargeDelay > 0) {
 				if (Std.int(player.staminaRechargeDelay / 4) % 2 == 0)
-					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 555, 0, 0), 0);
+					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
 				else
-					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
+					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
 			} else if (i < player.stamina) {
-				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 220, 550, 553), 0);
+				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
 			} else {
-				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
+				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
 			}
 		}
 		if (player.activeItem != null) {
@@ -260,11 +249,11 @@ class Game extends hxd.App {
 			var isSelected = (i == player.hotbarSelection && player.activeItem == null);
 
 			// Slot background (2x2 tiles)
-			var bgCol = isSelected ? Color.get(0, 555, 555, 555) : Color.get(0, 111, 111, 111);
-			screen.render(sx, sy, 0 + 12 * 32, bgCol, 0);
-			//screen.render(sx + 8, sy, 0 + 12 * 32, bgCol, 0);
-			//screen.render(sx, sy + 8, 0 + 12 * 32, bgCol, 0);
-			//screen.render(sx + 8, sy + 8, 0 + 12 * 32, bgCol, 0);
+			screen.render(sx, sy, 0 + 12 * 32, 0, screen.colorSheet);
+			//screen.render(sx + 8, sy, 1 * 32, 0, screen.colorSheet);
+			//screen.render(sx + 16, sy, 3 + 12 * 32, 0, screen.colorSheet);
+			//screen.render(sx, sy + 8, 0 + 12 * 32, 0);
+			//screen.render(sx + 8, sy + 8, 0 + 12 * 32, 0);
 
 			// Item in hotbar
 			var item = player.hotbar[i];
@@ -287,11 +276,10 @@ class Game extends hxd.App {
 			var ax = startX + player.hotbarSelection * slotSize;
 			var ay = startY;
 			// Draw highlight border
-			var hiCol = Color.get(0, 555, 555, 0);
-			screen.render(ax - 1, ay - 1, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax - 1, ay - 1, 0 + 12 * 32, 0);
+			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, 0);
+			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, 0);
+			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, 0);
 		}
 	}
 
@@ -321,17 +309,17 @@ class Game extends hxd.App {
 		var w = msg.length;
 		var h = 1;
 
-		screen.render(xx - 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-		screen.render(xx + w * 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
-		screen.render(xx - 8, yy + 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
-		screen.render(xx + w * 8, yy + 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 3);
+		screen.render(xx - 8, yy - 8, 0 + 13 * 32, 0);
+		screen.render(xx + w * 8, yy - 8, 0 + 13 * 32, 1);
+		screen.render(xx - 8, yy + 8, 0 + 13 * 32, 2);
+		screen.render(xx + w * 8, yy + 8, 0 + 13 * 32, 3);
 		for (x in 0...w) {
-			screen.render(xx + x * 8, yy - 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-			screen.render(xx + x * 8, yy + 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
+			screen.render(xx + x * 8, yy - 8, 1 + 13 * 32, 0);
+			screen.render(xx + x * 8, yy + 8, 1 + 13 * 32, 2);
 		}
 		for (y in 0...h) {
-			screen.render(xx - 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-			screen.render(xx + w * 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
+			screen.render(xx - 8, yy + y * 8, 2 + 13 * 32, 0);
+			screen.render(xx + w * 8, yy + y * 8, 2 + 13 * 32, 1);
 		}
 
 		if (Std.int(tickCount / 20) % 2 == 0)
@@ -343,14 +331,7 @@ class Game extends hxd.App {
 	function copyFrame() {
 		for (y in 0...screen.h) {
 			for (x in 0...screen.w) {
-				var i = x + y * screen.w;
-				var rgba = screen.colorPixels[i];
-				if (rgba >= 0)
-					framePixels.setPixel(x, y, rgba);
-				else {
-					var cc = screen.pixels[i];
-					if (cc < 255) framePixels.setPixel(x, y, colors[cc]);
-				}
+				framePixels.setPixel(x, y, screen.pixels[x + y * screen.w]);
 			}
 		}
 		frameTexture.uploadPixels(framePixels);

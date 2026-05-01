@@ -28,11 +28,11 @@ class ResourceItem extends Item {
 	}
 
 	override public function renderIcon(screen:Screen, x:Int, y:Int) {
-		screen.renderFullColor(x, y, resource.sprite, resource.color, 0);
+		screen.render(x, y, resource.sprite, 0, screen.colorSheet);
 	}
 
 	override public function renderInventory(screen:Screen, x:Int, y:Int) {
-		screen.renderFullColor(x, y, resource.sprite, resource.color, 0);
+		screen.render(x, y, resource.sprite, 0, screen.colorSheet);
 		Font.draw(resource.name, screen, x + 32, y, Color.get(-1, 555, 555, 555));
 		var cc = count;
 		if (cc > 999) cc = 999;

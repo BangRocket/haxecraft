@@ -19,6 +19,7 @@ class Level {
 
 	public var tiles:Array<Int>;
 	public var data:Array<Int>;
+	public var groundTiles:Array<Int>;
 	public var entitiesInTiles:Array<Array<Entity>>;
 
 	public var grassColor:Int = 141;
@@ -55,6 +56,7 @@ class Level {
 
 		tiles = maps[0];
 		data = maps[1];
+		groundTiles = maps[2];
 
 		if (parentLevel != null) {
 			for (y in 0...h) {
@@ -106,7 +108,7 @@ class Level {
 		screen.setOffset(xScroll, yScroll);
 		for (y in yo...(h + yo + 1)) {
 			for (x in xo...(w + xo + 1)) {
-				getTile(x, y).render(screen, this, x, y);
+				getGroundTile(x, y).render(screen, this, x, y);
 			}
 		}
 		screen.setOffset(0, 0);
@@ -122,6 +124,13 @@ class Level {
 
 		screen.setOffset(xScroll, yScroll);
 		for (y in yo...(h + yo + 1)) {
+			for (x in xo...(w + xo + 1)) {
+				if (x < 0 || y < 0 || x >= this.w || y >= this.h) continue;
+				var tile = getTile(x, y);
+				if (tile.isTall) {
+					tile.render(screen, this, x, y);
+				}
+			}
 			for (x in xo...(w + xo + 1)) {
 				if (x < 0 || y < 0 || x >= this.w || y >= this.h) continue;
 				for (e in entitiesInTiles[x + y * this.w]) {
@@ -176,10 +185,19 @@ class Level {
 		return Tile.tiles[tiles[x + y * w]];
 	}
 
+	public function getGroundTile(x:Int, y:Int):Tile {
+		if (x < 0 || y < 0 || x >= w || y >= h) return Tile.rock;
+		return Tile.tiles[groundTiles[x + y * w]];
+	}
+
 	public function setTile(x:Int, y:Int, t:Tile, dataVal:Int) {
 		if (x < 0 || y < 0 || x >= w || y >= h) return;
-		tiles[x + y * w] = t.id;
-		data[x + y * w] = dataVal;
+		var idx = x + y * w;
+		if (!t.isTall) {
+			groundTiles[idx] = t.id;
+		}
+		tiles[idx] = t.id;
+		data[idx] = dataVal;
 	}
 
 	public function getData(x:Int, y:Int):Int {

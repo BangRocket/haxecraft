@@ -43,6 +43,7 @@ class Tile {
 	public var connectsToSand:Bool = false;
 	public var connectsToLava:Bool = false;
 	public var connectsToWater:Bool = false;
+	public var isTall:Bool = false;
 
 	public function new(id:Int) {
 		this.id = id & 0xff;

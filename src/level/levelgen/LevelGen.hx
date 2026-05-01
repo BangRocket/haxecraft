@@ -147,6 +147,7 @@ class LevelGen {
 
 		var map = [for (_ in 0...w * h) 0];
 		var data = [for (_ in 0...w * h) 0];
+		var groundMap = [for (_ in 0...w * h) 0];
 		for (y in 0...h) {
 			for (x in 0...w) {
 				var i = x + y * w;
@@ -166,10 +167,13 @@ class LevelGen {
 
 				if (val < -0.5) {
 					map[i] = Tile.water.id;
+					groundMap[i] = Tile.water.id;
 				} else if (val > 0.5 && mval < -1.5) {
 					map[i] = Tile.rock.id;
+					groundMap[i] = Tile.rock.id;
 				} else {
 					map[i] = Tile.grass.id;
+					groundMap[i] = Tile.grass.id;
 				}
 			}
 		}
@@ -188,6 +192,7 @@ class LevelGen {
 							if (xx >= 0 && yy >= 0 && xx < w && yy < h) {
 								if (map[xx + yy * w] == Tile.grass.id) {
 									map[xx + yy * w] = Tile.sand.id;
+									groundMap[xx + yy * w] = Tile.sand.id;
 								}
 							}
 				}
@@ -207,6 +212,7 @@ class LevelGen {
 				if (xx >= 0 && yy >= 0 && xx < w && yy < h) {
 					if (map[xx + yy * w] == Tile.grass.id) {
 						map[xx + yy * w] = Tile.tree.id;
+						// groundMap stays grass
 					}
 				}
 			}
@@ -234,6 +240,7 @@ class LevelGen {
 			if (xx >= 0 && yy >= 0 && xx < w && yy < h) {
 				if (map[xx + yy * w] == Tile.sand.id) {
 					map[xx + yy * w] = Tile.cactus.id;
+					// groundMap stays sand
 				}
 			}
 		}
@@ -255,7 +262,7 @@ class LevelGen {
 			if (count == 4) break;
 		}
 
-		return [map, data];
+		return [map, data, groundMap];
 	}
 
 	private static function createUndergroundMap(w:Int, h:Int, depth:Int):Array<Array<Int>> {
@@ -349,7 +356,7 @@ class LevelGen {
 			}
 		}
 
-		return [map, data];
+		return [map, data, map.copy()];
 	}
 
 	private static function createSkyMap(w:Int, h:Int):Array<Array<Int>> {
@@ -358,6 +365,7 @@ class LevelGen {
 
 		var map = [for (_ in 0...w * h) 0];
 		var data = [for (_ in 0...w * h) 0];
+		var groundMap = [for (_ in 0...w * h) 0];
 		for (y in 0...h) {
 			for (x in 0...w) {
 				var i = x + y * w;
@@ -376,8 +384,10 @@ class LevelGen {
 
 				if (val < -0.25) {
 					map[i] = Tile.infiniteFall.id;
+					groundMap[i] = Tile.infiniteFall.id;
 				} else {
 					map[i] = Tile.cloud.id;
+					groundMap[i] = Tile.cloud.id;
 				}
 			}
 		}
@@ -413,6 +423,6 @@ class LevelGen {
 			if (count == 2) break;
 		}
 
-		return [map, data];
+		return [map, data, groundMap];
 	}
 }

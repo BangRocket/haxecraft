@@ -286,32 +286,34 @@ class Player extends Mob {
 		}
 		if (dir > 1) {
 			flip1 = 0;
-			flip2 = ((walkDist >> 4) & 1);
 			if (dir == 2) {
 				flip1 = 1;
 			}
-			xt += 4 + ((walkDist >> 3) & 1) * 2;
+			flip2 = flip1;
+			xt += 4 + (Std.int(walkDist >> 3) % 3) * 2;
 		}
 
 		var xo = x - 8;
 		var yo = y - 11;
+		
 		if (isSwimming()) {
 			yo += 4;
 			var waterColor = Color.get(-1, -1, 115, 335);
 			if (Std.int(tickTime / 8) % 2 == 0) {
 				waterColor = Color.get(-1, 335, 5, 115);
 			}
-			screen.render(xo + 0, yo + 3, 5 + 13 * 32, waterColor, 0);
-			screen.render(xo + 8, yo + 3, 5 + 13 * 32, waterColor, 1);
+			screen.render(xo + 0, yo + 3, 5 + 13 * 32, 0);
+			screen.render(xo + 8, yo + 3, 5 + 13 * 32, 1);
 		}
 
 		if (attackTime > 0 && attackDir == 1) {
-			screen.render(xo + 0, yo - 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 0);
-			screen.render(xo + 8, yo - 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 1);
+			screen.render(xo + 0, yo - 4, 6 + 13 * 32, 0);
+			screen.render(xo + 8, yo - 4, 6 + 13 * 32, 1);
 			if (attackItem != null) {
 				attackItem.renderIcon(screen, xo + 4, yo - 4);
 			}
 		}
+
 		var col = Color.get(-1, 100, 220, 532);
 		if (hurtTime > 0) {
 			col = Color.get(-1, 555, 555, 555);
@@ -320,30 +322,31 @@ class Player extends Mob {
 		if (Std.isOfType(activeItem, FurnitureItem)) {
 			yt += 2;
 		}
-		screen.render(xo + 8 * flip1, yo + 0, xt + yt * 32, col, flip1);
-		screen.render(xo + 8 - 8 * flip1, yo + 0, xt + 1 + yt * 32, col, flip1);
+		screen.render(xo + 8 * flip1, yo + 0, xt + yt * 32, flip1);
+		screen.render(xo + 8 - 8 * flip1, yo + 0, xt + 1 + yt * 32, flip1);
+		
 		if (!isSwimming()) {
-			screen.render(xo + 8 * flip2, yo + 8, xt + (yt + 1) * 32, col, flip2);
-			screen.render(xo + 8 - 8 * flip2, yo + 8, xt + 1 + (yt + 1) * 32, col, flip2);
+			screen.render(xo + 8 * flip2, yo + 8, xt + (yt + 1) * 32, flip2);
+			screen.render(xo + 8 - 8 * flip2, yo + 8, xt + 1 + (yt + 1) * 32, flip2);
 		}
 
 		if (attackTime > 0 && attackDir == 2) {
-			screen.render(xo - 4, yo, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 1);
-			screen.render(xo - 4, yo + 8, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 3);
+			screen.render(xo - 4, yo, 7 + 13 * 32, 1);
+			screen.render(xo - 4, yo + 8, 7 + 13 * 32, 3);
 			if (attackItem != null) {
 				attackItem.renderIcon(screen, xo - 4, yo + 4);
 			}
 		}
 		if (attackTime > 0 && attackDir == 3) {
-			screen.render(xo + 8 + 4, yo, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 0);
-			screen.render(xo + 8 + 4, yo + 8, 7 + 13 * 32, Color.get(-1, 555, 555, 555), 2);
+			screen.render(xo + 8 + 4, yo, 7 + 13 * 32, 0);
+			screen.render(xo + 8 + 4, yo + 8, 7 + 13 * 32, 2);
 			if (attackItem != null) {
 				attackItem.renderIcon(screen, xo + 8 + 4, yo + 4);
 			}
 		}
 		if (attackTime > 0 && attackDir == 0) {
-			screen.render(xo + 0, yo + 8 + 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 2);
-			screen.render(xo + 8, yo + 8 + 4, 6 + 13 * 32, Color.get(-1, 555, 555, 555), 3);
+			screen.render(xo + 0, yo + 8 + 4, 6 + 13 * 32, 2);
+			screen.render(xo + 8, yo + 8 + 4, 6 + 13 * 32, 3);
 			if (attackItem != null) {
 				attackItem.renderIcon(screen, xo + 4, yo + 8 + 4);
 			}

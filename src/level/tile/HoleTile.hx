@@ -29,26 +29,26 @@ class HoleTile extends Tile {
 		var sr = r && level.getTile(x + 1, y).connectsToSand;
 
 		if (!u && !l) {
-			screen.render(x * 16 + 0, y * 16 + 0, 0, col, 0);
+			screen.render(x * 16 + 0, y * 16 + 0, 0, 0);
 		} else {
-			screen.render(x * 16 + 0, y * 16 + 0, (l ? 14 : 15) + (u ? 0 : 1) * 32, (su || sl) ? transitionColor2 : transitionColor1, 0);
+			screen.render(x * 16 + 0, y * 16 + 0, (l ? 14 : 15) + (u ? 0 : 1) * 32, 0);
 		}
 
 		if (!u && !r) {
-			screen.render(x * 16 + 8, y * 16 + 0, 1, col, 0);
+			screen.render(x * 16 + 8, y * 16 + 0, 1, 0);
 		} else {
-			screen.render(x * 16 + 8, y * 16 + 0, (r ? 16 : 15) + (u ? 0 : 1) * 32, (su || sr) ? transitionColor2 : transitionColor1, 0);
+			screen.render(x * 16 + 8, y * 16 + 0, (r ? 16 : 15) + (u ? 0 : 1) * 32, 0);
 		}
 
 		if (!d && !l) {
-			screen.render(x * 16 + 0, y * 16 + 8, 2, col, 0);
+			screen.render(x * 16 + 0, y * 16 + 8, 2, 0);
 		} else {
-			screen.render(x * 16 + 0, y * 16 + 8, (l ? 14 : 15) + (d ? 2 : 1) * 32, (sd || sl) ? transitionColor2 : transitionColor1, 0);
+			screen.render(x * 16 + 0, y * 16 + 8, (l ? 14 : 15) + (d ? 2 : 1) * 32, 0);
 		}
 		if (!d && !r) {
-			screen.render(x * 16 + 8, y * 16 + 8, 3, col, 0);
+			screen.render(x * 16 + 8, y * 16 + 8, 3, 0);
 		} else {
-			screen.render(x * 16 + 8, y * 16 + 8, (r ? 16 : 15) + (d ? 2 : 1) * 32, (sd || sr) ? transitionColor2 : transitionColor1, 0);
+			screen.render(x * 16 + 8, y * 16 + 8, (r ? 16 : 15) + (d ? 2 : 1) * 32, 0);
 		}
 	}
 
