@@ -234,8 +234,59 @@ class Game extends hxd.App {
 			player.activeItem.renderInventory(screen, 10 * 8, screen.h - 16);
 		}
 
+		// Quickbar
+		renderQuickbar();
+
 		if (menu != null) {
 			menu.render(screen);
+		}
+	}
+
+	function renderQuickbar() {
+		var slotSize = 16;
+		var slotCount = 8;
+		var totalW = slotCount * slotSize;
+		var startX = Std.int((screen.w - totalW) / 2);
+		var startY = screen.h - 38;
+
+		for (i in 0...slotCount) {
+			var sx = startX + i * slotSize;
+			var sy = startY;
+			var isSelected = (i == player.hotbarSelection && player.activeItem == null);
+
+			// Slot background (2x2 tiles)
+			var bgCol = isSelected ? Color.get(0, 555, 555, 555) : Color.get(0, 111, 111, 111);
+			screen.render(sx, sy, 0 + 12 * 32, bgCol, 0);
+			screen.render(sx + 8, sy, 0 + 12 * 32, bgCol, 0);
+			screen.render(sx, sy + 8, 0 + 12 * 32, bgCol, 0);
+			screen.render(sx + 8, sy + 8, 0 + 12 * 32, bgCol, 0);
+
+			// Item in hotbar
+			var item = player.hotbar[i];
+			if (item != null) {
+				item.renderIcon(screen, sx + 4, sy + 4);
+				if (Std.isOfType(item, com.mojang.ld22.item.ResourceItem)) {
+					var ri = cast(item, com.mojang.ld22.item.ResourceItem);
+					if (ri.count > 1) {
+						Font.draw("" + ri.count, screen, sx + 4, sy + 8, Color.get(-1, 555, 555, 555));
+					}
+				}
+			}
+
+			// Key number
+			Font.draw("" + (i + 1), screen, sx + 4, sy - 8, Color.get(0, 333, 333, 333));
+		}
+
+		// Active item indicator (if activeItem came from hotbar)
+		if (player.activeItem != null) {
+			var ax = startX + player.hotbarSelection * slotSize;
+			var ay = startY;
+			// Draw highlight border
+			var hiCol = Color.get(0, 555, 555, 0);
+			screen.render(ax - 1, ay - 1, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, hiCol, 0);
 		}
 	}
 
