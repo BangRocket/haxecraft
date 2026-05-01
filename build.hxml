@@ -3,6 +3,6 @@
 -lib hlopenal
 -D hlopenal
 -cp src
--main com.mojang.ld22.Game
--hl minicraft.hl
+-main Game
+-hl haxecraft.hl
 -D resourcesPath=res

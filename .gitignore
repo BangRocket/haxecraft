@@ -1,6 +1,10 @@
 # Build artifacts
 minicraft.hl
 minicraft
+haxecraft.hl
+haxecraft
+libhl.dylib
+out/
 
 # macOS
 .DS_Store
@@ -8,7 +12,6 @@ minicraft
 # Original Java reference (not part of port)
 Minicraft-master/
 Haxecraft-ui/
-out/
 
 Haxecraft-ui.zip
 
