@@ -1,0 +1,113 @@
+package game.level.tile;
+
+import engine.level.tile.Tile;
+
+import engine.entity.Entity;
+import engine.entity.ItemEntity;
+import engine.entity.Mob;
+import game.entity.Player;
+import engine.entity.particle.SmashParticle;
+import engine.entity.particle.TextParticle;
+import engine.gfx.Color;
+import engine.gfx.Screen;
+import engine.item.Item;
+import game.item.ResourceItem;
+import game.item.ToolItem;
+import engine.item.ToolType;
+import engine.item.resource.Resource;
+import engine.level.Level;
+
+class TreeTile extends Tile {
+	public function new(id:Int) {
+		super(id);
+		connectsToGrass = true;
+		isTall = true;
+	}
+
+	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
+		var col = Color.get(10, 30, 151, level.grassColor);
+		var barkCol1 = Color.get(10, 30, 430, level.grassColor);
+		var barkCol2 = Color.get(10, 30, 320, level.grassColor);
+
+		var u = level.getTile(x, y - 1) == this;
+		var l = level.getTile(x - 1, y) == this;
+		var r = level.getTile(x + 1, y) == this;
+		var d = level.getTile(x, y + 1) == this;
+		var ul = level.getTile(x - 1, y - 1) == this;
+		var ur = level.getTile(x + 1, y - 1) == this;
+		var dl = level.getTile(x - 1, y + 1) == this;
+		var dr = level.getTile(x + 1, y + 1) == this;
+
+		if (u && ul && l) {
+			screen.render(x * 16 + 0, y * 16 + 0, 10 + 1 * 32, 0);
+		} else {
+			screen.render(x * 16 + 0, y * 16 + 0, 9 + 0 * 32, 0);
+		}
+		if (u && ur && r) {
+			screen.render(x * 16 + 8, y * 16 + 0, 10 + 2 * 32, 0);
+		} else {
+			screen.render(x * 16 + 8, y * 16 + 0, 10 + 0 * 32, 0);
+		}
+		if (d && dl && l) {
+			screen.render(x * 16 + 0, y * 16 + 8, 10 + 2 * 32, 0);
+		} else {
+			screen.render(x * 16 + 0, y * 16 + 8, 9 + 1 * 32, 0);
+		}
+		if (d && dr && r) {
+			screen.render(x * 16 + 8, y * 16 + 8, 10 + 1 * 32, 0);
+		} else {
+			screen.render(x * 16 + 8, y * 16 + 8, 10 + 3 * 32, 0);
+		}
+	}
+
+	override public function tick(level:Level, xt:Int, yt:Int) {
+		var damage = level.getData(xt, yt);
+		if (damage > 0) level.setData(xt, yt, damage - 1);
+	}
+
+	override public function mayPass(level:Level, x:Int, y:Int, e:Entity):Bool {
+		return false;
+	}
+
+	override public function hurt(level:Level, x:Int, y:Int, source:Mob, dmg:Int, attackDir:Int) {
+		hurtTileDamage(level, x, y, dmg);
+	}
+
+	override public function interact(level:Level, xt:Int, yt:Int, player:Player, item:Item, attackDir:Int):Bool {
+		if (Std.isOfType(item, ToolItem)) {
+			var tool:ToolItem = cast(item, ToolItem);
+			if (tool.type == ToolType.axe) {
+				if (player.payStamina(4 - tool.level)) {
+					hurtTileDamage(level, xt, yt, random.nextInt(10) + (tool.level) * 5 + 10);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	function hurtTileDamage(level:Level, x:Int, y:Int, dmg:Int) {
+		{
+			var count = random.nextInt(10) == 0 ? 1 : 0;
+			for (i in 0...count) {
+				level.add(ItemEntity.create(new ResourceItem(Resource.apple), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+			}
+		}
+		var damage = level.getData(x, y) + dmg;
+		level.add(SmashParticle.create(x * 16 + 8, y * 16 + 8));
+		level.add(TextParticle.create("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
+		if (damage >= 20) {
+			var count = random.nextInt(2) + 1;
+			for (i in 0...count) {
+				level.add(ItemEntity.create(new ResourceItem(Resource.wood), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+			}
+			count = random.nextInt(random.nextInt(4) + 1);
+			for (i in 0...count) {
+				level.add(ItemEntity.create(new ResourceItem(Resource.acorn), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+			}
+			level.setTile(x, y, Tile.grass, 0);
+		} else {
+			level.setData(x, y, damage);
+		}
+	}
+}

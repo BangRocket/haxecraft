@@ -1,0 +1,22 @@
+package game.entity;
+
+import engine.entity.Entity;
+
+import game.crafting.Crafting;
+import engine.gfx.Color;
+import game.screen.CraftingMenu;
+
+class Oven extends Furniture {
+	public function new() {
+		super("Oven");
+		col = Color.get(-1, 0, 332, 442);
+		sprite = 2;
+		xr = 3;
+		yr = 2;
+	}
+
+	override public function use(player:Player, attackDir:Int):Bool {
+		player.game.setMenu(new CraftingMenu(Crafting.ovenRecipes, player));
+		return true;
+	}
+}

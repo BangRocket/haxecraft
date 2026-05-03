@@ -3,7 +3,7 @@
 -lib hlopenal
 -D hlopenal
 -cp src
--main Game
+-main game.Game
 -hl haxecraft.hl
 -D resourcesPath=res
 -dce full
