@@ -191,17 +191,17 @@ class Game extends Engine {
 
 		for (i in 0...10) {
 			if (i < player.health)
-				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 100, 0, 0), 0);
+				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 200, 500, 533), 0);
 			else
 				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 100, 0, 0), 0);
 
 			if (player.staminaRechargeDelay > 0) {
 				if (Std.int(player.staminaRechargeDelay / 4) % 2 == 0)
-					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
+					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 555, 0, 0), 0);
 				else
 					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
 			} else if (i < player.stamina) {
-				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
+				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 220, 550, 553), 0);
 			} else {
 				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
 			}
@@ -245,11 +245,10 @@ class Game extends Engine {
 		if (player.activeItem != null) {
 			var ax = startX + player.hotbarSelection * slotSize;
 			var ay = startY;
-			var hiCol = Color.get(0, 555, 555, 0);
-			screen.render(ax - 1, ay - 1, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax - 1, ay - 1, 0, 0, 0, screen.colorSheet);
+			screen.render(ax + slotSize, ay - 1, 0, 0, 0, screen.colorSheet);
+			screen.render(ax - 1, ay + slotSize, 0, 0, 0, screen.colorSheet);
+			screen.render(ax + slotSize, ay + slotSize, 0, 0, 0, screen.colorSheet);
 		}
 	}
 
