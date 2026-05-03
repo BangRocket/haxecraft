@@ -185,7 +185,11 @@ class Game extends hxd.App {
 			gpuRenderer.hideOverlay();
 		}
 
-		renderGui();
+		if (menu != null) {
+			menu.render(screen);
+		} else {
+			renderGui();
+		}
 		if (!hxd.Window.getInstance().isFocused) renderFocusNagger();
 
 		gpuRenderer.endFrame();
@@ -220,10 +224,6 @@ class Game extends hxd.App {
 		}
 
 		renderQuickbar();
-
-		if (menu != null) {
-			menu.render(screen);
-		}
 	}
 
 	function renderQuickbar() {
