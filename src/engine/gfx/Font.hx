@@ -21,7 +21,7 @@ class Font {
 			if (code >= "a".code && code <= "z".code) code -= UPPER_DELTA;
 			var ix = charMap.get(code);
 			if (ix != null) {
-				screen.render(x + i * 8, y, ix + 30 * 32, col, 0);
+				screen.render(x + i * 8, y, ix + 30 * 32, 0);
 			}
 		}
 	}

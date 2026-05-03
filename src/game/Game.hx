@@ -46,7 +46,19 @@ class Game extends Engine {
 
 		var icons = hxd.Res.load("sprites/icons.png").toImage().getPixels();
 		var sprites = hxd.Res.load("sprites/sprites.png").toImage().getPixels();
+		var terrainSprites = hxd.Res.load("sprites/sprites_terrain.png").toImage().getPixels();
+		var itemSprites = hxd.Res.load("sprites/sprites_items.png").toImage().getPixels();
+		var uiSprites = hxd.Res.load("sprites/sprites_ui.png").toImage().getPixels();
+		var playerSprites = hxd.Res.load("sprites/sprites_player.png").toImage().getPixels();
+		var monsterSprites = hxd.Res.load("sprites/sprites_monsters.png").toImage().getPixels();
 		initScreen(320, 240, new SpriteSheet(icons), new SpriteSheet(sprites));
+		screen.setCategorySheets(
+			new SpriteSheet(terrainSprites),
+			new SpriteSheet(itemSprites),
+			new SpriteSheet(uiSprites),
+			new SpriteSheet(playerSprites),
+			new SpriteSheet(monsterSprites)
+		);
 
 		updateDisplayScale();
 		window.resize(1280, 960);
@@ -214,7 +226,7 @@ class Game extends Engine {
 			var isSelected = (i == player.hotbarSelection && player.activeItem == null);
 
 			var bgCol = isSelected ? Color.get(0, 555, 555, 555) : Color.get(0, 111, 111, 111);
-			screen.render(sx, sy, 0 + 12 * 32, bgCol, 0);
+			screen.render(sx, sy, 0 + 12 * 32, 0);
 
 			var item = player.hotbar[i];
 			if (item != null) {
@@ -234,10 +246,10 @@ class Game extends Engine {
 			var ax = startX + player.hotbarSelection * slotSize;
 			var ay = startY;
 			var hiCol = Color.get(0, 555, 555, 0);
-			screen.render(ax - 1, ay - 1, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, hiCol, 0);
-			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax - 1, ay - 1, 0 + 12 * 32, 0);
+			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, 0);
+			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, 0);
+			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, 0);
 		}
 	}
 

@@ -96,17 +96,17 @@ class Engine extends hxd.App {
 		var w = msg.length;
 		var h = 1;
 
-		screen.render(xx - 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-		screen.render(xx + w * 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
-		screen.render(xx - 8, yy + 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
-		screen.render(xx + w * 8, yy + 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 3);
+		screen.render(xx - 8, yy - 8, 0 + 13 * 32, 0);
+		screen.render(xx + w * 8, yy - 8, 0 + 13 * 32, 1);
+		screen.render(xx - 8, yy + 8, 0 + 13 * 32, 2);
+		screen.render(xx + w * 8, yy + 8, 0 + 13 * 32, 3);
 		for (x in 0...w) {
-			screen.render(xx + x * 8, yy - 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-			screen.render(xx + x * 8, yy + 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
+			screen.render(xx + x * 8, yy - 8, 1 + 13 * 32, 0);
+			screen.render(xx + x * 8, yy + 8, 1 + 13 * 32, 2);
 		}
 		for (y in 0...h) {
-			screen.render(xx - 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-			screen.render(xx + w * 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
+			screen.render(xx - 8, yy + y * 8, 2 + 13 * 32, 0);
+			screen.render(xx + w * 8, yy + y * 8, 2 + 13 * 32, 1);
 		}
 
 		if (Std.int(tickCount / 20) % 2 == 0)
