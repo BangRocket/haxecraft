@@ -18,40 +18,16 @@ class Engine extends hxd.App {
 	public var screen:Screen;
 	public var lightScreen:Screen;
 	public var gpuRenderer:GpuRenderer;
-	public var colors:Array<Int> = [];
 	public var tickCount = 0;
 
 	var accumulator = 0.0;
-
-	override function init() {
-		initPalette();
-	}
-
-	function initPalette() {
-		var pp = 0;
-		for (r in 0...6) {
-			for (g in 0...6) {
-				for (b in 0...6) {
-					var rr = Std.int(r * 255 / 5);
-					var gg = Std.int(g * 255 / 5);
-					var bb = Std.int(b * 255 / 5);
-					var mid = Std.int((rr * 30 + gg * 59 + bb * 11) / 100);
-
-					var r1 = Std.int(((rr + mid) / 2) * 230 / 255 + 10);
-					var g1 = Std.int(((gg + mid) / 2) * 230 / 255 + 10);
-					var b1 = Std.int(((bb + mid) / 2) * 230 / 255 + 10);
-					colors[pp++] = 0xff000000 | (r1 << 16) | (g1 << 8) | b1;
-				}
-			}
-		}
-	}
 
 	function initScreen(w:Int, h:Int, iconSheet:SpriteSheet, ?spriteSheet:SpriteSheet) {
 		WIDTH = w;
 		HEIGHT = h;
 		screen = new Screen(w, h, iconSheet, spriteSheet);
 		lightScreen = new Screen(w, h, iconSheet);
-		gpuRenderer = new GpuRenderer(w, h, colors, iconSheet, spriteSheet, s2d);
+		gpuRenderer = new GpuRenderer(w, h, iconSheet, spriteSheet, s2d);
 		screen.gpu = gpuRenderer;
 	}
 

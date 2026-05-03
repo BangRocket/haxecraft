@@ -51,14 +51,14 @@ class Game extends Engine {
 		var uiSprites = hxd.Res.load("sprites/sprites_ui.png").toImage().getPixels();
 		var playerSprites = hxd.Res.load("sprites/sprites_player.png").toImage().getPixels();
 		var monsterSprites = hxd.Res.load("sprites/sprites_monsters.png").toImage().getPixels();
+		var terrainSheet = new SpriteSheet(terrainSprites);
+		var itemSheet = new SpriteSheet(itemSprites);
+		var uiSheet = new SpriteSheet(uiSprites);
+		var playerSheet = new SpriteSheet(playerSprites);
+		var monsterSheet = new SpriteSheet(monsterSprites);
 		initScreen(320, 240, new SpriteSheet(icons), new SpriteSheet(sprites));
-		screen.setCategorySheets(
-			new SpriteSheet(terrainSprites),
-			new SpriteSheet(itemSprites),
-			new SpriteSheet(uiSprites),
-			new SpriteSheet(playerSprites),
-			new SpriteSheet(monsterSprites)
-		);
+		screen.setCategorySheets(terrainSheet, itemSheet, uiSheet, playerSheet, monsterSheet);
+		gpuRenderer.setCategorySheets(terrainSheet, itemSheet, uiSheet, playerSheet, monsterSheet);
 
 		updateDisplayScale();
 		window.resize(1280, 960);

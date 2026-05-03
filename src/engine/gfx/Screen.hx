@@ -112,6 +112,12 @@ class Screen {
 		}
 		xp -= xOffset;
 		yp -= yOffset;
+
+		if (gpu != null) {
+			gpu.addTile(xp, yp, tile, bits, tint);
+			return;
+		}
+
 		var mirrorX = (bits & BIT_MIRROR_X) > 0;
 		var mirrorY = (bits & BIT_MIRROR_Y) > 0;
 
