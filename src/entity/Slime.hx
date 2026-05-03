@@ -55,7 +55,7 @@ class Slime extends Mob {
 
 		var count = random.nextInt(2) + 1;
 		for (i in 0...count) {
-			level.add(new ItemEntity(new ResourceItem(Resource.slime), x + random.nextInt(11) - 5, y + random.nextInt(11) - 5));
+			level.add(ItemEntity.create(new ResourceItem(Resource.slime), x + random.nextInt(11) - 5, y + random.nextInt(11) - 5));
 		}
 
 		if (level.player != null) {

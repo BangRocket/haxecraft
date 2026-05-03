@@ -93,16 +93,16 @@ class RockTile extends Tile {
 
 	public function hurtTileDamage(level:Level, x:Int, y:Int, dmg:Int) {
 		var damage = level.getData(x, y) + dmg;
-		level.add(new SmashParticle(x * 16 + 8, y * 16 + 8));
-		level.add(new TextParticle("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
+		level.add(SmashParticle.create(x * 16 + 8, y * 16 + 8));
+		level.add(TextParticle.create("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
 		if (damage >= 50) {
 			var count = random.nextInt(4) + 1;
 			for (i in 0...count) {
-				level.add(new ItemEntity(new ResourceItem(Resource.stone), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+				level.add(ItemEntity.create(new ResourceItem(Resource.stone), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 			}
 			count = random.nextInt(2);
 			for (i in 0...count) {
-				level.add(new ItemEntity(new ResourceItem(Resource.coal), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+				level.add(ItemEntity.create(new ResourceItem(Resource.coal), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 			}
 			level.setTile(x, y, Tile.dirt, 0);
 		} else {

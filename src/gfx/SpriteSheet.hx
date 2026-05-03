@@ -1,20 +1,22 @@
 package gfx;
 
+import haxe.ds.Vector;
 import hxd.Pixels;
 
 class SpriteSheet {
 	public var width:Int;
 	public var height:Int;
-	public var pixels:Array<Int>;
-	public var rgbaPixels:Array<Int>;
-	public var grayscaleMask:Array<Bool>;
+	public var pixels:Vector<Int>;
+	public var rgbaPixels:Vector<Int>;
+	public var grayscaleMask:Vector<Bool>;
 
 	public function new(image:Pixels) {
 		width = image.width;
 		height = image.height;
-		pixels = [];
-		rgbaPixels = [];
-		grayscaleMask = [];
+		var n = width * height;
+		pixels = new Vector<Int>(n);
+		rgbaPixels = new Vector<Int>(n);
+		grayscaleMask = new Vector<Bool>(n);
 		for (y in 0...height) {
 			for (x in 0...width) {
 				var i = x + y * width;

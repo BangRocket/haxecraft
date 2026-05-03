@@ -4,6 +4,7 @@ import entity.Player;
 import crafting.Crafting;
 import gfx.Color;
 import gfx.Font;
+import gfx.GpuRenderer;
 import gfx.Screen;
 import gfx.SpriteSheet;
 import level.Level;
@@ -15,12 +16,6 @@ import screen.LevelTransitionMenu;
 import screen.Menu;
 import screen.TitleMenu;
 import screen.WonMenu;
-import h2d.Bitmap;
-import h2d.Tile as H2dTile;
-import h3d.mat.Texture;
-import h3d.mat.Data.TextureFlags;
-import hxd.Pixels;
-import hxd.PixelFormat;
 import hxd.Window;
 
 class Game extends hxd.App {
@@ -31,11 +26,9 @@ class Game extends hxd.App {
 	public static var displayOffsetX = 0;
 	public static var displayOffsetY = 0;
 
-	var bitmap:Bitmap;
-	var frameTexture:Texture;
-	var framePixels:Pixels;
 	var screen:Screen;
 	var lightScreen:Screen;
+	var gpuRenderer:GpuRenderer;
 	var input = new InputHandler();
 	var tickCount = 0;
 	var level:Level;
@@ -67,10 +60,10 @@ class Game extends hxd.App {
 		var spriteSheet = new SpriteSheet(sprites);
 		screen = new Screen(WIDTH, HEIGHT, iconSheet, spriteSheet);
 		lightScreen = new Screen(WIDTH, HEIGHT, iconSheet);
-		framePixels = Pixels.alloc(WIDTH, HEIGHT, PixelFormat.RGBA);
-		frameTexture = new Texture(WIDTH, HEIGHT, [TextureFlags.Dynamic], h3d.mat.Texture.nativeFormat);
-		bitmap = new Bitmap(H2dTile.fromTexture(frameTexture), s2d);
-		bitmap.smooth = false;
+
+		gpuRenderer = new GpuRenderer(WIDTH, HEIGHT, colors, iconSheet, spriteSheet, s2d);
+		screen.gpu = gpuRenderer;
+
 		updateDisplayScale();
 		window.resize(1280, 960);
 
@@ -163,6 +156,8 @@ class Game extends hxd.App {
 	}
 
 	function renderGame() {
+		gpuRenderer.beginFrame();
+
 		var xScroll = player.x - Std.int(screen.w / 2);
 		var yScroll = player.y - Std.int((screen.h - 8) / 2);
 		if (xScroll < 16) xScroll = 16;
@@ -186,11 +181,14 @@ class Game extends hxd.App {
 			lightScreen.clearLight(0);
 			level.renderLight(lightScreen, xScroll, yScroll);
 			screen.overlay(lightScreen, xScroll, yScroll);
+		} else {
+			gpuRenderer.hideOverlay();
 		}
 
 		renderGui();
 		if (!hxd.Window.getInstance().isFocused) renderFocusNagger();
-		copyFrame();
+
+		gpuRenderer.endFrame();
 	}
 
 	function renderGui() {
@@ -221,7 +219,6 @@ class Game extends hxd.App {
 			player.activeItem.renderInventory(screen, 10 * 8, screen.h - 16);
 		}
 
-		// Quickbar
 		renderQuickbar();
 
 		if (menu != null) {
@@ -241,14 +238,9 @@ class Game extends hxd.App {
 			var sy = startY;
 			var isSelected = (i == player.hotbarSelection && player.activeItem == null);
 
-			// Slot background (2x2 tiles)
 			var bgCol = isSelected ? Color.get(0, 555, 555, 555) : Color.get(0, 111, 111, 111);
 			screen.render(sx, sy, 0 + 12 * 32, bgCol, 0);
-			//screen.render(sx + 8, sy, 0 + 12 * 32, bgCol, 0);
-			//screen.render(sx, sy + 8, 0 + 12 * 32, bgCol, 0);
-			//screen.render(sx + 8, sy + 8, 0 + 12 * 32, bgCol, 0);
 
-			// Item in hotbar
 			var item = player.hotbar[i];
 			if (item != null) {
 				item.renderIcon(screen, sx + 4, sy + 4);
@@ -260,15 +252,12 @@ class Game extends hxd.App {
 				}
 			}
 
-			// Key number
 			Font.draw("" + (i + 1), screen, sx + 4, sy - 8, Color.get(0, 333, 333, 333));
 		}
 
-		// Active item indicator (if activeItem came from hotbar)
 		if (player.activeItem != null) {
 			var ax = startX + player.hotbarSelection * slotSize;
 			var ay = startY;
-			// Draw highlight border
 			var hiCol = Color.get(0, 555, 555, 0);
 			screen.render(ax - 1, ay - 1, 0 + 12 * 32, hiCol, 0);
 			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, hiCol, 0);
@@ -278,18 +267,15 @@ class Game extends hxd.App {
 	}
 
 	function updateDisplayScale() {
-		if (bitmap == null) return;
 		var window = Window.getInstance();
 		var w = window.width;
 		var h = window.height;
-		// Scale to fill the window exactly (uniform if 4:3, stretched otherwise)
-		bitmap.scaleX = w / WIDTH;
-		bitmap.scaleY = h / HEIGHT;
-		bitmap.x = 0;
-		bitmap.y = 0;
+		var sx = w / WIDTH;
+		var sy = h / HEIGHT;
+		gpuRenderer.setScale(sx, sy);
 		displayOffsetX = 0;
 		displayOffsetY = 0;
-		SCALE = bitmap.scaleX < bitmap.scaleY ? bitmap.scaleX : bitmap.scaleY;
+		SCALE = sx < sy ? sx : sy;
 	}
 
 	override function onResize() {
@@ -320,23 +306,6 @@ class Game extends hxd.App {
 			Font.draw(msg, screen, xx, yy, Color.get(5, 333, 333, 333));
 		else
 			Font.draw(msg, screen, xx, yy, Color.get(5, 555, 555, 555));
-	}
-
-	function copyFrame() {
-		var bytes = framePixels.bytes;
-		var n = screen.w * screen.h;
-		var px = screen.pixels;
-		var cpx = screen.colorPixels;
-		for (i in 0...n) {
-			var rgba = cpx[i];
-			if (rgba < 0) {
-				var cc = px[i];
-				if (cc < 255) rgba = colors[cc];
-			}
-			// Convert ARGB int to RGBA byte order for hxd.Pixels
-			bytes.setInt32(i << 2, ((rgba >> 16) & 0xFF) | (rgba & 0xFF00) | ((rgba & 0xFF) << 16) | (rgba & 0xFF000000));
-		}
-		frameTexture.uploadPixels(framePixels);
 	}
 
 	public function scheduleLevelChange(dir:Int) {

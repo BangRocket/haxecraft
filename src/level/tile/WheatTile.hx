@@ -71,7 +71,7 @@ class WheatTile extends Tile {
 
 		var count = random.nextInt(2);
 		for (i in 0...count) {
-			level.add(new ItemEntity(new ResourceItem(Resource.seeds), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+			level.add(ItemEntity.create(new ResourceItem(Resource.seeds), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 		}
 
 		count = 0;
@@ -81,7 +81,7 @@ class WheatTile extends Tile {
 			count = random.nextInt(2) + 1;
 		}
 		for (i in 0...count) {
-			level.add(new ItemEntity(new ResourceItem(Resource.wheat), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+			level.add(ItemEntity.create(new ResourceItem(Resource.wheat), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 		}
 
 		level.setTile(x, y, Tile.dirt, 0);

@@ -53,8 +53,8 @@ class CloudCactusTile extends Tile {
 
 	public function hurtTileDamage(level:Level, x:Int, y:Int, dmg:Int) {
 		var damage = level.getData(x, y) + 1;
-		level.add(new SmashParticle(x * 16 + 8, y * 16 + 8));
-		level.add(new TextParticle("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
+		level.add(SmashParticle.create(x * 16 + 8, y * 16 + 8));
+		level.add(TextParticle.create("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
 		if (dmg > 0) {
 			if (damage >= 10) {
 				level.setTile(x, y, Tile.cloud, 0);

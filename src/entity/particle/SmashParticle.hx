@@ -6,13 +6,26 @@ import gfx.Screen;
 import sound.Sound;
 
 class SmashParticle extends Entity {
+	static var pool:Array<SmashParticle> = [];
+
 	private var time:Int = 0;
 
-	public function new(x:Int, y:Int) {
+	public function new() {
 		super();
-		this.x = x;
-		this.y = y;
+	}
+
+	public static function create(x:Int, y:Int):SmashParticle {
+		var p = pool.length > 0 ? pool.pop() : new SmashParticle();
+		p.removed = false;
+		p.x = x;
+		p.y = y;
+		p.time = 0;
 		Sound.monsterHurt.play();
+		return p;
+	}
+
+	override public function onRemovedFromLevel() {
+		pool.push(this);
 	}
 
 	override public function tick() {

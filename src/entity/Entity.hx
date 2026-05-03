@@ -27,6 +27,8 @@ class Entity {
 		removed = true;
 	}
 
+	public function onRemovedFromLevel() {}
+
 	public final function init(level:Level) {
 		this.level = level;
 	}

@@ -287,6 +287,7 @@ class Level {
 				entities[i] = last;
 				entities.pop();
 				removeEntity(xto, yto, e);
+				e.onRemovedFromLevel();
 				// don't increment i — re-check swapped element
 			} else {
 				var xt = e.x >> 4;

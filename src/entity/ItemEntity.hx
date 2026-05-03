@@ -6,6 +6,8 @@ import item.Item;
 import sound.Sound;
 
 class ItemEntity extends Entity {
+	static var pool:Array<ItemEntity> = [];
+
 	private var lifeTime:Int;
 	var walkDist:Int = 0;
 	var dir:Int = 0;
@@ -21,20 +23,36 @@ class ItemEntity extends Entity {
 	public var item:Item;
 	private var time:Int = 0;
 
-	public function new(item:Item, x:Int, y:Int) {
+	public function new() {
 		super();
-		this.item = item;
-		xx = this.x = x;
-		yy = this.y = y;
-		xr = 3;
-		yr = 3;
+	}
 
-		zz = 2;
-		xa = random.nextGaussian() * 0.3;
-		ya = random.nextGaussian() * 0.2;
-		za = random.nextFloat() * 0.7 + 1;
+	public static function create(item:Item, x:Int, y:Int):ItemEntity {
+		var e = pool.length > 0 ? pool.pop() : new ItemEntity();
+		e.removed = false;
+		e.item = item;
+		e.x = x;
+		e.y = y;
+		e.xx = x;
+		e.yy = y;
+		e.xr = 3;
+		e.yr = 3;
+		e.zz = 2;
+		e.xa = e.random.nextGaussian() * 0.3;
+		e.ya = e.random.nextGaussian() * 0.2;
+		e.za = e.random.nextFloat() * 0.7 + 1;
+		e.lifeTime = 60 * 10 + e.random.nextInt(60);
+		e.time = 0;
+		e.hurtTime = 0;
+		e.walkDist = 0;
+		e.dir = 0;
+		e.xKnockback = 0;
+		e.yKnockback = 0;
+		return e;
+	}
 
-		lifeTime = 60 * 10 + random.nextInt(60);
+	override public function onRemovedFromLevel() {
+		pool.push(this);
 	}
 
 	override public function tick() {

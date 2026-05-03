@@ -88,20 +88,20 @@ class TreeTile extends Tile {
 		{
 			var count = random.nextInt(10) == 0 ? 1 : 0;
 			for (i in 0...count) {
-				level.add(new ItemEntity(new ResourceItem(Resource.apple), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+				level.add(ItemEntity.create(new ResourceItem(Resource.apple), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 			}
 		}
 		var damage = level.getData(x, y) + dmg;
-		level.add(new SmashParticle(x * 16 + 8, y * 16 + 8));
-		level.add(new TextParticle("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
+		level.add(SmashParticle.create(x * 16 + 8, y * 16 + 8));
+		level.add(TextParticle.create("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
 		if (damage >= 20) {
 			var count = random.nextInt(2) + 1;
 			for (i in 0...count) {
-				level.add(new ItemEntity(new ResourceItem(Resource.wood), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+				level.add(ItemEntity.create(new ResourceItem(Resource.wood), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 			}
 			count = random.nextInt(random.nextInt(4) + 1);
 			for (i in 0...count) {
-				level.add(new ItemEntity(new ResourceItem(Resource.acorn), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+				level.add(ItemEntity.create(new ResourceItem(Resource.acorn), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 			}
 			level.setTile(x, y, Tile.grass, 0);
 		} else {
