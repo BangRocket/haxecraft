@@ -1,0 +1,22 @@
+package game.entity;
+
+import engine.entity.Entity;
+
+import game.crafting.Crafting;
+import engine.gfx.Color;
+import game.screen.CraftingMenu;
+
+class Anvil extends Furniture {
+	public function new() {
+		super("Anvil");
+		col = Color.get(-1, 0, 111, 222);
+		sprite = 0;
+		xr = 3;
+		yr = 2;
+	}
+
+	override public function use(player:Player, attackDir:Int):Bool {
+		player.game.setMenu(new CraftingMenu(Crafting.anvilRecipes, player));
+		return true;
+	}
+}
