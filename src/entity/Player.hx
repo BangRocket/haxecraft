@@ -416,7 +416,7 @@ class Player extends Mob {
 		if (hurtTime > 0 || invulnerableTime > 0) return;
 
 		Sound.playerHurt.play();
-		level.add(new TextParticle("" + damage, x, y, Color.get(-1, 504, 504, 504)));
+		level.add(TextParticle.create("" + damage, x, y, Color.get(-1, 504, 504, 504)));
 		health -= damage;
 		if (attackDir == 0) yKnockback = 6;
 		if (attackDir == 1) yKnockback = -6;

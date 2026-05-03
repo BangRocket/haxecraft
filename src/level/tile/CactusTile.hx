@@ -31,12 +31,12 @@ class CactusTile extends Tile {
 
 	override public function hurt(level:Level, x:Int, y:Int, source:Mob, dmg:Int, attackDir:Int) {
 		var damage = level.getData(x, y) + dmg;
-		level.add(new SmashParticle(x * 16 + 8, y * 16 + 8));
-		level.add(new TextParticle("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
+		level.add(SmashParticle.create(x * 16 + 8, y * 16 + 8));
+		level.add(TextParticle.create("" + dmg, x * 16 + 8, y * 16 + 8, Color.get(-1, 500, 500, 500)));
 		if (damage >= 10) {
 			var count = random.nextInt(2) + 1;
 			for (i in 0...count) {
-				level.add(new ItemEntity(new ResourceItem(Resource.cactusFlower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+				level.add(ItemEntity.create(new ResourceItem(Resource.cactusFlower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 			}
 			level.setTile(x, y, Tile.sand, 0);
 		} else {

@@ -93,7 +93,7 @@ class Mob extends Entity {
 	public function heal(heal:Int) {
 		if (hurtTime > 0) return;
 
-		level.add(new TextParticle("" + heal, x, y, Color.get(-1, 50, 50, 50)));
+		level.add(TextParticle.create("" + heal, x, y, Color.get(-1, 50, 50, 50)));
 		health += heal;
 		if (health > maxHealth) health = maxHealth;
 	}
@@ -108,7 +108,7 @@ class Mob extends Entity {
 				Sound.monsterHurt.play();
 			}
 		}
-		level.add(new TextParticle("" + damage, x, y, Color.get(-1, 500, 500, 500)));
+		level.add(TextParticle.create("" + damage, x, y, Color.get(-1, 500, 500, 500)));
 		health -= damage;
 		if (attackDir == 0) yKnockback = 6;
 		if (attackDir == 1) yKnockback = -6;

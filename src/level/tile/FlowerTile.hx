@@ -37,8 +37,8 @@ class FlowerTile extends GrassTile {
 			var tool:ToolItem = cast(item, ToolItem);
 			if (tool.type == ToolType.shovel) {
 				if (player.payStamina(4 - tool.level)) {
-					level.add(new ItemEntity(new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
-					level.add(new ItemEntity(new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+					level.add(ItemEntity.create(new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+					level.add(ItemEntity.create(new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 					level.setTile(x, y, Tile.grass, 0);
 					return true;
 				}
@@ -50,7 +50,7 @@ class FlowerTile extends GrassTile {
 	override public function hurt(level:Level, x:Int, y:Int, source:Mob, dmg:Int, attackDir:Int) {
 		var count = random.nextInt(2) + 1;
 		for (i in 0...count) {
-			level.add(new ItemEntity(new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
+			level.add(ItemEntity.create(new ResourceItem(Resource.flower), x * 16 + random.nextInt(10) + 3, y * 16 + random.nextInt(10) + 3));
 		}
 		level.setTile(x, y, Tile.grass, 0);
 	}

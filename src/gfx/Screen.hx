@@ -1,5 +1,7 @@
 package gfx;
 
+import haxe.ds.Vector;
+
 class Screen {
 	public var xOffset:Int;
 	public var yOffset:Int;
@@ -12,12 +14,13 @@ class Screen {
 	public var h:Int;
 	public var pixels:Array<Int>;
 	public var colorPixels:Array<Int>;
-	public var light:Array<Int>;
+	public var light:Vector<Int>;
 	public var lightW:Int;
 	public var lightH:Int;
 
 	var sheet:SpriteSheet;
 	var colorSheet:SpriteSheet;
+	public var gpu:GpuRenderer;
 
 	public function new(w:Int, h:Int, sheet:SpriteSheet, ?colorSheet:SpriteSheet) {
 		this.sheet = sheet;
@@ -28,13 +31,10 @@ class Screen {
 		lightH = (h + LIGHT_SCALE - 1) >> 2;
 		pixels = [];
 		colorPixels = [];
-		light = [];
+		light = new Vector<Int>(lightW * lightH);
 		for (i in 0...w * h) {
 			pixels.push(0);
 			colorPixels.push(-1);
-		}
-		for (i in 0...lightW * lightH) {
-			light.push(0);
 		}
 	}
 
@@ -54,6 +54,12 @@ class Screen {
 	public function render(xp:Int, yp:Int, tile:Int, colors:Int, bits:Int) {
 		xp -= xOffset;
 		yp -= yOffset;
+
+		if (gpu != null) {
+			gpu.addTile(xp, yp, tile, colors, bits);
+			return;
+		}
+
 		var mirrorX = (bits & BIT_MIRROR_X) > 0;
 		var mirrorY = (bits & BIT_MIRROR_Y) > 0;
 
@@ -81,9 +87,15 @@ class Screen {
 	}
 
 	public function renderFullColor(xp:Int, yp:Int, tile:Int, colors:Int, bits:Int) {
-		var sourceSheet = colorSheet != null ? colorSheet : sheet;
 		xp -= xOffset;
 		yp -= yOffset;
+
+		if (gpu != null) {
+			gpu.addFullColorTile(xp, yp, tile, colors, bits);
+			return;
+		}
+
+		var sourceSheet = colorSheet != null ? colorSheet : sheet;
 		var mirrorX = (bits & BIT_MIRROR_X) > 0;
 		var mirrorY = (bits & BIT_MIRROR_Y) > 0;
 
@@ -127,6 +139,10 @@ class Screen {
 	var dither:Array<Int> = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
 	public function overlay(screen2:Screen, xa:Int, ya:Int) {
+		if (gpu != null) {
+			gpu.buildOverlay(screen2, xa, ya);
+			return;
+		}
 		var oLight = screen2.light;
 		var oLightW = screen2.lightW;
 		var i = 0;
@@ -146,7 +162,6 @@ class Screen {
 	public function renderLight(x:Int, y:Int, r:Int) {
 		x -= xOffset;
 		y -= yOffset;
-		// Scale to light-buffer coordinates
 		var lx = x >> 2;
 		var ly = y >> 2;
 		var lr = (r + LIGHT_SCALE - 1) >> 2;
