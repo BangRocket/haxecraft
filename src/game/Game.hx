@@ -44,8 +44,8 @@ class Game extends Engine {
 		var window = Window.getInstance();
 		window.title = NAME;
 
-		var icons = hxd.Res.load("icons.png").toImage().getPixels();
-		var sprites = hxd.Res.load("sprites.png").toImage().getPixels();
+		var icons = hxd.Res.load("sprites/icons.png").toImage().getPixels();
+		var sprites = hxd.Res.load("sprites/sprites.png").toImage().getPixels();
 		initScreen(320, 240, new SpriteSheet(icons), new SpriteSheet(sprites));
 
 		updateDisplayScale();
