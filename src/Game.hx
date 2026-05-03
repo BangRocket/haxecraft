@@ -8,6 +8,7 @@ import gfx.Screen;
 import gfx.SpriteSheet;
 import level.Level;
 import level.tile.Tile;
+import item.resource.Resource;
 import item.ResourceItem;
 import screen.DeadMenu;
 import screen.LevelTransitionMenu;
@@ -74,6 +75,8 @@ class Game extends hxd.App {
 		updateDisplayScale();
 		window.resize(1280, 960);
 
+		Tile.init();
+		Resource.init();
 		Crafting.init();
 		resetGame();
 		setMenu(new TitleMenu());

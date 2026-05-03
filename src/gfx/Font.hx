@@ -3,11 +3,24 @@ package gfx;
 class Font {
 	static var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ      0123456789.,!?'\"-+=/\\%()<>:;     ";
 
+	static var charMap:haxe.ds.IntMap<Int> = {
+		var m = new haxe.ds.IntMap<Int>();
+		for (i in 0...chars.length) {
+			var code = chars.charCodeAt(i);
+			if (code != null && code != " ".code && !m.exists(code)) m.set(code, i);
+		}
+		m;
+	};
+
+	static inline var UPPER_DELTA = "a".code - "A".code;
+
 	public static function draw(msg:String, screen:Screen, x:Int, y:Int, col:Int) {
-		msg = msg.toUpperCase();
 		for (i in 0...msg.length) {
-			var ix = chars.indexOf(msg.charAt(i));
-			if (ix >= 0) {
+			var code = msg.charCodeAt(i);
+			if (code == null) continue;
+			if (code >= "a".code && code <= "z".code) code -= UPPER_DELTA;
+			var ix = charMap.get(code);
+			if (ix != null) {
 				screen.render(x + i * 8, y, ix + 30 * 32, col, 0);
 			}
 		}

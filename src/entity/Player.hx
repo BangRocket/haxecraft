@@ -240,28 +240,30 @@ class Player extends Mob {
 		}
 	}
 
+	static var areaScratch:Array<Entity> = [];
+
 	private function useArea(x0:Int, y0:Int, x1:Int, y1:Int):Bool {
-		var entities = level.getEntities(x0, y0, x1, y1);
-		for (i in 0...entities.length) {
-			var e = entities[i];
+		level.getEntitiesInto(areaScratch, x0, y0, x1, y1);
+		for (i in 0...areaScratch.length) {
+			var e = areaScratch[i];
 			if (e != this) if (e.use(this, attackDir)) return true;
 		}
 		return false;
 	}
 
 	private function interactArea(x0:Int, y0:Int, x1:Int, y1:Int):Bool {
-		var entities = level.getEntities(x0, y0, x1, y1);
-		for (i in 0...entities.length) {
-			var e = entities[i];
+		level.getEntitiesInto(areaScratch, x0, y0, x1, y1);
+		for (i in 0...areaScratch.length) {
+			var e = areaScratch[i];
 			if (e != this) if (e.interact(this, activeItem, attackDir)) return true;
 		}
 		return false;
 	}
 
 	private function hurtArea(x0:Int, y0:Int, x1:Int, y1:Int) {
-		var entities = level.getEntities(x0, y0, x1, y1);
-		for (i in 0...entities.length) {
-			var e = entities[i];
+		level.getEntitiesInto(areaScratch, x0, y0, x1, y1);
+		for (i in 0...areaScratch.length) {
+			var e = areaScratch[i];
 			if (e != this) e.hurt(this, getAttackDamage(e), attackDir);
 		}
 	}

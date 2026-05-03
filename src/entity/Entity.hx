@@ -6,6 +6,9 @@ import level.Level;
 import level.tile.Tile;
 
 class Entity {
+	static var move2WasInside:Array<Entity> = [];
+	static var move2IsInside:Array<Entity> = [];
+
 	public var random = new utils.Random();
 	public var x:Int;
 	public var y:Int;
@@ -28,7 +31,7 @@ class Entity {
 		this.level = level;
 	}
 
-	public function intersects(x0:Int, y0:Int, x1:Int, y1:Int):Bool {
+	public inline function intersects(x0:Int, y0:Int, x1:Int, y1:Int):Bool {
 		return !(x + xr < x0 || y + yr < y0 || x - xr > x1 || y - yr > y1);
 	}
 
@@ -80,8 +83,10 @@ class Entity {
 		}
 		if (blocked) return false;
 
-		var wasInside = level.getEntities(x - xr, y - yr, x + xr, y + yr);
-		var isInside = level.getEntities(x + xa - xr, y + ya - yr, x + xa + xr, y + ya + yr);
+		var wasInside = move2WasInside;
+		var isInside = move2IsInside;
+		level.getEntitiesInto(wasInside, x - xr, y - yr, x + xr, y + yr);
+		level.getEntitiesInto(isInside, x + xa - xr, y + ya - yr, x + xa + xr, y + ya + yr);
 		for (i in 0...isInside.length) {
 			var e = isInside[i];
 			if (e == this) continue;
