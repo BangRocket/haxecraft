@@ -103,7 +103,7 @@ class Screen {
 		}
 	}
 
-	public function setOffset(xOffset:Int, yOffset:Int) {
+	public inline function setOffset(xOffset:Int, yOffset:Int) {
 		this.xOffset = xOffset;
 		this.yOffset = yOffset;
 	}

@@ -140,7 +140,7 @@ class Level {
 			if (rowSprites.length > 0) {
 				sortAndRender(screen, rowSprites);
 			}
-			rowSprites = [];
+			rowSprites.resize(0);
 		}
 		screen.setOffset(0, 0);
 	}
@@ -180,7 +180,7 @@ class Level {
 		}
 	}
 
-	public function getTile(x:Int, y:Int):Tile {
+	public inline function getTile(x:Int, y:Int):Tile {
 		if (x < 0 || y < 0 || x >= w || y >= h) return Tile.rock;
 		return Tile.tiles[tiles[x + y * w]];
 	}
@@ -200,12 +200,12 @@ class Level {
 		data[idx] = dataVal;
 	}
 
-	public function getData(x:Int, y:Int):Int {
+	public inline function getData(x:Int, y:Int):Int {
 		if (x < 0 || y < 0 || x >= w || y >= h) return 0;
 		return data[x + y * w] & 0xff;
 	}
 
-	public function setData(x:Int, y:Int, val:Int) {
+	public inline function setData(x:Int, y:Int, val:Int) {
 		if (x < 0 || y < 0 || x >= w || y >= h) return;
 		data[x + y * w] = val;
 	}
@@ -267,7 +267,7 @@ class Level {
 
 		for (i in 0...Std.int(w * h / 50)) {
 			var xt = random.nextInt(w);
-			var yt = random.nextInt(w);
+			var yt = random.nextInt(h);
 			getTile(xt, yt).tick(this, xt, yt);
 		}
 		var i = 0;
@@ -296,6 +296,12 @@ class Level {
 
 	public function getEntities(x0:Int, y0:Int, x1:Int, y1:Int):Array<Entity> {
 		var result:Array<Entity> = [];
+		getEntitiesInto(result, x0, y0, x1, y1);
+		return result;
+	}
+
+	public function getEntitiesInto(out:Array<Entity>, x0:Int, y0:Int, x1:Int, y1:Int):Void {
+		out.resize(0);
 		var xt0 = (x0 >> 4) - 1;
 		var yt0 = (y0 >> 4) - 1;
 		var xt1 = (x1 >> 4) + 1;
@@ -306,10 +312,9 @@ class Level {
 				var ents = entitiesInTiles[x + y * this.w];
 				for (i in 0...ents.length) {
 					var e = ents[i];
-					if (e.intersects(x0, y0, x1, y1)) result.push(e);
+					if (e.intersects(x0, y0, x1, y1)) out.push(e);
 				}
 			}
 		}
-		return result;
 	}
 }

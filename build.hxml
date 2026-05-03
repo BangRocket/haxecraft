@@ -6,3 +6,5 @@
 -main Game
 -hl haxecraft.hl
 -D resourcesPath=res
+-dce full
+-D analyzer-optimize
