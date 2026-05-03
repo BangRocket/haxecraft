@@ -28,23 +28,4 @@ class SpriteSheet {
 			}
 		}
 	}
-
-	public static function fromRows(source:SpriteSheet, rows:Array<Int>):SpriteSheet {
-		var image = Pixels.alloc(source.width, source.height, hxd.PixelFormat.BGRA);
-		var keepRows = new Map<Int, Bool>();
-		for (r in rows) {
-			keepRows.set(r, true);
-		}
-
-		for (y in 0...source.height) {
-			var tileRow = Std.int(y / 8);
-			var includeRow = keepRows.exists(tileRow);
-			for (x in 0...source.width) {
-				var i = x + y * source.width;
-				var rgba = includeRow ? source.rgbaPixels[i] : 0x00000000;
-				image.setPixel(x, y, rgba);
-			}
-		}
-		return new SpriteSheet(image);
-	}
 }

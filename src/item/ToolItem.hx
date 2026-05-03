@@ -40,11 +40,11 @@ class ToolItem extends Item {
 	}
 
 	override public function renderIcon(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), 0, screen.colorSheet);
+		screen.renderFullColor(x, y, getSprite(), getColor(), 0);
 	}
 
 	override public function renderInventory(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), 0, screen.colorSheet);
+		screen.renderFullColor(x, y, getSprite(), getColor(), 0);
 		Font.draw(getName(), screen, x + 8, y, Color.get(-1, 555, 555, 555));
 	}
 

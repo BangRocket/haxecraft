@@ -24,8 +24,8 @@ import hxd.Window;
 
 class Game extends hxd.App {
 	public static inline var NAME = "Haxecraft";
-	public static inline var HEIGHT = 480;
-	public static inline var WIDTH = 640;
+	public static inline var HEIGHT = 240;
+	public static inline var WIDTH = 320;
 	public static var SCALE:Float = 4;
 	public static var displayOffsetX = 0;
 	public static var displayOffsetY = 0;
@@ -59,22 +59,12 @@ class Game extends hxd.App {
 		var window = Window.getInstance();
 		window.title = NAME;
 
-		var icons = hxd.Res.load("sprites/icons.png").toImage().getPixels();
-		var sprites = hxd.Res.load("sprites/sprites.png").toImage().getPixels();
-		var terrainSprites = hxd.Res.load("sprites/sprites_terrain.png").toImage().getPixels();
-		var itemSprites = hxd.Res.load("sprites/sprites_items.png").toImage().getPixels();
-		var uiSprites = hxd.Res.load("sprites/sprites_ui.png").toImage().getPixels();
-		var playerSprites = hxd.Res.load("sprites/sprites_player.png").toImage().getPixels();
-		var monsterSprites = hxd.Res.load("sprites/sprites_monsters.png").toImage().getPixels();
+		initPalette();
+		var icons = hxd.Res.load("icons.png").toImage().getPixels();
+		var sprites = hxd.Res.load("sprites.png").toImage().getPixels();
 		var iconSheet = new SpriteSheet(icons);
 		var spriteSheet = new SpriteSheet(sprites);
-		var terrainSheet = new SpriteSheet(terrainSprites);
-		var itemSheet = new SpriteSheet(itemSprites);
-		var uiSheet = new SpriteSheet(uiSprites);
-		var playerSheet = new SpriteSheet(playerSprites);
-		var monsterSheet = new SpriteSheet(monsterSprites);
 		screen = new Screen(WIDTH, HEIGHT, iconSheet, spriteSheet);
-		screen.setCategorySheets(terrainSheet, itemSheet, uiSheet, playerSheet, monsterSheet);
 		lightScreen = new Screen(WIDTH, HEIGHT, iconSheet);
 		framePixels = Pixels.alloc(WIDTH, HEIGHT, PixelFormat.RGBA);
 		frameTexture = new Texture(WIDTH, HEIGHT, [TextureFlags.Dynamic], h3d.mat.Texture.nativeFormat);
@@ -249,11 +239,11 @@ class Game extends hxd.App {
 			var isSelected = (i == player.hotbarSelection && player.activeItem == null);
 
 			// Slot background (2x2 tiles)
-			screen.render(sx, sy, 0 + 12 * 32, 0, screen.colorSheet);
-			//screen.render(sx + 8, sy, 1 * 32, 0, screen.colorSheet);
-			//screen.render(sx + 16, sy, 3 + 12 * 32, 0, screen.colorSheet);
-			//screen.render(sx, sy + 8, 0 + 12 * 32, 0);
-			//screen.render(sx + 8, sy + 8, 0 + 12 * 32, 0);
+			var bgCol = isSelected ? Color.get(0, 555, 555, 555) : Color.get(0, 111, 111, 111);
+			screen.render(sx, sy, 0 + 12 * 32, bgCol, 0);
+			//screen.render(sx + 8, sy, 0 + 12 * 32, bgCol, 0);
+			//screen.render(sx, sy + 8, 0 + 12 * 32, bgCol, 0);
+			//screen.render(sx + 8, sy + 8, 0 + 12 * 32, bgCol, 0);
 
 			// Item in hotbar
 			var item = player.hotbar[i];
@@ -276,10 +266,11 @@ class Game extends hxd.App {
 			var ax = startX + player.hotbarSelection * slotSize;
 			var ay = startY;
 			// Draw highlight border
-			screen.render(ax - 1, ay - 1, 0 + 12 * 32, 0);
-			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, 0);
-			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, 0);
-			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, 0);
+			var hiCol = Color.get(0, 555, 555, 0);
+			screen.render(ax - 1, ay - 1, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, hiCol, 0);
 		}
 	}
 
@@ -331,7 +322,14 @@ class Game extends hxd.App {
 	function copyFrame() {
 		for (y in 0...screen.h) {
 			for (x in 0...screen.w) {
-				framePixels.setPixel(x, y, screen.pixels[x + y * screen.w]);
+				var i = x + y * screen.w;
+				var rgba = screen.colorPixels[i];
+				if (rgba >= 0)
+					framePixels.setPixel(x, y, rgba);
+				else {
+					var cc = screen.pixels[i];
+					if (cc < 255) framePixels.setPixel(x, y, colors[cc]);
+				}
 			}
 		}
 		frameTexture.uploadPixels(framePixels);
