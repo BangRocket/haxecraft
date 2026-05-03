@@ -24,9 +24,9 @@ class LevelTransitionMenu extends GameMenu {
 				var dd = (y + x % 2 * 2 + Std.int(x / 3)) - time;
 				if (dd < 0 && dd > -30) {
 					if (dir > 0)
-						screen.render(x * 8, y * 8, 0, 0);
+						screen.render(x * 8, y * 8, 0, 0, 0);
 					else
-						screen.render(x * 8, screen.h - y * 8 - 8, 0, 0);
+						screen.render(x * 8, screen.h - y * 8 - 8, 0, 0, 0);
 				}
 			}
 		}

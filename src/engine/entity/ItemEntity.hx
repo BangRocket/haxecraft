@@ -95,8 +95,8 @@ class ItemEntity extends Entity {
 		if (time >= lifeTime - 6 * 20) {
 			if (Std.int(time / 6) % 2 == 0) return;
 		}
-		screen.render(x - 4, y - 4, item.getSprite(), 0);
-		screen.render(x - 4, y - 4 - Std.int(zz), item.getSprite(), 0);
+		screen.render(x - 4, y - 4, item.getSprite(), Color.get(-1, 0, 0, 0), 0);
+		screen.render(x - 4, y - 4 - Std.int(zz), item.getSprite(), item.getColor(), 0);
 	}
 
 	override function touchedBy(entity:Entity) {

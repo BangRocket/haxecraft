@@ -44,7 +44,7 @@ class TitleMenu extends GameMenu {
 		var yo = 24;
 		for (y in 0...h) {
 			for (x in 0...w) {
-				screen.render(xo + x * 8, yo + y * 8, x + (y + 6) * 32, 0);
+				screen.render(xo + x * 8, yo + y * 8, x + (y + 6) * 32, titleColor, 0);
 			}
 		}
 

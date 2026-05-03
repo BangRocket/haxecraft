@@ -21,7 +21,7 @@ class Font {
 			if (code >= "a".code && code <= "z".code) code -= UPPER_DELTA;
 			var ix = charMap.get(code);
 			if (ix != null) {
-				screen.render(x + i * 8, y, ix + 30 * 32, 0);
+				screen.render(x + i * 8, y, ix + 30 * 32, col, 0);
 			}
 		}
 	}
@@ -30,23 +30,23 @@ class Font {
 		for (y in y0...(y1 + 1)) {
 			for (x in x0...(x1 + 1)) {
 				if (x == x0 && y == y0)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, 0);
+					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
 				else if (x == x1 && y == y0)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, 1);
+					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
 				else if (x == x0 && y == y1)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, 2);
+					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
 				else if (x == x1 && y == y1)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, 3);
+					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 3);
 				else if (y == y0)
-					screen.render(x * 8, y * 8, 1 + 13 * 32, 0);
+					screen.render(x * 8, y * 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
 				else if (y == y1)
-					screen.render(x * 8, y * 8, 1 + 13 * 32, 2);
+					screen.render(x * 8, y * 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
 				else if (x == x0)
-					screen.render(x * 8, y * 8, 2 + 13 * 32, 0);
+					screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
 				else if (x == x1)
-					screen.render(x * 8, y * 8, 2 + 13 * 32, 1);
+					screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(5, 5, 5, 5), 1);
 				else
-					screen.render(x * 8, y * 8, 2 + 13 * 32, 1);
+					screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(5, 5, 5, 5), 1);
 			}
 		}
 

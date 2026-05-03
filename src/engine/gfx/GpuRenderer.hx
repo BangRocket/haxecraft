@@ -103,17 +103,17 @@ class GpuRenderer {
 		}
 	}
 
-	public function addTile(xp:Int, yp:Int, tileId:Int, bits:Int, tint:Int) {
-		var key = tileId | ((bits & 3) << 10) | ((tint & 0xFFFFFF) << 12);
+	public function addTile(xp:Int, yp:Int, tileId:Int, colors:Int, bits:Int, tint:Int) {
+		var key = tileId | ((bits & 3) << 10) | (colors * 8192) + tint;
 		var tile = cacheMap.get(key);
 		if (tile == null) {
-			tile = renderCacheTile(tileId, bits, tint);
+			tile = renderCacheTile(tileId, colors, bits, tint);
 			cacheMap.set(key, tile);
 		}
 		tileGroup.add(xp, yp, tile);
 	}
 
-	function renderCacheTile(tileId:Int, bits:Int, tint:Int):H2dTile {
+	function renderCacheTile(tileId:Int, colors:Int, bits:Int, tint:Int):H2dTile {
 		if (nextSlot >= MAX_SLOTS) return atlasTile.sub(0, 0, TILE_SIZE, TILE_SIZE);
 
 		var slot = nextSlot++;
@@ -157,6 +157,17 @@ class GpuRenderer {
 				var alpha = (rgba >>> 24) & 255;
 				if (alpha == 0) {
 					atlasPixels.setPixel(ax + px, ay + py, 0x00000000);
+					continue;
+				}
+
+				// Grayscale pixels: palette lookup
+				if (s.grayscaleMask[srcIdx]) {
+					var palIdx = (colors >> (s.pixels[srcIdx] * 8)) & 255;
+					if (palIdx < 255) {
+						atlasPixels.setPixel(ax + px, ay + py, Screen.palette[palIdx]);
+					} else {
+						atlasPixels.setPixel(ax + px, ay + py, 0x00000000);
+					}
 					continue;
 				}
 

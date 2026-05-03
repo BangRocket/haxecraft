@@ -156,7 +156,7 @@ class Game extends Engine {
 			var cols = Std.int((screen.w + 15) / 8) + 1;
 			for (y in 0...rows) {
 				for (x in 0...cols) {
-					screen.render(x * 8 - ((Std.int(xScroll / 4)) & 7), y * 8 - ((Std.int(yScroll / 4)) & 7), 0, 0);
+					screen.render(x * 8 - ((Std.int(xScroll / 4)) & 7), y * 8 - ((Std.int(yScroll / 4)) & 7), 0, col, 0);
 				}
 			}
 		}
@@ -185,25 +185,25 @@ class Game extends Engine {
 	function renderGui() {
 		for (y in 0...2) {
 			for (x in 0...20) {
-				screen.render(x * 8, screen.h - 16 + y * 8, 0 + 12 * 32, 0);
+				screen.render(x * 8, screen.h - 16 + y * 8, 0 + 12 * 32, Color.get(0, 0, 0, 0), 0);
 			}
 		}
 
 		for (i in 0...10) {
 			if (i < player.health)
-				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, 0);
+				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 100, 0, 0), 0);
 			else
-				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, 0);
+				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 100, 0, 0), 0);
 
 			if (player.staminaRechargeDelay > 0) {
 				if (Std.int(player.staminaRechargeDelay / 4) % 2 == 0)
-					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
+					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
 				else
-					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
+					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
 			} else if (i < player.stamina) {
-				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
+				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
 			} else {
-				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, 0);
+				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
 			}
 		}
 		if (player.activeItem != null) {
@@ -226,7 +226,7 @@ class Game extends Engine {
 			var isSelected = (i == player.hotbarSelection && player.activeItem == null);
 
 			var bgCol = isSelected ? Color.get(0, 555, 555, 555) : Color.get(0, 111, 111, 111);
-			screen.render(sx, sy, 0 + 12 * 32, 0);
+			screen.render(sx, sy, 0 + 12 * 32, bgCol, 0);
 
 			var item = player.hotbar[i];
 			if (item != null) {
@@ -246,10 +246,10 @@ class Game extends Engine {
 			var ax = startX + player.hotbarSelection * slotSize;
 			var ay = startY;
 			var hiCol = Color.get(0, 555, 555, 0);
-			screen.render(ax - 1, ay - 1, 0 + 12 * 32, 0);
-			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, 0);
-			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, 0);
-			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, 0);
+			screen.render(ax - 1, ay - 1, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax + slotSize, ay - 1, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, hiCol, 0);
+			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, hiCol, 0);
 		}
 	}
 

@@ -29,10 +29,10 @@ class OreTile extends Tile {
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		var toDrop = getDrop();
 		color = (toDrop.color & 0xffffff00) + Color.get(level.dirtColor);
-		screen.render(x * 16 + 0, y * 16 + 0, 17 + 1 * 32, 0);
-		screen.render(x * 16 + 8, y * 16 + 0, 18 + 1 * 32, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, 17 + 2 * 32, 0);
-		screen.render(x * 16 + 8, y * 16 + 8, 18 + 2 * 32, 0);
+		screen.render(x * 16 + 0, y * 16 + 0, 17 + 1 * 32, color, 0);
+		screen.render(x * 16 + 8, y * 16 + 0, 18 + 1 * 32, color, 0);
+		screen.render(x * 16 + 0, y * 16 + 8, 17 + 2 * 32, color, 0);
+		screen.render(x * 16 + 8, y * 16 + 8, 18 + 2 * 32, color, 0);
 	}
 
 	override public function mayPass(level:Level, x:Int, y:Int, e:Entity):Bool {

@@ -38,7 +38,7 @@ class Recipe implements ListItem {
 	}
 
 	public function renderInventory(screen:Screen, x:Int, y:Int):Void {
-		screen.render(x, y, resultTemplate.getSprite(), 0);
+		screen.render(x, y, resultTemplate.getSprite(), resultTemplate.getColor(), 0);
 		var textColor = canCraft ? Color.get(-1, 555, 555, 555) : Color.get(-1, 222, 222, 222);
 		Font.draw(resultTemplate.getName(), screen, x + 8, y, textColor);
 	}

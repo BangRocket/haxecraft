@@ -21,10 +21,10 @@ class DirtTile extends Tile {
 
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		var col = Color.get(level.dirtColor, level.dirtColor, level.dirtColor - 111, level.dirtColor - 111);
-		screen.render(x * 16 + 0, y * 16 + 0, 0, 0);
-		screen.render(x * 16 + 8, y * 16 + 0, 1, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, 2, 0);
-		screen.render(x * 16 + 8, y * 16 + 8, 3, 0);
+		screen.render(x * 16 + 0, y * 16 + 0, 0, col, 0);
+		screen.render(x * 16 + 8, y * 16 + 0, 1, col, 0);
+		screen.render(x * 16 + 0, y * 16 + 8, 2, col, 0);
+		screen.render(x * 16 + 8, y * 16 + 8, 3, col, 0);
 	}
 
 	override public function interact(level:Level, xt:Int, yt:Int, player:Player, item:Item, attackDir:Int):Bool {

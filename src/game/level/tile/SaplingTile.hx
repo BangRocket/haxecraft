@@ -24,7 +24,7 @@ class SaplingTile extends Tile {
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		onType.render(screen, level, x, y);
 		var col = Color.get(10, 40, 50, -1);
-		screen.render(x * 16 + 4, y * 16 + 4, 11 + 3 * 32, 0);
+		screen.render(x * 16 + 4, y * 16 + 4, 11 + 3 * 32, col, 0);
 	}
 
 	override public function tick(level:Level, x:Int, y:Int) {

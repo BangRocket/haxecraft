@@ -20,6 +20,27 @@ class Screen {
 	public var lightW:Int;
 	public var lightH:Int;
 
+	public static var palette:Array<Int> = [];
+
+	public static function initPalette() {
+		if (palette.length > 0) return;
+		var pp = 0;
+		for (r in 0...6) {
+			for (g in 0...6) {
+				for (b in 0...6) {
+					var rr = Std.int(r * 255 / 5);
+					var gg = Std.int(g * 255 / 5);
+					var bb = Std.int(b * 255 / 5);
+					var mid = Std.int((rr * 30 + gg * 59 + bb * 11) / 100);
+					var r1 = Std.int(((rr + mid) / 2) * 230 / 255 + 10);
+					var g1 = Std.int(((gg + mid) / 2) * 230 / 255 + 10);
+					var b1 = Std.int(((bb + mid) / 2) * 230 / 255 + 10);
+					palette[pp++] = 0xff000000 | (r1 << 16) | (g1 << 8) | b1;
+				}
+			}
+		}
+	}
+
 	var sheet:SpriteSheet;
 	public var colorSheet:SpriteSheet;
 	public var terrainSheet:SpriteSheet;
@@ -98,7 +119,7 @@ class Screen {
 		}
 	}
 
-	public function render(xp:Int, yp:Int, tile:Int, bits:Int, ?sourceSheet:SpriteSheet, ?tint:Int = 0) {
+	public function render(xp:Int, yp:Int, tile:Int, colors:Int, bits:Int, ?sourceSheet:SpriteSheet, ?tint:Int = 0) {
 		var s:SpriteSheet;
 		var offY:Int;
 		if (sourceSheet != null) {
@@ -114,7 +135,7 @@ class Screen {
 		yp -= yOffset;
 
 		if (gpu != null) {
-			gpu.addTile(xp, yp, tile, bits, tint);
+			gpu.addTile(xp, yp, tile, colors, bits, tint);
 			return;
 		}
 
@@ -142,6 +163,16 @@ class Screen {
 				var alpha = (rgba >>> 24) & 255;
 				if (alpha == 0) continue;
 
+				// Grayscale pixels: palette lookup via colors parameter
+				if (s.grayscaleMask[src]) {
+					var palIdx = (colors >> (s.pixels[src] * 8)) & 255;
+					if (palIdx < 255) {
+						pixels[(x + xp) + (y + yp) * w] = palette[palIdx];
+					}
+					continue;
+				}
+
+				// Full-color pixels: render RGBA directly
 				if (tint != 0) {
 					var sr = (rgba >> 16) & 255;
 					var sg = (rgba >> 8) & 255;

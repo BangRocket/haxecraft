@@ -60,7 +60,7 @@ class Spark extends Entity {
 		var xt = 8;
 		var yt = 13;
 
-		screen.render(x - 4, y - 4 - 2, xt + yt * 32, random.nextInt(4));
-		screen.render(x - 4, y - 4 + 2, xt + yt * 32, random.nextInt(4));
+		screen.render(x - 4, y - 4 - 2, xt + yt * 32, Color.get(-1, 555, 555, 555), random.nextInt(4));
+		screen.render(x - 4, y - 4 + 2, xt + yt * 32, Color.get(-1, 0, 0, 0), random.nextInt(4));
 	}
 }
