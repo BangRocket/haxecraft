@@ -1,13 +1,12 @@
 package game.screen;
 
-import engine.screen.Menu;
 
 import engine.entity.Inventory;
 import game.entity.Player;
 import engine.gfx.Font;
 import engine.gfx.Screen;
 
-class ContainerMenu extends Menu {
+class ContainerMenu extends GameMenu {
 	var player:Player;
 	var container:Inventory;
 	var selected = 0;

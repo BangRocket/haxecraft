@@ -1,6 +1,5 @@
 package game.screen;
 
-import engine.screen.Menu;
 
 import game.crafting.Recipe;
 import game.entity.Player;
@@ -11,7 +10,7 @@ import engine.item.Item;
 import game.item.ResourceItem;
 import engine.sound.Sound;
 
-class CraftingMenu extends Menu {
+class CraftingMenu extends GameMenu {
 	var player:Player;
 	var selected = 0;
 

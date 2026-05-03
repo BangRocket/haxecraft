@@ -1,20 +1,20 @@
 package engine.screen;
 
-import game.Game;
+import engine.Engine;
 import game.InputHandler;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
 
 class Menu {
-	var game:Game;
+	var engine:Engine;
 	var input:InputHandler;
 
 	public function new() {}
 
-	public function init(game:Game, input:InputHandler) {
+	public function init(engine:Engine, input:InputHandler) {
 		this.input = input;
-		this.game = game;
+		this.engine = engine;
 	}
 
 	public function tick() {}

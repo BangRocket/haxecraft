@@ -1,12 +1,12 @@
 package game.screen;
 
-import engine.screen.Menu;
 
+import engine.screen.Menu;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
 
-class InstructionsMenu extends Menu {
+class InstructionsMenu extends GameMenu {
 	var parent:Menu;
 
 	public function new(parent:Menu) {

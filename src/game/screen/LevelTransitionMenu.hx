@@ -1,10 +1,9 @@
 package game.screen;
 
-import engine.screen.Menu;
 
 import engine.gfx.Screen;
 
-class LevelTransitionMenu extends Menu {
+class LevelTransitionMenu extends GameMenu {
 	var dir:Int;
 	var time = 0;
 

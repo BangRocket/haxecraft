@@ -1,5 +1,6 @@
 package game;
 
+import engine.Engine;
 import hxd.Key as HxdKey;
 
 class InputHandler {
@@ -66,10 +67,10 @@ class InputHandler {
 
 	public function updateKeys() {
 		var window = hxd.Window.getInstance();
-		var mx = window.mouseX * Game.WIDTH / window.width;
-		var my = window.mouseY * Game.HEIGHT / window.height;
-		var cx = Game.WIDTH / 2;
-		var cy = (Game.HEIGHT - 8) / 2;
+		var mx = window.mouseX * Engine.WIDTH / window.width;
+		var my = window.mouseY * Engine.HEIGHT / window.height;
+		var cx = Engine.WIDTH / 2;
+		var cy = (Engine.HEIGHT - 8) / 2;
 		var dx = mx - cx;
 		var dy = my - cy;
 		if (Math.abs(dx) > Math.abs(dy)) {

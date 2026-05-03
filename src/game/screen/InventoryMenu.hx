@@ -1,6 +1,5 @@
 package game.screen;
 
-import engine.screen.Menu;
 
 import game.entity.Player;
 import engine.gfx.Color;
@@ -9,7 +8,7 @@ import engine.gfx.Screen;
 import engine.item.Item;
 import game.item.ResourceItem;
 
-class InventoryMenu extends Menu {
+class InventoryMenu extends GameMenu {
 	var player:Player;
 	var selected = 0;
 	var window = 0; // 0 = inventory, 1 = hotbar

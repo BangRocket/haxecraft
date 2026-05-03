@@ -1,43 +1,33 @@
 package game;
 
-import game.entity.Player;
-import game.crafting.Crafting;
+import engine.Engine;
 import engine.gfx.Color;
 import engine.gfx.Font;
-import engine.gfx.GpuRenderer;
 import engine.gfx.Screen;
 import engine.gfx.SpriteSheet;
 import engine.level.Level;
 import engine.level.tile.Tile;
 import engine.item.resource.Resource;
+import engine.screen.Menu;
+import game.entity.Player;
+import game.crafting.Crafting;
 import game.item.ResourceItem;
 import game.screen.DeadMenu;
 import game.screen.LevelTransitionMenu;
-import engine.screen.Menu;
 import game.screen.TitleMenu;
 import game.screen.WonMenu;
 import hxd.Window;
 
-class Game extends hxd.App {
+class Game extends Engine {
 	public static inline var NAME = "Haxecraft";
-	public static inline var HEIGHT = 240;
-	public static inline var WIDTH = 320;
-	public static var SCALE:Float = 4;
-	public static var displayOffsetX = 0;
-	public static var displayOffsetY = 0;
 
-	var screen:Screen;
-	var lightScreen:Screen;
-	var gpuRenderer:GpuRenderer;
 	var input = new InputHandler();
-	var tickCount = 0;
 	var level:Level;
 	var levels:Array<Level> = [];
 	var currentLevel = 3;
 	var playerDeadTime = 0;
 	var pendingLevelChange = 0;
 	var wonTimer = 0;
-	var accumulator = 0.0;
 
 	public var gameTime = 0;
 	public var player:Player;
@@ -50,19 +40,13 @@ class Game extends hxd.App {
 	}
 
 	override function init() {
+		super.init();
 		var window = Window.getInstance();
 		window.title = NAME;
 
-		initPalette();
 		var icons = hxd.Res.load("icons.png").toImage().getPixels();
 		var sprites = hxd.Res.load("sprites.png").toImage().getPixels();
-		var iconSheet = new SpriteSheet(icons);
-		var spriteSheet = new SpriteSheet(sprites);
-		screen = new Screen(WIDTH, HEIGHT, iconSheet, spriteSheet);
-		lightScreen = new Screen(WIDTH, HEIGHT, iconSheet);
-
-		gpuRenderer = new GpuRenderer(WIDTH, HEIGHT, colors, iconSheet, spriteSheet, s2d);
-		screen.gpu = gpuRenderer;
+		initScreen(320, 240, new SpriteSheet(icons), new SpriteSheet(sprites));
 
 		updateDisplayScale();
 		window.resize(1280, 960);
@@ -76,7 +60,7 @@ class Game extends hxd.App {
 
 	public function setMenu(menu:Menu) {
 		this.menu = menu;
-		if (menu != null) menu.init(this, input);
+		if (menu != null) menu.init(cast this, input);
 	}
 
 	public function resetGame() {
@@ -104,17 +88,8 @@ class Game extends hxd.App {
 		}
 	}
 
-	override function update(dt:Float) {
-		accumulator += dt * 60;
-		while (accumulator >= 1) {
-			tick();
-			accumulator--;
-		}
-		renderGame();
-	}
-
-	public function tick() {
-		tickCount++;
+	override public function tick() {
+		super.tick();
 		if (!hxd.Window.getInstance().isFocused) {
 			input.releaseAll();
 			return;
@@ -155,7 +130,7 @@ class Game extends hxd.App {
 		level.add(player);
 	}
 
-	function renderGame() {
+	override public function render() {
 		gpuRenderer.beginFrame();
 
 		var xScroll = player.x - Std.int(screen.w / 2);
@@ -264,48 +239,6 @@ class Game extends hxd.App {
 			screen.render(ax - 1, ay + slotSize, 0 + 12 * 32, hiCol, 0);
 			screen.render(ax + slotSize, ay + slotSize, 0 + 12 * 32, hiCol, 0);
 		}
-	}
-
-	function updateDisplayScale() {
-		var window = Window.getInstance();
-		var w = window.width;
-		var h = window.height;
-		var sx = w / WIDTH;
-		var sy = h / HEIGHT;
-		gpuRenderer.setScale(sx, sy);
-		displayOffsetX = 0;
-		displayOffsetY = 0;
-		SCALE = sx < sy ? sx : sy;
-	}
-
-	override function onResize() {
-		updateDisplayScale();
-	}
-
-	function renderFocusNagger() {
-		var msg = "Click to focus!";
-		var xx = Std.int((WIDTH - msg.length * 8) / 2);
-		var yy = Std.int((HEIGHT - 8) / 2);
-		var w = msg.length;
-		var h = 1;
-
-		screen.render(xx - 8, yy - 8, 0 + 13 * 32, 0);
-		screen.render(xx + w * 8, yy - 8, 0 + 13 * 32, 1);
-		screen.render(xx - 8, yy + 8, 0 + 13 * 32, 2);
-		screen.render(xx + w * 8, yy + 8, 0 + 13 * 32, 3);
-		for (x in 0...w) {
-			screen.render(xx + x * 8, yy - 8, 1 + 13 * 32, 0);
-			screen.render(xx + x * 8, yy + 8, 1 + 13 * 32, 2);
-		}
-		for (y in 0...h) {
-			screen.render(xx - 8, yy + y * 8, 2 + 13 * 32, 0);
-			screen.render(xx + w * 8, yy + y * 8, 2 + 13 * 32, 1);
-		}
-
-		if (Std.int(tickCount / 20) % 2 == 0)
-			Font.draw(msg, screen, xx, yy, Color.get(5, 333, 333, 333));
-		else
-			Font.draw(msg, screen, xx, yy, Color.get(5, 555, 555, 555));
 	}
 
 	public function scheduleLevelChange(dir:Int) {

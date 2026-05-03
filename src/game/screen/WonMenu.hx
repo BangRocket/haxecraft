@@ -1,12 +1,11 @@
 package game.screen;
 
-import engine.screen.Menu;
 
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
 
-class WonMenu extends Menu {
+class WonMenu extends GameMenu {
 	var inputDelay = 60;
 
 	public function new() {

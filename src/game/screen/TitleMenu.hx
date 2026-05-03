@@ -1,13 +1,12 @@
 package game.screen;
 
-import engine.screen.Menu;
 
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
 import engine.sound.Sound;
 
-class TitleMenu extends Menu {
+class TitleMenu extends GameMenu {
 	var selected = 0;
 
 	static var options = ["Start game", "How to play", "About"];
