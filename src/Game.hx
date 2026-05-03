@@ -204,7 +204,7 @@ class Game extends hxd.App {
 		level.renderSprites(screen, xScroll, yScroll);
 
 		if (currentLevel < 3) {
-			lightScreen.clear(0);
+			lightScreen.clearLight(0);
 			level.renderLight(lightScreen, xScroll, yScroll);
 			screen.overlay(lightScreen, xScroll, yScroll);
 		}
@@ -344,17 +344,18 @@ class Game extends hxd.App {
 	}
 
 	function copyFrame() {
-		for (y in 0...screen.h) {
-			for (x in 0...screen.w) {
-				var i = x + y * screen.w;
-				var rgba = screen.colorPixels[i];
-				if (rgba >= 0)
-					framePixels.setPixel(x, y, rgba);
-				else {
-					var cc = screen.pixels[i];
-					if (cc < 255) framePixels.setPixel(x, y, colors[cc]);
-				}
+		var bytes = framePixels.bytes;
+		var n = screen.w * screen.h;
+		var px = screen.pixels;
+		var cpx = screen.colorPixels;
+		for (i in 0...n) {
+			var rgba = cpx[i];
+			if (rgba < 0) {
+				var cc = px[i];
+				if (cc < 255) rgba = colors[cc];
 			}
+			// Convert ARGB int to RGBA byte order for hxd.Pixels
+			bytes.setInt32(i << 2, ((rgba >> 16) & 0xFF) | (rgba & 0xFF00) | ((rgba & 0xFF) << 16) | (rgba & 0xFF000000));
 		}
 		frameTexture.uploadPixels(framePixels);
 	}

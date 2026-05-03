@@ -244,10 +244,13 @@ class Level {
 		}
 	}
 
+	var randomTickCount:Int = 0;
+
 	public function tick() {
 		trySpawn(1);
 
-		for (i in 0...Std.int(w * h / 50)) {
+		if (randomTickCount == 0) randomTickCount = Std.int(w * h / 50);
+		for (i in 0...randomTickCount) {
 			var xt = random.nextInt(w);
 			var yt = random.nextInt(h);
 			getTile(xt, yt).tick(this, xt, yt);
@@ -261,8 +264,12 @@ class Level {
 			e.tick();
 
 			if (e.removed) {
-				entities.splice(i, 1);
+				// Swap-and-pop: O(1) instead of O(n) splice
+				var last = entities[entities.length - 1];
+				entities[i] = last;
+				entities.pop();
 				removeEntity(xto, yto, e);
+				// don't increment i — re-check swapped element
 			} else {
 				var xt = e.x >> 4;
 				var yt = e.y >> 4;
