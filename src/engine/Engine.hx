@@ -61,14 +61,14 @@ class Engine extends hxd.App {
 			tick();
 			accumulator--;
 		}
-		render();
+		renderFrame();
 	}
 
 	public function tick() {
 		tickCount++;
 	}
 
-	public function render() {
+	public function renderFrame() {
 		gpuRenderer.beginFrame();
 		gpuRenderer.endFrame();
 	}

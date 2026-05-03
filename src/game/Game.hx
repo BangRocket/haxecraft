@@ -130,7 +130,7 @@ class Game extends Engine {
 		level.add(player);
 	}
 
-	override public function render() {
+	override public function renderFrame() {
 		gpuRenderer.beginFrame();
 
 		var xScroll = player.x - Std.int(screen.w / 2);
