@@ -39,11 +39,11 @@ The "soul" of the game. From the UO pillars list, ranked by Joshua:
 
 ## Architecture — Approach 2: "Zone-sharded from day one"
 
-A gateway process plus N zone processes, with one Postgres backing both. Designed to ship with a single zone in MVP and scale by adding zones, without re-architecting the simulation core.
+A gateway process plus N zone processes, with one MySQL instance backing both. Designed to ship with a single zone in MVP and scale by adding zones, without re-architecting the simulation core.
 
 ```
                        ┌──────────────────┐
-       Postgres ◄──────│  Gateway (1)     │
+       MySQL    ◄──────│  Gateway (1)     │
                        │  - auth          │
                        │  - char select   │
                        │  - routing       │
@@ -61,7 +61,7 @@ A gateway process plus N zone processes, with one Postgres backing both. Designe
            │ persist       │ persist       │ persist
            └───────────────┼───────────────┘
                            ▼
-                       Postgres
+                        MySQL
                            ▲
                            │
                     ┌──────┴───────┐
@@ -72,13 +72,13 @@ A gateway process plus N zone processes, with one Postgres backing both. Designe
 ### Process responsibilities
 
 - **Gateway** (1 process). Auth, character creation and selection, zone registry (which zone owns which tile rect), brokering cross-zone player handoffs, central chat relay. Not in the gameplay hot path — once a client is in a zone, gateway only sees them again at zone transitions, global chat, or logout.
-- **Zone server** (N processes; start with 1). Owns simulation for its tile rect. Authoritative on movement, combat, skills, items, NPCs, monsters within its rect. Ticks at 10 Hz. Talks directly to its clients. Writes mutations to Postgres with batching for hot state and synchronously for item/gold movement.
-- **Postgres** (single instance for MVP). Characters, items, skills, world mutations, corpses, dropped items, NPC state. Sharded later when one box becomes the bottleneck.
+- **Zone server** (N processes; start with 1). Owns simulation for its tile rect. Authoritative on movement, combat, skills, items, NPCs, monsters within its rect. Ticks at 10 Hz. Talks directly to its clients. Writes mutations to MySQL with batching for hot state and synchronously for item/gold movement.
+- **MySQL** (single instance for MVP). Characters, items, skills, world mutations, corpses, dropped items, NPC state. Sharded later when one box becomes the bottleneck. Chosen over Postgres because Haxe stdlib `sys.db.Mysql` is HashLink-ready out of the box; no maintained Postgres driver for HL exists. MySQL 8's `JSON` columns + functional indexes cover the original JSONB use case.
 - **Client** (Haxe/Heaps targeting HashLink initially, JS browser target deferred). Rendering, input, prediction, interpolation. Has no authoritative game state — purely a view + input device with prediction to hide latency.
 
 ### Why gateway + zones (not just zones)
 
-Without a gateway, every client would need every zone's address and would re-auth on each crossing. Gateway gives us: one stable endpoint, central auth + anti-cheat + ban hammer, place for global chat without going through Postgres, and the coordinator for handoff (so a player is never in two zones or zero zones at once).
+Without a gateway, every client would need every zone's address and would re-auth on each crossing. Gateway gives us: one stable endpoint, central auth + anti-cheat + ban hammer, place for global chat without going through the DB, and the coordinator for handoff (so a player is never in two zones or zero zones at once).
 
 ### MVP process layout
 
@@ -290,7 +290,7 @@ Calling out explicitly to prevent scope drift: no poison, no damage types, no mo
 
 ### Database
 
-PostgreSQL. Single instance for MVP. SQLite would work for sub-100 CCU but Postgres gives us real concurrency, replication paths, and the JSONB columns we lean on for item properties.
+MySQL 8. Single instance for MVP. SQLite would work for sub-100 CCU but MySQL gives us real concurrency, replication paths, and the `JSON` columns we lean on for item properties. Originally specced as Postgres; switched after finding no maintained HashLink driver — MySQL is in Haxe stdlib (`sys.db.Mysql`) and `JSON` columns + functional path indexes cover ~95% of the JSONB use case for item properties.
 
 ### Schema sketch
 
@@ -300,16 +300,16 @@ characters(id, account_id, name UNIQUE, zone_id, tile_x, tile_y,
            str, dex, int, hp, mana, stamina, gold, is_ghost,
            created_at, last_save, locked_by_zone)
 character_skills(character_id, skill_id, value)  -- value = u16, skill×10
-character_inventory(character_id, container, slot, item_blob JSONB)
+character_inventory(character_id, container, slot, item_blob JSON)
    -- container ∈ {backpack, equipment, bank}
-world_items(zone_id, tile_x, tile_y, item_blob JSONB, decay_at)
-world_corpses(zone_id, tile_x, tile_y, owner_char_id, contents JSONB,
+world_items(zone_id, tile_x, tile_y, item_blob JSON, decay_at)
+world_corpses(zone_id, tile_x, tile_y, owner_char_id, contents JSON,
               decay_at, owner_only_until)
 world_resource_nodes(zone_id, tile_x, tile_y, type, state, respawn_at)
-world_npc_state(zone_id, npc_id, hp, vendor_stock JSONB, respawn_at)
+world_npc_state(zone_id, npc_id, hp, vendor_stock JSON, respawn_at)
 ```
 
-**Why JSONB for item_blob:** items have arbitrary properties (durability, quality tier, who crafted it, magical bonuses later). Modeling each as a column = schema bloat. JSONB lets us evolve properties without migrations; specific keys can be indexed when needed.
+**Why `JSON` columns for item_blob:** items have arbitrary properties (durability, quality tier, who crafted it, magical bonuses later). Modeling each as a column = schema bloat. MySQL 8 `JSON` columns let us evolve properties without migrations; specific JSON paths can be indexed via generated columns + functional indexes when needed.
 
 **Why `locked_by_zone` on characters:** prevents the same character from being loaded in two zone processes at once — common bug in early MMOs. Gateway sets the lock on enter-world; zone clears on logout. Stale lock recovery: gateway checks zone heartbeat, force-clears if zone is dead.
 
@@ -335,8 +335,8 @@ world_npc_state(zone_id, npc_id, hp, vendor_stock JSONB, respawn_at)
 
 ### Backups
 
-- MVP: nightly `pg_dump` to a separate disk + offsite. Acceptable RPO = 24h for indie launch.
-- Pre-real-launch: WAL archiving + PITR.
+- MVP: nightly `mysqldump` to a separate disk + offsite. Acceptable RPO = 24h for indie launch.
+- Pre-real-launch: binlog archiving + PITR.
 
 ### Anti-dupe discipline
 
@@ -368,7 +368,7 @@ haxecraft/
 ├── server/                  -- HashLink native
 │   ├── gateway/             -- auth, routing, zone registry
 │   ├── zone/                -- simulation, tick loop, world ownership
-│   ├── db/                  -- Postgres access layer
+│   ├── db/                  -- MySQL access layer
 │   ├── net/                 -- TCP server, frame codec
 │   └── build-*.hxml         -- one per binary (gateway, zone)
 ├── tools/                   -- asset pipeline, Tiled importer, dev CLIs
@@ -421,9 +421,9 @@ CI on every commit: build all four, run shared tests, run a smoke test that boot
 
 ### Honest tradeoffs of going Haxe-everywhere
 
-- Haxe Postgres drivers are less mature than node-pg or pgx. Likely need to write a thin wrapper around HL's native libpq binding or use a community lib and contribute back. Budget time in M0.
 - Smaller hiring pool if collaborators are ever added (offset: AI-assisted dev levels this).
 - Haxe ecosystem moves slower than JS/Go for general libs.
+- Database driver choice is constrained — only MySQL and SQLite are HL-ready in stdlib; Postgres requires writing C bindings.
 
 Real but small; code-sharing dividend more than pays for them.
 
@@ -439,7 +439,7 @@ Boot a zone in-process (no network, no DB — mock both). Drive with scripted in
 
 ### Layer 3 — Integration tests
 
-Boot real gateway + zone + Postgres (Docker) + N **headless clients** in CI. Headless client = same Haxe client code minus rendering, scriptable.
+Boot real gateway + zone + MySQL (Docker) + N **headless clients** in CI. Headless client = same Haxe client code minus rendering, scriptable.
 
 Must-have scenarios:
 
@@ -507,7 +507,7 @@ Each milestone ends with something demoable.
 - Shared protocol skeleton: `@:serializable` macro, codec, version handshake
 - HL server skeleton: TCP listen, frame I/O, basic message dispatch
 - Heaps client connects, sends `Hello`, gets ack
-- Postgres up (Docker for dev), schema applied
+- MySQL up (Docker for dev), schema applied
 - Account create + login flow end-to-end
 
 **Demo:** client connects, logs in, sees "Welcome."
@@ -612,7 +612,7 @@ Each milestone ends with something demoable.
 
 - **Zone handoff bugs in production.** Mitigated by paranoid testing (Layer 4), but expect to ship a patch in week 1 of public play.
 - **Item dupes via clever timing.** Mitigated by transaction discipline + Layer 5 invariants, but assume one will be found.
-- **HashLink Postgres driver maturity.** May need to write/extend a lib in M0. Could add 1-2 weeks.
+- **MySQL scaling at multi-zone.** Single-instance MySQL is fine for 100-500 CCU; planning sharding strategy before approaching 1000+ may be needed sooner than expected.
 - **Content authoring being a wall.** Tiled is great but painting 1024×1024 of detailed terrain is real work. Mitigated by procgen base layer + hand-edit; expect M1 and M9 to drag.
 - **Burnout.** 9-12 months on a side-project with no public feedback is hard. M9 closed alpha is partly to *get* feedback before burnout hits.
 
@@ -637,3 +637,4 @@ Each milestone ends with something demoable.
 | Tile size | 8×8 px (correction from initial 16×16 assumption) |
 | Movement model | C — tile-step authority, smooth-interp rendering |
 | Art direction | Minifantasy-style |
+| Database | MySQL 8 (post-spec revision: no maintained HL Postgres driver exists; MySQL is in Haxe stdlib and `JSON` columns cover the JSONB use case) |
