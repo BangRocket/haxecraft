@@ -127,4 +127,28 @@ class TestMessages extends Test {
     var m2 = shared.proto.MsgEntityDespawn.deserialize(new BytesInput(out.getBytes()));
     Assert.equals(7, m2.entityId);
   }
+
+  function testMoveIntent() {
+    var m = new shared.proto.MsgMoveIntent();
+    m.dir = 2;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgMoveIntent.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(2, m2.dir);
+  }
+
+  function testEntityMove() {
+    var m = new shared.proto.MsgEntityMove();
+    m.entityId = 42;
+    m.fromX = 10; m.fromY = 20;
+    m.toX = 11; m.toY = 20;
+    m.durationMs = 200;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgEntityMove.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(42, m2.entityId);
+    Assert.equals(10, m2.fromX);
+    Assert.equals(11, m2.toX);
+    Assert.equals(200, m2.durationMs);
+  }
 }
