@@ -60,6 +60,7 @@ class Main extends App {
   var camera:Camera;
   var worldRenderer:client.game.WorldRenderer;
   var entityRenderer:EntityRenderer;
+  var inputDispatcher:client.game.InputDispatcher;
 
   static function main() {
     new Main();
@@ -186,7 +187,7 @@ class Main extends App {
     inZoneScreen = new InZoneScreen(s2d);
     worldRenderer = new client.game.WorldRenderer(inZoneScreen, map, camera);
     entityRenderer = new EntityRenderer(inZoneScreen, camera, ownEntityId);
-    // InputDispatcher (Task 23) wires here.
+    inputDispatcher = new client.game.InputDispatcher(zoneConn);
   }
 
   function onEntitySpawn(payload:Bytes):Void {
@@ -224,6 +225,7 @@ class Main extends App {
     if (state == IN_ZONE && worldRenderer != null) {
       worldRenderer.redraw();
       if (entityRenderer != null) entityRenderer.redraw();
+      if (inputDispatcher != null) inputDispatcher.update();
     }
   }
 }
