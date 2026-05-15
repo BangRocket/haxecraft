@@ -1,6 +1,6 @@
-.PHONY: all shared-test gateway zone server-cli client test server-test clean
+.PHONY: all shared-test gateway zone server-cli client test server-test worldgen-tmx regenerate-map clean
 
-all: out shared-test gateway zone server-cli client
+all: out shared-test gateway zone server-cli client worldgen-tmx
 
 out:
 	@mkdir -p out
@@ -19,6 +19,12 @@ server-cli: out
 
 client: out
 	cd client && haxe build-client.hxml
+
+worldgen-tmx: out
+	cd tools/worldgen-tmx && haxe build-worldgen-tmx.hxml
+
+regenerate-map: worldgen-tmx
+	hl out/worldgen-tmx.hl 1024 1024 res/maps/starter.tmx
 
 test: shared-test
 	hl out/shared-test.hl
