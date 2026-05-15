@@ -8,6 +8,7 @@ class TestMain {
     var r = new Runner();
     r.addCase(new TestDbClient());
     r.addCase(new TestAccountDal());
+    r.addCase(new TestFrameBuffer());
     Report.create(r);
     r.run();
   }
