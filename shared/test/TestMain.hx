@@ -11,6 +11,7 @@ class TestMain {
     r.addCase(new TestMsgType());
     r.addCase(new TestSerializableMacro());
     r.addCase(new TestMessages());
+    r.addCase(new TestPasswordHash());
     Report.create(r);
     r.run();
   }
