@@ -2,14 +2,21 @@ package server.zone;
 
 import server.net.TcpServer;
 import server.net.MessageDispatcher;
+import server.db.DbClient;
+import server.db.CharacterDal;
 import shared.Constants;
+import shared.proto.MsgType;
 
 class Main {
   public static function main() {
+    var db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
+    var characterDal = new CharacterDal(db);
+    var enterHandler = new EnterZoneHandler(characterDal);
+
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
+    dispatcher.register(MsgType.ENTER_ZONE, enterHandler.handle);
 
-    // Tick loop wiring — full ZoneSimulator integration arrives in Task 14.
     while (true) {
       srv.tickAccept();
       var i = 0;
