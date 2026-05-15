@@ -7,7 +7,7 @@ class ClientConnection {
   public var socket:Socket;
   public var id:Int;
   public var alive:Bool = true;
-  public var frameBuffer:FrameBuffer = new FrameBuffer();
+  public var frameBuffer:shared.proto.FrameBuffer = new shared.proto.FrameBuffer();
 
   public function new(socket:Socket, id:Int) {
     this.socket = socket;

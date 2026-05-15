@@ -5,7 +5,7 @@ import utest.Test;
 import haxe.io.Bytes;
 import haxe.io.BytesOutput;
 import shared.proto.FrameCodec;
-import server.net.FrameBuffer;
+import shared.proto.FrameBuffer;
 
 class TestFrameBuffer extends Test {
   function testCompleteFrameYields() {

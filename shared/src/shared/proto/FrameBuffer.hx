@@ -1,4 +1,4 @@
-package server.net;
+package shared.proto;
 
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
@@ -30,7 +30,7 @@ class FrameBuffer {
       if (buf.length < totalLen) break;
       var frameBytes = buf.sub(0, totalLen);
       var inp = new BytesInput(frameBytes);
-      out.push(shared.proto.FrameCodec.readFrame(inp));
+      out.push(FrameCodec.readFrame(inp));
       buf = buf.sub(totalLen, buf.length - totalLen);
     }
     return out;
