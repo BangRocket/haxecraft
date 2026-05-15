@@ -19,7 +19,11 @@ import shared.proto.MsgLoginAck;
 import shared.proto.MsgZoneHandoff;
 import shared.proto.MsgEnterZone;
 import shared.proto.MsgEnterZoneAck;
+import shared.proto.MsgEntitySpawn;
+import shared.proto.MsgEntityMove;
+import shared.proto.MsgEntityDespawn;
 import shared.proto.MsgType;
+import client.game.EntityRenderer;
 import sys.io.File;
 import shared.world.MapData;
 import shared.world.TmxParser;
@@ -55,6 +59,7 @@ class Main extends App {
   var map:MapData;
   var camera:Camera;
   var worldRenderer:client.game.WorldRenderer;
+  var entityRenderer:EntityRenderer;
 
   static function main() {
     new Main();
@@ -68,6 +73,9 @@ class Main extends App {
 
     zoneDispatcher = new ClientDispatcher();
     zoneDispatcher.on(MsgType.ENTER_ZONE_ACK, onEnterZoneAck);
+    zoneDispatcher.on(MsgType.ENTITY_SPAWN, onEntitySpawn);
+    zoneDispatcher.on(MsgType.ENTITY_MOVE, onEntityMove);
+    zoneDispatcher.on(MsgType.ENTITY_DESPAWN, onEntityDespawn);
 
     loginScreen = new LoginScreen(s2d);
     loginScreen.onSubmit = onLoginSubmit;
@@ -177,7 +185,31 @@ class Main extends App {
     camera.centerWorldY = ownTileY;
     inZoneScreen = new InZoneScreen(s2d);
     worldRenderer = new client.game.WorldRenderer(inZoneScreen, map, camera);
-    // EntityRenderer (Task 22), InputDispatcher (Task 23) wire here.
+    entityRenderer = new EntityRenderer(inZoneScreen, camera, ownEntityId);
+    // InputDispatcher (Task 23) wires here.
+  }
+
+  function onEntitySpawn(payload:Bytes):Void {
+    var m = MsgEntitySpawn.deserialize(new BytesInput(payload));
+    if (entityRenderer != null) entityRenderer.spawn(m.entityId, m.name, m.tileX, m.tileY);
+  }
+
+  function onEntityMove(payload:Bytes):Void {
+    var m = MsgEntityMove.deserialize(new BytesInput(payload));
+    if (entityRenderer != null) entityRenderer.applyMove(m.entityId, m.fromX, m.fromY, m.toX, m.toY, m.durationMs);
+    if (m.entityId == ownEntityId) {
+      ownTileX = m.toX;
+      ownTileY = m.toY;
+      if (camera != null) {
+        camera.centerWorldX = m.toX;
+        camera.centerWorldY = m.toY;
+      }
+    }
+  }
+
+  function onEntityDespawn(payload:Bytes):Void {
+    var m = MsgEntityDespawn.deserialize(new BytesInput(payload));
+    if (entityRenderer != null) entityRenderer.despawn(m.entityId);
   }
 
   override function update(dt:Float) {
@@ -191,6 +223,7 @@ class Main extends App {
     }
     if (state == IN_ZONE && worldRenderer != null) {
       worldRenderer.redraw();
+      if (entityRenderer != null) entityRenderer.redraw();
     }
   }
 }
