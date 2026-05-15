@@ -54,13 +54,21 @@ class EnterZoneHandler {
       return;
     }
 
+    // If saved position isn't walkable (procgen spawn in water/rock/tree), relocate.
+    var sx = ch.tileX, sy = ch.tileY;
+    if (!sim.map.isWalkable(sx, sy) || sim.entityAt(sx, sy) != null) {
+      var p = sim.map.findWalkableNear(sx, sy);
+      Sys.println('[zone] relocating char ${ch.id} from ($sx,$sy) -> (${p.x},${p.y})');
+      sx = p.x; sy = p.y;
+    }
+
     ack.success = true;
     ack.entityId = ch.id;
-    ack.tileX = ch.tileX;
-    ack.tileY = ch.tileY;
+    ack.tileX = sx;
+    ack.tileY = sy;
     sendAck(conn, ack);
 
-    var runtime = new Character(ch.id, ch.name, conn, ch.tileX, ch.tileY);
+    var runtime = new Character(ch.id, ch.name, conn, sx, sy);
     sim.spawn(runtime);
     connToEntity.set(conn.id, ch.id);
     Sys.println('[zone] conn ${conn.id} spawned char=${ch.id} at (${ch.tileX},${ch.tileY})');

@@ -35,4 +35,22 @@ class TestMapData extends Test {
     Assert.isFalse(m.isWalkable(1, 1));
     Assert.isFalse(m.isWalkable(-1, -1));
   }
+
+  function testFindWalkableNearReturnsSelfWhenWalkable() {
+    var m = MapData.filled(5, 5, TileType.GRASS);
+    var pos = m.findWalkableNear(2, 2);
+    Assert.equals(2, pos.x);
+    Assert.equals(2, pos.y);
+  }
+
+  function testFindWalkableNearSpiralsOut() {
+    // Center 3x3 is water, surrounded by grass.
+    var m = MapData.filled(7, 7, TileType.GRASS);
+    for (dy in -1...2) for (dx in -1...2) m.setTile(3 + dx, 3 + dy, TileType.WATER);
+    var pos = m.findWalkableNear(3, 3);
+    // The found tile must be walkable and within 2 of center.
+    Assert.isTrue(m.isWalkable(pos.x, pos.y));
+    Assert.isTrue(Math.abs(pos.x - 3) <= 2);
+    Assert.isTrue(Math.abs(pos.y - 3) <= 2);
+  }
 }

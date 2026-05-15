@@ -36,4 +36,22 @@ class MapData {
   }
 
   public function rawBytes():Bytes return tiles;
+
+  /** Spiral outward from (sx, sy) until a walkable tile is found. Returns (sx, sy)
+      if it's already walkable. Bounded scan radius keeps this O(maxRadius^2) worst case. **/
+  public function findWalkableNear(sx:Int, sy:Int, maxRadius:Int = 256):{x:Int, y:Int} {
+    if (isWalkable(sx, sy)) return { x: sx, y: sy };
+    for (r in 1...maxRadius + 1) {
+      // Ring at radius r: top + bottom rows + left + right columns
+      for (dx in -r...r + 1) {
+        if (isWalkable(sx + dx, sy - r)) return { x: sx + dx, y: sy - r };
+        if (isWalkable(sx + dx, sy + r)) return { x: sx + dx, y: sy + r };
+      }
+      for (dy in -r + 1...r) {
+        if (isWalkable(sx - r, sy + dy)) return { x: sx - r, y: sy + dy };
+        if (isWalkable(sx + r, sy + dy)) return { x: sx + r, y: sy + dy };
+      }
+    }
+    return { x: sx, y: sy };  // give up; caller should treat as unrescuable
+  }
 }

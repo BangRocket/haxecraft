@@ -1,4 +1,4 @@
-package headless;
+package;
 
 import sys.net.Socket;
 import sys.net.Host;

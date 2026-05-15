@@ -13,6 +13,7 @@ class TestMain {
     r.addCase(new TestFrameBuffer());
     r.addCase(new TestSessionStore());
     r.addCase(new TestLoginFlow());
+    r.addCase(new TestZoneLifecycle());
     Report.create(r);
     r.run();
   }
