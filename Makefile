@@ -17,5 +17,9 @@ client: out
 test: shared-test
 	hl out/shared-test.hl
 
+server-test: out
+	cd server && haxe build-server-test.hxml
+	hl out/server-test.hl
+
 clean:
 	rm -rf out/*.hl
