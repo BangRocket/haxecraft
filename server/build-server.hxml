@@ -1,0 +1,6 @@
+-cp src
+-cp ../shared/src
+-lib utest
+-main server.Main
+--hl ../out/server.hl
+-D analyzer-optimize

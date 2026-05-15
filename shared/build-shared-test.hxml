@@ -1,0 +1,7 @@
+-cp src
+-cp test
+-cp test/_fixtures
+-lib utest
+-main TestMain
+--hl ../out/shared-test.hl
+-D analyzer-optimize
