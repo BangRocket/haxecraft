@@ -5,6 +5,7 @@ haxecraft.hl
 haxecraft
 libhl.dylib
 out/
+tools/hl-stbtt/build/
 
 # macOS
 .DS_Store
