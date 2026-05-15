@@ -35,4 +35,22 @@ class TestFrameCodec extends Test {
     var payload = Bytes.alloc(70000);
     Assert.raises(() -> FrameCodec.writeFrame(out, 1, payload));
   }
+
+  function testReadFrameRoundtrip() {
+    var out = new BytesOutput();
+    var payload = Bytes.ofString("hello");
+    FrameCodec.writeFrame(out, 3, payload);
+    var inp = new haxe.io.BytesInput(out.getBytes());
+    var frame = FrameCodec.readFrame(inp);
+    Assert.equals(3, frame.msgType);
+    Assert.equals("hello", frame.payload.toString());
+  }
+
+  function testReadFrameRejectsOversizedHeader() {
+    var b = Bytes.alloc(3);
+    b.setUInt16(0, 70000);  // claimed length, exceeds MAX_FRAME_SIZE
+    b.set(2, 1);
+    var inp = new haxe.io.BytesInput(b);
+    Assert.raises(() -> FrameCodec.readFrame(inp));
+  }
 }
