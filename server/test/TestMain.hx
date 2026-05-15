@@ -10,6 +10,7 @@ class TestMain {
     r.addCase(new TestAccountDal());
     r.addCase(new TestFrameBuffer());
     r.addCase(new TestSessionStore());
+    r.addCase(new TestLoginFlow());
     Report.create(r);
     r.run();
   }
