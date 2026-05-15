@@ -36,9 +36,13 @@ class SerializableMacro {
             case "Bool":
               writeExprs.push(macro out.writeByte(this.$fname ? 1 : 0));
               readExprs.push(macro inst.$fname = inp.readByte() != 0);
+            case "UInt":
+              // Wire format: u8. Any field declared UInt is treated as u8 protocol field.
+              writeExprs.push(macro out.writeByte(this.$fname & 0xff));
+              readExprs.push(macro inst.$fname = inp.readByte());
             default:
               Context.error("SerializableMacro: unsupported type '" + typeStr +
-                "' on field '" + fname + "' (supported: Int, String, Bool)", f.pos);
+                "' on field '" + fname + "' (supported: Int, String, Bool, UInt)", f.pos);
           }
         default:
           // skip non-var fields (methods, properties)

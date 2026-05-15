@@ -12,6 +12,7 @@ class TestSerializableMacro extends Test {
     m.i = 12345;
     m.s = "hello world";
     m.b = true;
+    m.u = 200;
 
     var out = new BytesOutput();
     m.serialize(out);
@@ -21,6 +22,7 @@ class TestSerializableMacro extends Test {
     Assert.equals(12345, m2.i);
     Assert.equals("hello world", m2.s);
     Assert.isTrue(m2.b);
+    Assert.equals(200, m2.u);
   }
 
   function testEmptyString() {
