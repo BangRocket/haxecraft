@@ -5,6 +5,7 @@ import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import server.net.ClientConnection;
 import server.db.CharacterDal;
+import server.zone.Character;
 import shared.proto.MsgEnterZone;
 import shared.proto.MsgEnterZoneAck;
 import shared.proto.MsgType;
@@ -12,9 +13,12 @@ import shared.security.HandoffToken;
 
 class EnterZoneHandler {
   var characterDal:CharacterDal;
+  var sim:ZoneSimulator;
+  var connToEntity:Map<Int, Int> = new Map();
 
-  public function new(characterDal:CharacterDal) {
+  public function new(characterDal:CharacterDal, sim:ZoneSimulator) {
     this.characterDal = characterDal;
+    this.sim = sim;
   }
 
   public function handle(conn:ClientConnection, payload:Bytes):Void {
@@ -41,13 +45,33 @@ class EnterZoneHandler {
       return;
     }
 
+    if (sim.entityById(ch.id) != null) {
+      ack.success = false;
+      ack.errorMsg = "character already in zone";
+      Sys.println('[zone] conn ${conn.id} EnterZone REJECT (already in zone, char=${ch.id})');
+      sendAck(conn, ack);
+      conn.close();
+      return;
+    }
+
     ack.success = true;
     ack.entityId = ch.id;
     ack.tileX = ch.tileX;
     ack.tileY = ch.tileY;
-    Sys.println('[zone] conn ${conn.id} EnterZone OK char=${ch.id} pos=(${ch.tileX},${ch.tileY})');
     sendAck(conn, ack);
-    // Spawn into the simulator — wired in Task 14/15.
+
+    var runtime = new Character(ch.id, ch.name, conn, ch.tileX, ch.tileY);
+    sim.spawn(runtime);
+    connToEntity.set(conn.id, ch.id);
+    Sys.println('[zone] conn ${conn.id} spawned char=${ch.id} at (${ch.tileX},${ch.tileY})');
+  }
+
+  public function entityIdForConn(conn:ClientConnection):Null<Int> {
+    return connToEntity.get(conn.id);
+  }
+
+  public function forgetConn(conn:ClientConnection):Void {
+    connToEntity.remove(conn.id);
   }
 
   static function sendAck(conn:ClientConnection, ack:MsgEnterZoneAck):Void {

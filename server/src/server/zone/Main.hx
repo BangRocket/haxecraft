@@ -16,11 +16,15 @@ class Main {
     var map = MapLoader.loadFromFile("res/maps/starter.tmx");
     Sys.println('[zone] map loaded: ${map.width}x${map.height}');
 
-    var enterHandler = new EnterZoneHandler(characterDal);
+    var sim = new ZoneSimulator(map);
+    var enterHandler = new EnterZoneHandler(characterDal, sim);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
     dispatcher.register(MsgType.ENTER_ZONE, enterHandler.handle);
+
+    var tickInterval = 1.0 / Constants.TICK_HZ;
+    var nextTickAt = Sys.time() + tickInterval;
 
     while (true) {
       srv.tickAccept();
@@ -30,13 +34,33 @@ class Main {
         var frames = c.pollFrames();
         for (f in frames) dispatcher.dispatch(c, f.msgType, f.payload);
         if (!c.alive) {
+          var owned = enterHandler.entityIdForConn(c);
+          if (owned != null) {
+            var ch = sim.entityById(owned);
+            if (ch != null) {
+              characterDal.savePosition(ch.id, ch.tileX, ch.tileY);
+              Sys.println('[zone] conn ${c.id} disconnected - saved char ${ch.id} at (${ch.tileX},${ch.tileY})');
+              sim.despawn(owned);
+            }
+            enterHandler.forgetConn(c);
+          }
           c.close();
           srv.connections.splice(i, 1);
         } else {
           i++;
         }
       }
-      Sys.sleep(0.01);
+
+      var now = Sys.time();
+      if (now >= nextTickAt) {
+        sim.tick();
+        nextTickAt += tickInterval;
+        if (now > nextTickAt + tickInterval) {
+          nextTickAt = now + tickInterval;
+        }
+      }
+
+      Sys.sleep(0.001);
     }
   }
 }
