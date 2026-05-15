@@ -103,4 +103,28 @@ class TestMessages extends Test {
     Assert.equals(512, m2.tileX);
     Assert.equals(512, m2.tileY);
   }
+
+  function testEntitySpawn() {
+    var m = new shared.proto.MsgEntitySpawn();
+    m.entityId = 42;
+    m.name = "alice";
+    m.tileX = 10;
+    m.tileY = 20;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgEntitySpawn.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(42, m2.entityId);
+    Assert.equals("alice", m2.name);
+    Assert.equals(10, m2.tileX);
+    Assert.equals(20, m2.tileY);
+  }
+
+  function testEntityDespawn() {
+    var m = new shared.proto.MsgEntityDespawn();
+    m.entityId = 7;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgEntityDespawn.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(7, m2.entityId);
+  }
 }

@@ -40,6 +40,19 @@ class Main {
             if (ch != null) {
               characterDal.savePosition(ch.id, ch.tileX, ch.tileY);
               Sys.println('[zone] conn ${c.id} disconnected - saved char ${ch.id} at (${ch.tileX},${ch.tileY})');
+
+              // Broadcast despawn to remaining entities BEFORE removing.
+              var dp = new shared.proto.MsgEntityDespawn();
+              dp.entityId = owned;
+              var dpOut = new haxe.io.BytesOutput(); dp.serialize(dpOut);
+              var dpBytes = dpOut.getBytes();
+              for (other in sim.allEntities()) {
+                if (other.id == owned) continue;
+                if (other.conn != null && other.conn.alive) {
+                  other.conn.sendFrame(shared.proto.MsgType.ENTITY_DESPAWN, dpBytes);
+                }
+              }
+
               sim.despawn(owned);
             }
             enterHandler.forgetConn(c);
