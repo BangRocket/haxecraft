@@ -13,6 +13,7 @@ class TestMain {
     r.addCase(new TestMessages());
     r.addCase(new TestPasswordHash());
     r.addCase(new TestHandoffToken());
+    r.addCase(new TestMapData());
     Report.create(r);
     r.run();
   }
