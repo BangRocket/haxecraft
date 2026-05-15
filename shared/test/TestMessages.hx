@@ -66,4 +66,41 @@ class TestMessages extends Test {
     Assert.equals(42, m2.code);
     Assert.equals("bad client", m2.message);
   }
+
+  function testZoneHandoff() {
+    var m = new shared.proto.MsgZoneHandoff();
+    m.zoneHost = "127.0.0.1";
+    m.zonePort = 7778;
+    m.handoffToken = "42|7|9999999999|abc123";
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgZoneHandoff.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals("127.0.0.1", m2.zoneHost);
+    Assert.equals(7778, m2.zonePort);
+    Assert.equals("42|7|9999999999|abc123", m2.handoffToken);
+  }
+
+  function testEnterZone() {
+    var m = new shared.proto.MsgEnterZone();
+    m.handoffToken = "tok-xyz";
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgEnterZone.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals("tok-xyz", m2.handoffToken);
+  }
+
+  function testEnterZoneAck() {
+    var m = new shared.proto.MsgEnterZoneAck();
+    m.success = true;
+    m.entityId = 99;
+    m.tileX = 512;
+    m.tileY = 512;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgEnterZoneAck.deserialize(new BytesInput(out.getBytes()));
+    Assert.isTrue(m2.success);
+    Assert.equals(99, m2.entityId);
+    Assert.equals(512, m2.tileX);
+    Assert.equals(512, m2.tileY);
+  }
 }
