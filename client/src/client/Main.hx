@@ -20,6 +20,10 @@ import shared.proto.MsgZoneHandoff;
 import shared.proto.MsgEnterZone;
 import shared.proto.MsgEnterZoneAck;
 import shared.proto.MsgType;
+import sys.io.File;
+import shared.world.MapData;
+import shared.world.TmxParser;
+import client.game.Camera;
 
 enum ClientState {
   LOGGING_IN;
@@ -47,6 +51,9 @@ class Main extends App {
   var ownEntityId:Int = 0;
   var ownTileX:Int = 0;
   var ownTileY:Int = 0;
+
+  var map:MapData;
+  var camera:Camera;
 
   static function main() {
     new Main();
@@ -159,8 +166,16 @@ class Main extends App {
   function transitionToInZone():Void {
     state = IN_ZONE;
     if (connectingScreen != null) { connectingScreen.remove(); connectingScreen = null; }
+    if (map == null) {
+      var xml = File.getContent("res/maps/starter.tmx");
+      map = TmxParser.parse(xml);
+    }
+    var win = hxd.Window.getInstance();
+    camera = new Camera(16, win.width, win.height);
+    camera.centerWorldX = ownTileX;
+    camera.centerWorldY = ownTileY;
     inZoneScreen = new InZoneScreen(s2d);
-    // World/entity renderers + input dispatcher hook into inZoneScreen in Tasks 21-23.
+    // WorldRenderer (Task 21), EntityRenderer (Task 22), InputDispatcher (Task 23) wire here.
   }
 
   override function update(dt:Float) {
