@@ -1,6 +1,6 @@
 -cp src
 -cp ../shared/src
 -lib utest
--main server.Main
---hl ../out/server.hl
+-main server.gateway.Main
+--hl ../out/gateway.hl
 -D analyzer-optimize

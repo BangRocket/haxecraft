@@ -1,4 +1,4 @@
-package server.auth;
+package server.gateway;
 
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
@@ -9,6 +9,7 @@ import shared.proto.MsgLogin;
 import shared.proto.MsgLoginAck;
 import shared.proto.MsgType;
 import shared.security.PasswordHash;
+import server.auth.SessionStore;
 
 class LoginHandler {
   var dal:AccountDal;

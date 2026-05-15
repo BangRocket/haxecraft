@@ -1,11 +1,11 @@
-package server;
+package server.gateway;
 
 import server.net.TcpServer;
 import server.net.MessageDispatcher;
 import server.auth.HelloHandler;
 import server.db.DbClient;
 import server.db.AccountDal;
-import server.auth.LoginHandler;
+import server.gateway.LoginHandler;
 import server.auth.SessionStore;
 import shared.Constants;
 import shared.proto.MsgType;

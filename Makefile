@@ -1,6 +1,6 @@
-.PHONY: all shared-test server client test clean
+.PHONY: all shared-test gateway zone server-cli client test server-test clean
 
-all: out shared-test server server-cli client
+all: out shared-test gateway zone server-cli client
 
 out:
 	@mkdir -p out
@@ -8,8 +8,11 @@ out:
 shared-test: out
 	cd shared && haxe build-shared-test.hxml
 
-server: out
-	cd server && haxe build-server.hxml
+gateway: out
+	cd server && haxe build-gateway.hxml
+
+zone: out
+	cd server && haxe build-zone.hxml
 
 server-cli: out
 	cd server && haxe build-server-cli.hxml

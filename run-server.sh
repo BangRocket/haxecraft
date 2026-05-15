@@ -8,5 +8,11 @@ for _ in {1..60}; do
   sleep 1
 done
 ./db/apply-migrations.sh
-make server
-exec hl out/server.hl
+make gateway zone
+
+# Start zone in background, gateway in foreground.
+hl out/zone.hl &
+ZONE_PID=$!
+trap "kill $ZONE_PID 2>/dev/null || true" EXIT
+sleep 0.5
+exec hl out/gateway.hl
