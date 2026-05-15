@@ -1,5 +1,13 @@
+package;
+
+import utest.Runner;
+import utest.ui.Report;
+
 class TestMain {
   public static function main() {
-    Sys.println("shared tests: nothing yet");
+    var r = new Runner();
+    r.addCase(new TestConstants());
+    Report.create(r);
+    r.run();
   }
 }
