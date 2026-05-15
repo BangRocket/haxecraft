@@ -12,6 +12,7 @@ class TestMain {
     r.addCase(new TestSerializableMacro());
     r.addCase(new TestMessages());
     r.addCase(new TestPasswordHash());
+    r.addCase(new TestHandoffToken());
     Report.create(r);
     r.run();
   }
