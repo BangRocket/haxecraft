@@ -1,0 +1,25 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: haxecraft-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_only
+      MYSQL_USER: haxecraft
+      MYSQL_PASSWORD: dev_local_only
+      MYSQL_DATABASE: haxecraft
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - haxecraft-mysqldata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uhaxecraft", "-pdev_local_only", "--silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  haxecraft-mysqldata:

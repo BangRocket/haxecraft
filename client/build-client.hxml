@@ -1,0 +1,8 @@
+-cp src
+-cp ../shared/src
+-lib heaps
+-lib hlsdl
+-main client.Main
+--hl ../out/client.hl
+-D resourcesPath=../res
+-D analyzer-optimize

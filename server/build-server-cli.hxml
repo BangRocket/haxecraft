@@ -1,0 +1,4 @@
+-cp src
+-cp ../shared/src
+-main server.ServerCliMain
+--hl ../out/server-cli.hl
