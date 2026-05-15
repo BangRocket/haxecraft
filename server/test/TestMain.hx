@@ -9,6 +9,7 @@ class TestMain {
     r.addCase(new TestDbClient());
     r.addCase(new TestAccountDal());
     r.addCase(new TestFrameBuffer());
+    r.addCase(new TestSessionStore());
     Report.create(r);
     r.run();
   }
