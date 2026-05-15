@@ -8,6 +8,7 @@ import engine.entity.Mob;
 import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.item.Item;
 import game.item.ResourceItem;
 import game.item.ToolItem;
@@ -32,10 +33,10 @@ class WheatTile extends Tile {
 			icon = 3;
 		}
 
-		screen.render(x * 16 + 0, y * 16 + 0, 4 + 3 * 32 + icon, col, 0);
-		screen.render(x * 16 + 8, y * 16 + 0, 4 + 3 * 32 + icon, col, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, 4 + 3 * 32 + icon, col, 1);
-		screen.render(x * 16 + 8, y * 16 + 8, 4 + 3 * 32 + icon, col, 1);
+		screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_WHEAT[icon], col, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_WHEAT[icon], col, 0);
+		screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_WHEAT[icon], col, 1);
+		screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_WHEAT[icon], col, 1);
 	}
 
 	override public function tick(level:Level, xt:Int, yt:Int) {

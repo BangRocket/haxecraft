@@ -8,22 +8,24 @@ import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
+import engine.gfx.SpriteId;
+import game.SpriteNames;
 
 class PowerGloveItem extends Item {
 	override public function getColor():Int {
 		return Color.get(-1, 100, 320, 430);
 	}
 
-	override public function getSprite():Int {
-		return 7 + 4 * 32;
+	override public function getSprite():SpriteId {
+		return SpriteNames.itemRawTile(7 + 4 * 32);
 	}
 
 	override public function renderIcon(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), getColor(), 0);
+		screen.renderSprite(x, y, getSprite(), getColor(), 0);
 	}
 
 	override public function renderInventory(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), getColor(), 0);
+		screen.renderSprite(x, y, getSprite(), getColor(), 0);
 		Font.draw(getName(), screen, x + 8, y, Color.get(-1, 555, 555, 555));
 	}
 

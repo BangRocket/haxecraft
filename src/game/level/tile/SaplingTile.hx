@@ -6,6 +6,7 @@ import engine.entity.Mob;
 import engine.gfx.Color;
 import engine.gfx.Screen;
 import engine.level.Level;
+import game.SpriteNames;
 
 class SaplingTile extends Tile {
 	var onType:Tile;
@@ -24,7 +25,7 @@ class SaplingTile extends Tile {
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		onType.render(screen, level, x, y);
 		var col = Color.get(10, 40, 50, -1);
-		screen.render(x * 16 + 4, y * 16 + 4, 11 + 3 * 32, col, 0);
+		screen.renderSprite(x * 16 + 4, y * 16 + 4, SpriteNames.TERRAIN_SAPLING, col, 0);
 	}
 
 	override public function tick(level:Level, x:Int, y:Int) {

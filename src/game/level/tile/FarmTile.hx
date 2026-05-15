@@ -6,6 +6,7 @@ import engine.entity.Entity;
 import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.item.Item;
 import game.item.ToolItem;
 import engine.item.ToolType;
@@ -18,10 +19,10 @@ class FarmTile extends Tile {
 
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		var col = Color.get(level.dirtColor - 121, level.dirtColor - 11, level.dirtColor, level.dirtColor + 111);
-		screen.render(x * 16 + 0, y * 16 + 0, 2 + 32, col, 1);
-		screen.render(x * 16 + 8, y * 16 + 0, 2 + 32, col, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, 2 + 32, col, 0);
-		screen.render(x * 16 + 8, y * 16 + 8, 2 + 32, col, 1);
+		screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_FARMLAND, col, 1);
+		screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_FARMLAND, col, 0);
+		screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_FARMLAND, col, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_FARMLAND, col, 1);
 	}
 
 	override public function interact(level:Level, xt:Int, yt:Int, player:Player, item:Item, attackDir:Int):Bool {

@@ -4,6 +4,7 @@ import engine.entity.Entity;
 import engine.gfx.Color;
 import engine.gfx.Screen;
 import engine.sound.Sound;
+import game.SpriteNames;
 
 class SmashParticle extends Entity {
 	static var pool:Array<SmashParticle> = [];
@@ -37,9 +38,9 @@ class SmashParticle extends Entity {
 
 	override public function render(screen:Screen) {
 		var col = Color.get(-1, 555, 555, 555);
-		screen.render(x - 8, y - 8, 5 + 12 * 32, col, 2);
-		screen.render(x - 0, y - 8, 5 + 12 * 32, col, 3);
-		screen.render(x - 8, y - 0, 5 + 12 * 32, col, 0);
-		screen.render(x - 0, y - 0, 5 + 12 * 32, col, 1);
+		screen.renderSprite(x - 8, y - 8, SpriteNames.UI_SMASH_PARTICLE, col, 2);
+		screen.renderSprite(x - 0, y - 8, SpriteNames.UI_SMASH_PARTICLE, col, 3);
+		screen.renderSprite(x - 8, y - 0, SpriteNames.UI_SMASH_PARTICLE, col, 0);
+		screen.renderSprite(x - 0, y - 0, SpriteNames.UI_SMASH_PARTICLE, col, 1);
 	}
 }

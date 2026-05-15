@@ -7,6 +7,7 @@ import engine.entity.ItemEntity;
 
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import game.item.ResourceItem;
 import engine.item.resource.Resource;
 
@@ -89,10 +90,10 @@ class Slime extends Mob {
 			col = Color.get(-1, 555, 555, 555);
 		}
 
-		screen.render(xo + 0, yo + 0, xt + yt * 32, col, 0);
-		screen.render(xo + 8, yo + 0, xt + 1 + yt * 32, col, 0);
-		screen.render(xo + 0, yo + 8, xt + (yt + 1) * 32, col, 0);
-		screen.render(xo + 8, yo + 8, xt + 1 + (yt + 1) * 32, col, 0);
+		screen.renderSprite(xo + 0, yo + 0, SpriteNames.monsterRawTile(xt + yt * 32), col, 0);
+		screen.renderSprite(xo + 8, yo + 0, SpriteNames.monsterRawTile(xt + 1 + yt * 32), col, 0);
+		screen.renderSprite(xo + 0, yo + 8, SpriteNames.monsterRawTile(xt + (yt + 1) * 32), col, 0);
+		screen.renderSprite(xo + 8, yo + 8, SpriteNames.monsterRawTile(xt + 1 + (yt + 1) * 32), col, 0);
 	}
 
 	override function touchedBy(entity:Entity) {

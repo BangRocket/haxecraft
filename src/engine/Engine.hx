@@ -1,11 +1,14 @@
 package engine;
 
+import engine.gfx.ChromeText;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.GpuRenderer;
 import engine.gfx.Screen;
 import engine.gfx.SpriteSheet;
+import engine.gfx.ttf.RuntimeFont;
 import engine.screen.Menu;
+import game.SpriteNames;
 import hxd.Window;
 
 class Engine extends hxd.App {
@@ -20,22 +23,41 @@ class Engine extends hxd.App {
 	public var gpuRenderer:GpuRenderer;
 	public var tickCount = 0;
 
+	// Rolling FPS counter — frames in the last second.
+	var fpsFrames:Int = 0;
+	var fpsAccum:Float = 0;
+	public var fps:Int = 0;
+
 	var accumulator = 0.0;
 
 	override function init() {
 		Screen.initPalette();
 	}
 
-	function initScreen(w:Int, h:Int, iconSheet:SpriteSheet, ?spriteSheet:SpriteSheet) {
+	function initScreen(w:Int, h:Int) {
 		WIDTH = w;
 		HEIGHT = h;
-		screen = new Screen(w, h, iconSheet, spriteSheet);
-		lightScreen = new Screen(w, h, iconSheet);
-		gpuRenderer = new GpuRenderer(w, h, iconSheet, spriteSheet, s2d);
+		screen = new Screen(w, h);
+		lightScreen = new Screen(w, h);
+		gpuRenderer = new GpuRenderer(w, h, s2d);
 		screen.gpu = gpuRenderer;
+
+		// TTF overlay (FPS, debug labels). Added to s2d after gpuRenderer's
+		// tileGroup so it z-orders on top.
+		ChromeText.init(s2d);
+		var mago = hxd.Res.load("assets/font/mago1.ttf").entry.getBytes();
+		ChromeText.setFont(RuntimeFont.build(mago, 8));
 	}
 
 	override function update(dt:Float) {
+		fpsAccum += dt;
+		fpsFrames++;
+		if (fpsAccum >= 1) {
+			fps = fpsFrames;
+			fpsFrames = 0;
+			fpsAccum -= 1;
+		}
+
 		accumulator += dt * 60;
 		while (accumulator >= 1) {
 			tick();
@@ -50,6 +72,9 @@ class Engine extends hxd.App {
 
 	public function renderFrame() {
 		gpuRenderer.beginFrame();
+		ChromeText.beginFrame();
+		ChromeText.draw('FPS $fps', 2, 2, 0xFFFFFF);
+		ChromeText.endFrame();
 		gpuRenderer.endFrame();
 	}
 
@@ -60,6 +85,7 @@ class Engine extends hxd.App {
 		var sx = w / WIDTH;
 		var sy = h / HEIGHT;
 		gpuRenderer.setScale(sx, sy);
+		ChromeText.setScale(sx, sy);
 		displayOffsetX = 0;
 		displayOffsetY = 0;
 		SCALE = sx < sy ? sx : sy;
@@ -76,17 +102,17 @@ class Engine extends hxd.App {
 		var w = msg.length;
 		var h = 1;
 
-		screen.render(xx - 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-		screen.render(xx + w * 8, yy - 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
-		screen.render(xx - 8, yy + 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
-		screen.render(xx + w * 8, yy + 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 3);
+		screen.renderSprite(xx - 8, yy - 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 0);
+		screen.renderSprite(xx + w * 8, yy - 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 1);
+		screen.renderSprite(xx - 8, yy + 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 2);
+		screen.renderSprite(xx + w * 8, yy + 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 3);
 		for (x in 0...w) {
-			screen.render(xx + x * 8, yy - 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-			screen.render(xx + x * 8, yy + 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
+			screen.renderSprite(xx + x * 8, yy - 8, SpriteNames.UI_FRAME_HORIZ, Color.get(-1, 1, 5, 445), 0);
+			screen.renderSprite(xx + x * 8, yy + 8, SpriteNames.UI_FRAME_HORIZ, Color.get(-1, 1, 5, 445), 2);
 		}
 		for (y in 0...h) {
-			screen.render(xx - 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
-			screen.render(xx + w * 8, yy + y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
+			screen.renderSprite(xx - 8, yy + y * 8, SpriteNames.UI_FRAME_VERT, Color.get(-1, 1, 5, 445), 0);
+			screen.renderSprite(xx + w * 8, yy + y * 8, SpriteNames.UI_FRAME_VERT, Color.get(-1, 1, 5, 445), 1);
 		}
 
 		if (Std.int(tickCount / 20) % 2 == 0)

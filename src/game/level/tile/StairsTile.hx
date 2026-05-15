@@ -5,6 +5,7 @@ import engine.level.tile.Tile;
 import engine.gfx.Color;
 import engine.gfx.Screen;
 import engine.level.Level;
+import game.SpriteNames;
 
 class StairsTile extends Tile {
 	var leadsUp:Bool;
@@ -16,11 +17,10 @@ class StairsTile extends Tile {
 
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		var color = Color.get(level.dirtColor, 0, 333, 444);
-		var xt = 0;
-		if (leadsUp) xt = 2;
-		screen.render(x * 16 + 0, y * 16 + 0, xt + 2 * 32, color, 0);
-		screen.render(x * 16 + 8, y * 16 + 0, xt + 1 + 2 * 32, color, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, xt + 3 * 32, color, 0);
-		screen.render(x * 16 + 8, y * 16 + 8, xt + 1 + 3 * 32, color, 0);
+		var sprites = leadsUp ? SpriteNames.TERRAIN_STAIRS_UP : SpriteNames.TERRAIN_STAIRS_DOWN;
+		screen.renderSprite(x * 16 + 0, y * 16 + 0, sprites[0], color, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 0, sprites[1], color, 0);
+		screen.renderSprite(x * 16 + 0, y * 16 + 8, sprites[2], color, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 8, sprites[3], color, 0);
 	}
 }

@@ -1,5 +1,7 @@
 package engine.gfx;
 
+import game.SpriteNames;
+
 class Font {
 	static var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ      0123456789.,!?'\"-+=/\\%()<>:;     ";
 
@@ -21,7 +23,7 @@ class Font {
 			if (code >= "a".code && code <= "z".code) code -= UPPER_DELTA;
 			var ix = charMap.get(code);
 			if (ix != null) {
-				screen.render(x + i * 8, y, ix + 30 * 32, col, 0);
+				screen.renderSprite(x + i * 8, y, SpriteNames.FONT_GLYPHS[ix], col, 0);
 			}
 		}
 	}
@@ -30,23 +32,23 @@ class Font {
 		for (y in y0...(y1 + 1)) {
 			for (x in x0...(x1 + 1)) {
 				if (x == x0 && y == y0)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 0);
 				else if (x == x1 && y == y0)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 1);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 1);
 				else if (x == x0 && y == y1)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 2);
 				else if (x == x1 && y == y1)
-					screen.render(x * 8, y * 8, 0 + 13 * 32, Color.get(-1, 1, 5, 445), 3);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_CORNER, Color.get(-1, 1, 5, 445), 3);
 				else if (y == y0)
-					screen.render(x * 8, y * 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_HORIZ, Color.get(-1, 1, 5, 445), 0);
 				else if (y == y1)
-					screen.render(x * 8, y * 8, 1 + 13 * 32, Color.get(-1, 1, 5, 445), 2);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_HORIZ, Color.get(-1, 1, 5, 445), 2);
 				else if (x == x0)
-					screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(-1, 1, 5, 445), 0);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_VERT, Color.get(-1, 1, 5, 445), 0);
 				else if (x == x1)
-					screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(5, 5, 5, 5), 1);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_VERT, Color.get(5, 5, 5, 5), 1);
 				else
-					screen.render(x * 8, y * 8, 2 + 13 * 32, Color.get(5, 5, 5, 5), 1);
+					screen.renderSprite(x * 8, y * 8, SpriteNames.UI_FRAME_VERT, Color.get(5, 5, 5, 5), 1);
 			}
 		}
 

@@ -8,6 +8,8 @@ import engine.entity.ItemEntity;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
+import engine.gfx.SpriteId;
+import game.SpriteNames;
 
 class ToolItem extends Item {
 	var random = new engine.utils.Random();
@@ -38,16 +40,16 @@ class ToolItem extends Item {
 		return LEVEL_COLORS[level];
 	}
 
-	override public function getSprite():Int {
-		return type.sprite + 5 * 32;
+	override public function getSprite():SpriteId {
+		return SpriteNames.itemRawTile(type.sprite + 5 * 32);
 	}
 
 	override public function renderIcon(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), getColor(), 0);
+		screen.renderSprite(x, y, getSprite(), getColor(), 0);
 	}
 
 	override public function renderInventory(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), getColor(), 0);
+		screen.renderSprite(x, y, getSprite(), getColor(), 0);
 		Font.draw(getName(), screen, x + 8, y, Color.get(-1, 555, 555, 555));
 	}
 

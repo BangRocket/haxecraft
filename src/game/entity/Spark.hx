@@ -5,6 +5,7 @@ import engine.entity.Mob;
 
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 
 class Spark extends Entity {
 	private var lifeTime:Int;
@@ -57,10 +58,7 @@ class Spark extends Entity {
 			if (Std.int(time / 6) % 2 == 0) return;
 		}
 
-		var xt = 8;
-		var yt = 13;
-
-		screen.render(x - 4, y - 4 - 2, xt + yt * 32, Color.get(-1, 555, 555, 555), random.nextInt(4));
-		screen.render(x - 4, y - 4 + 2, xt + yt * 32, Color.get(-1, 0, 0, 0), random.nextInt(4));
+		screen.renderSprite(x - 4, y - 4 - 2, SpriteNames.UI_SPARK, Color.get(-1, 555, 555, 555), random.nextInt(4));
+		screen.renderSprite(x - 4, y - 4 + 2, SpriteNames.UI_SPARK, Color.get(-1, 0, 0, 0), random.nextInt(4));
 	}
 }

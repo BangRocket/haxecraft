@@ -7,7 +7,9 @@ import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
+import engine.gfx.SpriteId;
 import engine.item.resource.Resource;
+import game.SpriteNames;
 import engine.level.Level;
 import engine.level.tile.Tile;
 
@@ -25,16 +27,16 @@ class ResourceItem extends Item {
 		return resource.color;
 	}
 
-	override public function getSprite():Int {
-		return resource.sprite;
+	override public function getSprite():SpriteId {
+		return SpriteNames.itemRawTile(resource.sprite);
 	}
 
 	override public function renderIcon(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, resource.sprite, resource.color, 0);
+		screen.renderSprite(x, y, getSprite(), resource.color, 0);
 	}
 
 	override public function renderInventory(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, resource.sprite, resource.color, 0);
+		screen.renderSprite(x, y, getSprite(), resource.color, 0);
 		Font.draw(resource.name, screen, x + 32, y, Color.get(-1, 555, 555, 555));
 		var cc = count;
 		if (cc > 999) cc = 999;

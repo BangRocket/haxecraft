@@ -4,6 +4,7 @@ import engine.entity.Entity;
 import engine.entity.ItemEntity;
 import game.entity.Player;
 import engine.gfx.Screen;
+import engine.gfx.SpriteId;
 import engine.level.Level;
 import engine.level.tile.Tile;
 import engine.screen.ListItem;
@@ -15,8 +16,8 @@ class Item implements ListItem {
 		return 0;
 	}
 
-	public function getSprite():Int {
-		return 0;
+	public function getSprite():SpriteId {
+		return SpriteId.NONE;
 	}
 
 	public function onTake(itemEntity:ItemEntity) {}

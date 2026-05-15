@@ -14,7 +14,6 @@ class GpuRenderer {
 	static inline var TILE_SIZE = 8;
 	static inline var TILES_PER_ROW = 128;
 	static inline var MAX_SLOTS = 16384;
-	static inline var MAX_TILE_ROW = 32;
 
 	var atlasPixels:Pixels;
 	var atlasTexture:Texture;
@@ -22,14 +21,15 @@ class GpuRenderer {
 	var atlasDirty:Bool = false;
 	var nextSlot:Int = 0;
 
-	// Cache: key = tileId | (bits << 10) | (tint << 12), value = atlas sub-tile
-	// For zero-tint tiles (vast majority), key fits in 12 bits
-	var cacheMap:haxe.ds.IntMap<H2dTile>;
-
-	// Sheet dispatch table (mirrors Screen's)
-	var rowSheet:Vector<SpriteSheet>;
-	var rowOffsetY:Vector<Int>;
-	var defaultSheet:SpriteSheet;
+	// Cache: per-sheet (tint, IntMap). Splitting by tint avoids packing a
+	// 24-bit color into the 32-bit IntMap key alongside tile/bits/colors.
+	// Inner Int key layout (within a single tint bucket):
+	//   bits  0..9   tileId          (≤ 1024)
+	//   bits 10..11  flip bits
+	//   bits 12..31  colors          (palette word — up to 20 bits used)
+	// `tint` is almost always 0 in haxecraft, so the outer Map mostly has one
+	// entry per sheet and this stays a near-pure IntMap lookup.
+	var cacheMap:Map<SpriteSheet, Map<Int, haxe.ds.IntMap<H2dTile>>>;
 
 	public var tileGroup:TileGroup;
 
@@ -41,23 +41,15 @@ class GpuRenderer {
 
 	static var DITHER:Array<Int> = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 
-	public function new(w:Int, h:Int, iconSheet:SpriteSheet, ?spriteSheet:SpriteSheet, scene:h2d.Scene) {
-		this.defaultSheet = iconSheet;
+	public function new(w:Int, h:Int, scene:h2d.Scene) {
 		this.screenW = w;
 		this.screenH = h;
-
-		rowSheet = new Vector<SpriteSheet>(MAX_TILE_ROW);
-		rowOffsetY = new Vector<Int>(MAX_TILE_ROW);
-		for (i in 0...MAX_TILE_ROW) {
-			rowSheet[i] = iconSheet;
-			rowOffsetY[i] = 0;
-		}
 
 		atlasPixels = Pixels.alloc(ATLAS_SIZE, ATLAS_SIZE, PixelFormat.RGBA);
 		atlasTexture = new Texture(ATLAS_SIZE, ATLAS_SIZE, [TextureFlags.Dynamic], h3d.mat.Texture.nativeFormat);
 		atlasTile = H2dTile.fromTexture(atlasTexture);
 
-		cacheMap = new haxe.ds.IntMap<H2dTile>();
+		cacheMap = new Map();
 
 		tileGroup = new TileGroup(atlasTile, scene);
 		tileGroup.smooth = false;
@@ -67,29 +59,6 @@ class GpuRenderer {
 		overlayBitmap = new Bitmap(H2dTile.fromTexture(overlayTexture), scene);
 		overlayBitmap.smooth = false;
 		overlayBitmap.visible = false;
-	}
-
-	public function setCategorySheets(terrainSheet:SpriteSheet, itemSheet:SpriteSheet, uiSheet:SpriteSheet, playerSheet:SpriteSheet, monsterSheet:SpriteSheet):Void {
-		for (row in 0...MAX_TILE_ROW) {
-			var s = defaultSheet;
-			var oy = 0;
-			if (((row >= 0 && row <= 3) || row == 8 || row == 9) && terrainSheet != null) {
-				s = terrainSheet; oy = 0;
-			} else if (((row >= 4 && row <= 5) || row == 10) && itemSheet != null) {
-				s = itemSheet; oy = 4;
-			} else if (((row >= 6 && row <= 7) || (row >= 11 && row <= 13) || row == 30) && uiSheet != null) {
-				s = uiSheet; oy = 6;
-			} else if ((row >= 14 && row <= 17) && playerSheet != null) {
-				s = playerSheet; oy = 14;
-			} else if ((row >= 18 && row <= 29) && monsterSheet != null) {
-				s = monsterSheet; oy = 18;
-			}
-			rowSheet[row] = s;
-			rowOffsetY[row] = oy;
-		}
-		// Invalidate cache since sheets changed
-		cacheMap = new haxe.ds.IntMap<H2dTile>();
-		nextSlot = 0;
 	}
 
 	public inline function beginFrame() {
@@ -103,38 +72,37 @@ class GpuRenderer {
 		}
 	}
 
-	public function addTile(xp:Int, yp:Int, tileId:Int, colors:Int, bits:Int, tint:Int) {
-		var key = tileId | ((bits & 3) << 10) | (colors * 8192) + tint;
-		var tile = cacheMap.get(key);
+	public function addTile(xp:Int, yp:Int, tileId:Int, colors:Int, bits:Int, tint:Int, s:SpriteSheet) {
+		var sheetCache = cacheMap.get(s);
+		if (sheetCache == null) {
+			sheetCache = new Map();
+			cacheMap.set(s, sheetCache);
+		}
+		var tintCache = sheetCache.get(tint);
+		if (tintCache == null) {
+			tintCache = new haxe.ds.IntMap();
+			sheetCache.set(tint, tintCache);
+		}
+		var key = (tileId & 0x3FF) | ((bits & 3) << 10) | (colors << 12);
+		var tile = tintCache.get(key);
 		if (tile == null) {
-			tile = renderCacheTile(tileId, colors, bits, tint);
-			cacheMap.set(key, tile);
+			tile = renderCacheTile(s, tileId, colors, bits, tint);
+			tintCache.set(key, tile);
 		}
 		tileGroup.add(xp, yp, tile);
 	}
 
-	function renderCacheTile(tileId:Int, colors:Int, bits:Int, tint:Int):H2dTile {
+	function renderCacheTile(s:SpriteSheet, tileId:Int, colors:Int, bits:Int, tint:Int):H2dTile {
 		if (nextSlot >= MAX_SLOTS) return atlasTile.sub(0, 0, TILE_SIZE, TILE_SIZE);
 
 		var slot = nextSlot++;
 		var ax = (slot % TILES_PER_ROW) * TILE_SIZE;
 		var ay = Std.int(slot / TILES_PER_ROW) * TILE_SIZE;
 
-		var row = tileId >> 5;
-		var s:SpriteSheet;
-		var offY:Int;
-		if (row >= 0 && row < MAX_TILE_ROW) {
-			s = rowSheet[row];
-			offY = rowOffsetY[row];
-		} else {
-			s = defaultSheet;
-			offY = 0;
-		}
-
 		var mirrorX = (bits & 0x01) > 0;
 		var mirrorY = (bits & 0x02) > 0;
 		var xTile = tileId & 31;
-		var yTile = (tileId >> 5) - offY;
+		var yTile = tileId >> 5;
 		var maxTileX = s.width >> 3;
 		var maxTileY = s.height >> 3;
 

@@ -10,6 +10,7 @@ import engine.entity.particle.SmashParticle;
 import engine.entity.particle.TextParticle;
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.item.Item;
 import game.item.ResourceItem;
 import game.item.ToolItem;
@@ -39,24 +40,24 @@ class TreeTile extends Tile {
 		var dr = level.getTile(x + 1, y + 1) == this;
 
 		if (u && ul && l) {
-			screen.render(x * 16 + 0, y * 16 + 0, 10 + 1 * 32, col, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_TREE_LEAVES_FULL, col, 0);
 		} else {
-			screen.render(x * 16 + 0, y * 16 + 0, 9 + 0 * 32, col, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_TREE_LEAVES_TOP, col, 0);
 		}
 		if (u && ur && r) {
-			screen.render(x * 16 + 8, y * 16 + 0, 10 + 2 * 32, barkCol2, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_TREE_TRUNK, barkCol2, 0);
 		} else {
-			screen.render(x * 16 + 8, y * 16 + 0, 10 + 0 * 32, col, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_TREE_CANOPY_TR, col, 0);
 		}
 		if (d && dl && l) {
-			screen.render(x * 16 + 0, y * 16 + 8, 10 + 2 * 32, barkCol2, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_TREE_TRUNK, barkCol2, 0);
 		} else {
-			screen.render(x * 16 + 0, y * 16 + 8, 9 + 1 * 32, barkCol1, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_TREE_LEAVES_BL, barkCol1, 0);
 		}
 		if (d && dr && r) {
-			screen.render(x * 16 + 8, y * 16 + 8, 10 + 1 * 32, col, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_TREE_LEAVES_FULL, col, 0);
 		} else {
-			screen.render(x * 16 + 8, y * 16 + 8, 10 + 3 * 32, barkCol2, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_TREE_TRUNK_BR, barkCol2, 0);
 		}
 	}
 

@@ -4,6 +4,7 @@ import engine.Engine;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
+import engine.gfx.SpriteRegistry;
 import engine.gfx.SpriteSheet;
 import engine.level.Level;
 import engine.level.tile.Tile;
@@ -51,14 +52,19 @@ class Game extends Engine {
 		var uiSprites = hxd.Res.load("sprites/sprites_ui.png").toImage().getPixels();
 		var playerSprites = hxd.Res.load("sprites/sprites_player.png").toImage().getPixels();
 		var monsterSprites = hxd.Res.load("sprites/sprites_monsters.png").toImage().getPixels();
-		var terrainSheet = new SpriteSheet(terrainSprites);
-		var itemSheet = new SpriteSheet(itemSprites);
-		var uiSheet = new SpriteSheet(uiSprites);
-		var playerSheet = new SpriteSheet(playerSprites);
-		var monsterSheet = new SpriteSheet(monsterSprites);
-		initScreen(320, 240, new SpriteSheet(icons), new SpriteSheet(sprites));
-		screen.setCategorySheets(terrainSheet, itemSheet, uiSheet, playerSheet, monsterSheet);
-		gpuRenderer.setCategorySheets(terrainSheet, itemSheet, uiSheet, playerSheet, monsterSheet);
+		initScreen(320, 240);
+
+		var spriteRegistry = new SpriteRegistry();
+		spriteRegistry.registerEngineSheet("terrain", new SpriteSheet(terrainSprites));
+		spriteRegistry.registerEngineSheet("items",   new SpriteSheet(itemSprites));
+		spriteRegistry.registerEngineSheet("ui",      new SpriteSheet(uiSprites));
+		spriteRegistry.registerEngineSheet("player",  new SpriteSheet(playerSprites));
+		spriteRegistry.registerEngineSheet("monster", new SpriteSheet(monsterSprites));
+		spriteRegistry.registerEngineSheet("icons",   new SpriteSheet(icons));
+		spriteRegistry.registerEngineSheet("sprites", new SpriteSheet(sprites));
+		SpriteNames.init(spriteRegistry);
+		screen.spriteRegistry = spriteRegistry;
+		lightScreen.spriteRegistry = spriteRegistry;
 
 		updateDisplayScale();
 		window.resize(1280, 960);
@@ -157,7 +163,7 @@ class Game extends Engine {
 			var cols = Std.int((screen.w + 15) / 8) + 1;
 			for (y in 0...rows) {
 				for (x in 0...cols) {
-					screen.render(x * 8 - ((Std.int(xScroll / 4)) & 7), y * 8 - ((Std.int(yScroll / 4)) & 7), 0, col, 0);
+					screen.renderSprite(x * 8 - ((Std.int(xScroll / 4)) & 7), y * 8 - ((Std.int(yScroll / 4)) & 7), SpriteNames.TERRAIN_BASE[0], col, 0);
 				}
 			}
 		}
@@ -186,25 +192,25 @@ class Game extends Engine {
 	function renderGui() {
 		for (y in 0...2) {
 			for (x in 0...20) {
-				screen.render(x * 8, screen.h - 16 + y * 8, 0 + 12 * 32, Color.get(0, 0, 0, 0), 0);
+				screen.renderSprite(x * 8, screen.h - 16 + y * 8, SpriteNames.UI_SLOT_HEART, Color.get(0, 0, 0, 0), 0);
 			}
 		}
 
 		for (i in 0...10) {
 			if (i < player.health)
-				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 200, 500, 533), 0);
+				screen.renderSprite(i * 8, screen.h - 16, SpriteNames.UI_SLOT_HEART, Color.get(0, 200, 500, 533), 0);
 			else
-				screen.render(i * 8, screen.h - 16, 0 + 12 * 32, Color.get(0, 100, 0, 0), 0);
+				screen.renderSprite(i * 8, screen.h - 16, SpriteNames.UI_SLOT_HEART, Color.get(0, 100, 0, 0), 0);
 
 			if (player.staminaRechargeDelay > 0) {
 				if (Std.int(player.staminaRechargeDelay / 4) % 2 == 0)
-					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 555, 0, 0), 0);
+					screen.renderSprite(i * 8, screen.h - 8, SpriteNames.UI_SLOT_STAMINA, Color.get(0, 555, 0, 0), 0);
 				else
-					screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
+					screen.renderSprite(i * 8, screen.h - 8, SpriteNames.UI_SLOT_STAMINA, Color.get(0, 110, 0, 0), 0);
 			} else if (i < player.stamina) {
-				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 220, 550, 553), 0);
+				screen.renderSprite(i * 8, screen.h - 8, SpriteNames.UI_SLOT_STAMINA, Color.get(0, 220, 550, 553), 0);
 			} else {
-				screen.render(i * 8, screen.h - 8, 1 + 12 * 32, Color.get(0, 110, 0, 0), 0);
+				screen.renderSprite(i * 8, screen.h - 8, SpriteNames.UI_SLOT_STAMINA, Color.get(0, 110, 0, 0), 0);
 			}
 		}
 		if (player.activeItem != null) {
@@ -227,7 +233,7 @@ class Game extends Engine {
 			var isSelected = (i == player.hotbarSelection && player.activeItem == null);
 
 			var bgCol = isSelected ? Color.get(0, 555, 555, 555) : Color.get(0, 111, 111, 111);
-			screen.render(sx, sy, 0 + 12 * 32, bgCol, 0);
+			screen.renderSprite(sx, sy, SpriteNames.UI_SLOT_HEART, bgCol, 0);
 
 			var item = player.hotbar[i];
 			if (item != null) {
@@ -246,10 +252,10 @@ class Game extends Engine {
 		if (player.activeItem != null) {
 			var ax = startX + player.hotbarSelection * slotSize;
 			var ay = startY;
-			screen.render(ax - 1, ay - 1, 0, 0, 0, screen.colorSheet);
-			screen.render(ax + slotSize, ay - 1, 0, 0, 0, screen.colorSheet);
-			screen.render(ax - 1, ay + slotSize, 0, 0, 0, screen.colorSheet);
-			screen.render(ax + slotSize, ay + slotSize, 0, 0, 0, screen.colorSheet);
+			screen.renderSprite(ax - 1, ay - 1, SpriteNames.COLOR_SELECTION_CORNER, 0, 0);
+			screen.renderSprite(ax + slotSize, ay - 1, SpriteNames.COLOR_SELECTION_CORNER, 0, 0);
+			screen.renderSprite(ax - 1, ay + slotSize, SpriteNames.COLOR_SELECTION_CORNER, 0, 0);
+			screen.renderSprite(ax + slotSize, ay + slotSize, SpriteNames.COLOR_SELECTION_CORNER, 0, 0);
 		}
 	}
 

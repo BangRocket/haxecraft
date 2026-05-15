@@ -7,6 +7,7 @@ import engine.entity.Mob;
 import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.item.Item;
 import game.item.ResourceItem;
 import game.item.ToolItem;
@@ -28,10 +29,10 @@ class FlowerTile extends GrassTile {
 		var shape = (data / 16) % 2;
 		var flowerCol = Color.get(10, level.grassColor, 555, 440);
 
-		if (shape == 0) screen.render(x * 16 + 0, y * 16 + 0, 1 + 1 * 32, flowerCol, 0);
-		if (shape == 1) screen.render(x * 16 + 8, y * 16 + 0, 1 + 1 * 32, flowerCol, 0);
-		if (shape == 1) screen.render(x * 16 + 0, y * 16 + 8, 1 + 1 * 32, flowerCol, 0);
-		if (shape == 0) screen.render(x * 16 + 8, y * 16 + 8, 1 + 1 * 32, flowerCol, 0);
+		if (shape == 0) screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_FLOWER, flowerCol, 0);
+		if (shape == 1) screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_FLOWER, flowerCol, 0);
+		if (shape == 1) screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_FLOWER, flowerCol, 0);
+		if (shape == 0) screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_FLOWER, flowerCol, 0);
 	}
 
 	override public function interact(level:Level, x:Int, y:Int, player:Player, item:Item, attackDir:Int):Bool {

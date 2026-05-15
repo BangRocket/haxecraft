@@ -6,6 +6,7 @@ import engine.entity.Mob;
 
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import game.item.ResourceItem;
 import engine.item.resource.Resource;
 import engine.sound.Sound;
@@ -139,10 +140,10 @@ class AirWizard extends Mob {
 			col2 = Color.get(-1, 555, 555, 555);
 		}
 
-		screen.render(xo + 8 * flip1, yo + 0, xt + yt * 32, col1, flip1);
-		screen.render(xo + 8 - 8 * flip1, yo + 0, xt + 1 + yt * 32, col1, flip1);
-		screen.render(xo + 8 * flip2, yo + 8, xt + (yt + 1) * 32, col2, flip2);
-		screen.render(xo + 8 - 8 * flip2, yo + 8, xt + 1 + (yt + 1) * 32, col2, flip2);
+		screen.renderSprite(xo + 8 * flip1, yo + 0, SpriteNames.playerRawTile(xt + yt * 32), col1, flip1);
+		screen.renderSprite(xo + 8 - 8 * flip1, yo + 0, SpriteNames.playerRawTile(xt + 1 + yt * 32), col1, flip1);
+		screen.renderSprite(xo + 8 * flip2, yo + 8, SpriteNames.playerRawTile(xt + (yt + 1) * 32), col2, flip2);
+		screen.renderSprite(xo + 8 - 8 * flip2, yo + 8, SpriteNames.playerRawTile(xt + 1 + (yt + 1) * 32), col2, flip2);
 	}
 
 	override function touchedBy(entity:Entity) {

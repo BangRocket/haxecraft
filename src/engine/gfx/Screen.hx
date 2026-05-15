@@ -11,7 +11,6 @@ class Screen {
 	public static inline var LIGHT_SCALE = 4;
 
 	private static inline var TILE_STRIDE = 32;
-	private static inline var MAX_TILE_ROW = 32;
 
 	public var w:Int;
 	public var h:Int;
@@ -41,22 +40,10 @@ class Screen {
 		}
 	}
 
-	var sheet:SpriteSheet;
-	public var colorSheet:SpriteSheet;
-	public var terrainSheet:SpriteSheet;
-	public var itemSheet:SpriteSheet;
-	public var uiSheet:SpriteSheet;
-	public var playerSheet:SpriteSheet;
-	public var monsterSheet:SpriteSheet;
 	public var gpu:GpuRenderer;
+	public var spriteRegistry:SpriteRegistry;
 
-	// Per-tile-row dispatch table
-	var rowSheet:Vector<SpriteSheet>;
-	var rowOffsetY:Vector<Int>;
-
-	public function new(w:Int, h:Int, sheet:SpriteSheet, ?colorSheet:SpriteSheet) {
-		this.sheet = sheet;
-		this.colorSheet = colorSheet;
+	public function new(w:Int, h:Int) {
 		this.w = w;
 		this.h = h;
 		lightW = (w + LIGHT_SCALE - 1) >> 2;
@@ -65,43 +52,6 @@ class Screen {
 		light = new Vector<Int>(lightW * lightH);
 		for (i in 0...w * h) {
 			pixels.push(0xFF000000);
-		}
-		rowSheet = new Vector<SpriteSheet>(MAX_TILE_ROW);
-		rowOffsetY = new Vector<Int>(MAX_TILE_ROW);
-		rebuildSheetTable();
-	}
-
-	public function setCategorySheets(terrainSheet:SpriteSheet, itemSheet:SpriteSheet, uiSheet:SpriteSheet, playerSheet:SpriteSheet, monsterSheet:SpriteSheet):Void {
-		this.terrainSheet = terrainSheet;
-		this.itemSheet = itemSheet;
-		this.uiSheet = uiSheet;
-		this.playerSheet = playerSheet;
-		this.monsterSheet = monsterSheet;
-		rebuildSheetTable();
-	}
-
-	function rebuildSheetTable():Void {
-		for (row in 0...MAX_TILE_ROW) {
-			var s:SpriteSheet = sheet;
-			var oy:Int = 0;
-			if (((row >= 0 && row <= 3) || row == 8 || row == 9) && terrainSheet != null) {
-				s = terrainSheet;
-				oy = 0;
-			} else if (((row >= 4 && row <= 5) || row == 10) && itemSheet != null) {
-				s = itemSheet;
-				oy = 4;
-			} else if (((row >= 6 && row <= 7) || (row >= 11 && row <= 13) || row == 30) && uiSheet != null) {
-				s = uiSheet;
-				oy = 6;
-			} else if ((row >= 14 && row <= 17) && playerSheet != null) {
-				s = playerSheet;
-				oy = 14;
-			} else if ((row >= 18 && row <= 29) && monsterSheet != null) {
-				s = monsterSheet;
-				oy = 18;
-			}
-			rowSheet[row] = s;
-			rowOffsetY[row] = oy;
 		}
 	}
 
@@ -119,23 +69,12 @@ class Screen {
 		}
 	}
 
-	public function render(xp:Int, yp:Int, tile:Int, colors:Int, bits:Int, ?sourceSheet:SpriteSheet, ?tint:Int = 0) {
-		var s:SpriteSheet;
-		var offY:Int;
-		if (sourceSheet != null) {
-			s = sourceSheet;
-			offY = 0;
-		} else {
-			var row = tile >> 5;
-			if (row < 0 || row >= MAX_TILE_ROW) return;
-			s = rowSheet[row];
-			offY = rowOffsetY[row];
-		}
+	function render(xp:Int, yp:Int, tile:Int, colors:Int, bits:Int, s:SpriteSheet, tint:Int) {
 		xp -= xOffset;
 		yp -= yOffset;
 
 		if (gpu != null) {
-			gpu.addTile(xp, yp, tile, colors, bits, tint);
+			gpu.addTile(xp, yp, tile, colors, bits, tint, s);
 			return;
 		}
 
@@ -143,7 +82,7 @@ class Screen {
 		var mirrorY = (bits & BIT_MIRROR_Y) > 0;
 
 		var xTile = tile & (TILE_STRIDE - 1);
-		var yTile = (tile >> 5) - offY;
+		var yTile = tile >> 5;
 		var maxTileX = s.width >> 3;
 		var maxTileY = s.height >> 3;
 		if (xTile < 0 || yTile < 0 || xTile >= maxTileX || yTile >= maxTileY) return;
@@ -202,6 +141,19 @@ class Screen {
 				}
 			}
 		}
+	}
+
+	public function renderSprite(xp:Int, yp:Int, id:SpriteId, colors:Int = 0, bits:Int = 0, tint:Int = 0):Void {
+		if (id.isNone()) return;
+		var info = spriteRegistry.lookup(id);
+		var tile = info.row * TILE_STRIDE + info.col;
+		var actualColors = id.isPalette() ? spriteRegistry.palettes.get(id.getColorIndex()) : colors;
+		render(xp, yp, tile, actualColors, bits, info.sheet.atlas.sheet, tint);
+	}
+
+	/** Fill the destination rect with the named sprite, palette-shifted via `colors`. */
+	public inline function fillSprite(xp:Int, yp:Int, id:SpriteId, colors:Int):Void {
+		renderSprite(xp, yp, id, colors, 0, 0);
 	}
 
 	public inline function setOffset(xOffset:Int, yOffset:Int) {

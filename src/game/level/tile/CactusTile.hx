@@ -9,6 +9,7 @@ import engine.entity.particle.SmashParticle;
 import engine.entity.particle.TextParticle;
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import game.item.ResourceItem;
 import engine.item.resource.Resource;
 import engine.level.Level;
@@ -22,10 +23,10 @@ class CactusTile extends Tile {
 
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		var col = Color.get(20, 40, 50, level.sandColor);
-		screen.render(x * 16 + 0, y * 16 + 0, 8 + 2 * 32, col, 0);
-		screen.render(x * 16 + 8, y * 16 + 0, 9 + 2 * 32, col, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, 8 + 3 * 32, col, 0);
-		screen.render(x * 16 + 8, y * 16 + 8, 9 + 3 * 32, col, 0);
+		screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_CACTUS[0], col, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_CACTUS[1], col, 0);
+		screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_CACTUS[2], col, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_CACTUS[3], col, 0);
 	}
 
 	override public function mayPass(level:Level, x:Int, y:Int, e:Entity):Bool {

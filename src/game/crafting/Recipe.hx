@@ -4,6 +4,7 @@ import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.item.Item;
 import game.item.ResourceItem;
 import engine.item.resource.Resource;
@@ -38,7 +39,7 @@ class Recipe implements ListItem {
 	}
 
 	public function renderInventory(screen:Screen, x:Int, y:Int):Void {
-		screen.render(x, y, resultTemplate.getSprite(), resultTemplate.getColor(), 0);
+		screen.renderSprite(x, y, resultTemplate.getSprite(), resultTemplate.getColor(), 0);
 		var textColor = canCraft ? Color.get(-1, 555, 555, 555) : Color.get(-1, 222, 222, 222);
 		Font.draw(resultTemplate.getName(), screen, x + 8, y, textColor);
 	}

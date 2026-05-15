@@ -4,6 +4,7 @@ package game.screen;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.sound.Sound;
 
 class TitleMenu extends GameMenu {
@@ -44,7 +45,7 @@ class TitleMenu extends GameMenu {
 		var yo = 24;
 		for (y in 0...h) {
 			for (x in 0...w) {
-				screen.render(xo + x * 8, yo + y * 8, x + (y + 6) * 32, titleColor, 0);
+				screen.renderSprite(xo + x * 8, yo + y * 8, SpriteNames.uiRawTile(x + (y + 6) * 32), titleColor, 0);
 			}
 		}
 

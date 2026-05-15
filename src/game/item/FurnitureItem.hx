@@ -8,6 +8,8 @@ import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Font;
 import engine.gfx.Screen;
+import engine.gfx.SpriteId;
+import game.SpriteNames;
 import engine.level.Level;
 import engine.level.tile.Tile;
 
@@ -24,16 +26,16 @@ class FurnitureItem extends Item {
 		return furniture.col;
 	}
 
-	override public function getSprite():Int {
-		return furniture.sprite + 10 * 32;
+	override public function getSprite():SpriteId {
+		return SpriteNames.itemRawTile(furniture.sprite + 10 * 32);
 	}
 
 	override public function renderIcon(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), getColor(), 0);
+		screen.renderSprite(x, y, getSprite(), getColor(), 0);
 	}
 
 	override public function renderInventory(screen:Screen, x:Int, y:Int) {
-		screen.render(x, y, getSprite(), getColor(), 0);
+		screen.renderSprite(x, y, getSprite(), getColor(), 0);
 		Font.draw(furniture.name, screen, x + 8, y, Color.get(-1, 555, 555, 555));
 	}
 

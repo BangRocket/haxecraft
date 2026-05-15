@@ -5,6 +5,7 @@ import engine.level.tile.Tile;
 import engine.entity.Entity;
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.level.Level;
 
 class HoleTile extends Tile {
@@ -31,26 +32,26 @@ class HoleTile extends Tile {
 		var sr = r && level.getTile(x + 1, y).connectsToSand;
 
 		if (!u && !l) {
-			screen.render(x * 16 + 0, y * 16 + 0, 0, col, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_BASE[0], col, 0);
 		} else {
-			screen.render(x * 16 + 0, y * 16 + 0, (l ? 14 : 15) + (u ? 0 : 1) * 32, (su || sl) ? transitionColor2 : transitionColor1, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.edgeWaterTL(l, u), (su || sl) ? transitionColor2 : transitionColor1, 0);
 		}
 
 		if (!u && !r) {
-			screen.render(x * 16 + 8, y * 16 + 0, 1, col, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_BASE[1], col, 0);
 		} else {
-			screen.render(x * 16 + 8, y * 16 + 0, (r ? 16 : 15) + (u ? 0 : 1) * 32, (su || sr) ? transitionColor2 : transitionColor1, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.edgeWaterTR(r, u), (su || sr) ? transitionColor2 : transitionColor1, 0);
 		}
 
 		if (!d && !l) {
-			screen.render(x * 16 + 0, y * 16 + 8, 2, col, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_BASE[2], col, 0);
 		} else {
-			screen.render(x * 16 + 0, y * 16 + 8, (l ? 14 : 15) + (d ? 2 : 1) * 32, (sd || sl) ? transitionColor2 : transitionColor1, 0);
+			screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.edgeWaterBL(l, d), (sd || sl) ? transitionColor2 : transitionColor1, 0);
 		}
 		if (!d && !r) {
-			screen.render(x * 16 + 8, y * 16 + 8, 3, col, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_BASE[3], col, 0);
 		} else {
-			screen.render(x * 16 + 8, y * 16 + 8, (r ? 16 : 15) + (d ? 2 : 1) * 32, (sd || sr) ? transitionColor2 : transitionColor1, 0);
+			screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.edgeWaterBR(r, d), (sd || sr) ? transitionColor2 : transitionColor1, 0);
 		}
 	}
 

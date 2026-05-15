@@ -6,6 +6,7 @@ import engine.entity.ItemEntity;
 import game.entity.Player;
 import engine.gfx.Color;
 import engine.gfx.Screen;
+import game.SpriteNames;
 import engine.item.Item;
 import game.item.ResourceItem;
 import game.item.ToolItem;
@@ -21,10 +22,10 @@ class DirtTile extends Tile {
 
 	override public function render(screen:Screen, level:Level, x:Int, y:Int) {
 		var col = Color.get(level.dirtColor, level.dirtColor, level.dirtColor - 111, level.dirtColor - 111);
-		screen.render(x * 16 + 0, y * 16 + 0, 0, col, 0);
-		screen.render(x * 16 + 8, y * 16 + 0, 1, col, 0);
-		screen.render(x * 16 + 0, y * 16 + 8, 2, col, 0);
-		screen.render(x * 16 + 8, y * 16 + 8, 3, col, 0);
+		screen.renderSprite(x * 16 + 0, y * 16 + 0, SpriteNames.TERRAIN_BASE[0], col, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 0, SpriteNames.TERRAIN_BASE[1], col, 0);
+		screen.renderSprite(x * 16 + 0, y * 16 + 8, SpriteNames.TERRAIN_BASE[2], col, 0);
+		screen.renderSprite(x * 16 + 8, y * 16 + 8, SpriteNames.TERRAIN_BASE[3], col, 0);
 	}
 
 	override public function interact(level:Level, xt:Int, yt:Int, player:Player, item:Item, attackDir:Int):Bool {
