@@ -1,6 +1,7 @@
 -cp src
 -cp test
 -cp ../shared/src
+-cp ../client/src/headless
 -lib utest
 -main TestMain
 --hl ../out/server-test.hl
