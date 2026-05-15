@@ -9,6 +9,7 @@ class TestMain {
     r.addCase(new TestConstants());
     r.addCase(new TestFrameCodec());
     r.addCase(new TestMsgType());
+    r.addCase(new TestSerializableMacro());
     Report.create(r);
     r.run();
   }
