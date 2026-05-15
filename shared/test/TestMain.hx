@@ -14,6 +14,7 @@ class TestMain {
     r.addCase(new TestPasswordHash());
     r.addCase(new TestHandoffToken());
     r.addCase(new TestMapData());
+    r.addCase(new TestTmxParser());
     Report.create(r);
     r.run();
   }
