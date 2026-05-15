@@ -54,6 +54,7 @@ class Main extends App {
 
   var map:MapData;
   var camera:Camera;
+  var worldRenderer:client.game.WorldRenderer;
 
   static function main() {
     new Main();
@@ -175,7 +176,8 @@ class Main extends App {
     camera.centerWorldX = ownTileX;
     camera.centerWorldY = ownTileY;
     inZoneScreen = new InZoneScreen(s2d);
-    // WorldRenderer (Task 21), EntityRenderer (Task 22), InputDispatcher (Task 23) wire here.
+    worldRenderer = new client.game.WorldRenderer(inZoneScreen, map, camera);
+    // EntityRenderer (Task 22), InputDispatcher (Task 23) wire here.
   }
 
   override function update(dt:Float) {
@@ -186,6 +188,9 @@ class Main extends App {
     if (zoneConn != null && zoneConn.state == CONNECTED) {
       var frames = zoneConn.poll();
       for (f in frames) zoneDispatcher.dispatch(f.msgType, f.payload);
+    }
+    if (state == IN_ZONE && worldRenderer != null) {
+      worldRenderer.redraw();
     }
   }
 }
