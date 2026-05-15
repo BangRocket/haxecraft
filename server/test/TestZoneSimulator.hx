@@ -35,4 +35,11 @@ class TestZoneSimulator extends Test {
     Assert.equals(0, sim.entityCount());
     Assert.isNull(sim.entityById(1));
   }
+
+  function testEntityAtFindsOccupant() {
+    var sim = new ZoneSimulator(buildMap());
+    sim.spawn(new Character(1, "alice", null, 2, 1));
+    Assert.equals(1, sim.entityAt(2, 1).id);
+    Assert.isNull(sim.entityAt(0, 0));
+  }
 }

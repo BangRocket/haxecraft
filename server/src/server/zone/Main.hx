@@ -18,10 +18,12 @@ class Main {
 
     var sim = new ZoneSimulator(map);
     var enterHandler = new EnterZoneHandler(characterDal, sim);
+    var moveHandler = new MoveIntentHandler(sim, enterHandler);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
     dispatcher.register(MsgType.ENTER_ZONE, enterHandler.handle);
+    dispatcher.register(MsgType.MOVE_INTENT, moveHandler.handle);
 
     var tickInterval = 1.0 / Constants.TICK_HZ;
     var nextTickAt = Sys.time() + tickInterval;

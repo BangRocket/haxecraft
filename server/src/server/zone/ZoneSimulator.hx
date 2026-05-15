@@ -37,4 +37,11 @@ class ZoneSimulator {
   public function allEntities():Iterator<Character> {
     return entities.iterator();
   }
+
+  public function entityAt(x:Int, y:Int):Null<Character> {
+    for (e in entities) {
+      if (e.tileX == x && e.tileY == y) return e;
+    }
+    return null;
+  }
 }
