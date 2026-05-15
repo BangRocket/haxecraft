@@ -24,11 +24,13 @@ class TestLoginFlow extends Test {
   function setupClass() {
     db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     dal = new AccountDal(db);
+    db.exec("DELETE FROM characters WHERE name = ?", ["test_login_user"]);
     db.exec("DELETE FROM accounts WHERE username = ?", ["test_login_user"]);
     dal.create("test_login_user", PasswordHash.hash("test_login_pw"));
   }
 
   function teardownClass() {
+    db.exec("DELETE FROM characters WHERE name = ?", ["test_login_user"]);
     db.exec("DELETE FROM accounts WHERE username = ?", ["test_login_user"]);
     db.close();
   }
@@ -73,6 +75,17 @@ class TestLoginFlow extends Test {
     Assert.isTrue(loginAck.success);
     Assert.isTrue(loginAck.sessionToken.length >= 16);
     Assert.equals("", loginAck.errorMsg);
+
+    // After successful login, gateway sends a ZoneHandoff on the same connection.
+    var handoffFrame = FrameCodec.readFrame(s.input);
+    Assert.equals((shared.proto.MsgType.ZONE_HANDOFF : Int), handoffFrame.msgType);
+    var handoff = shared.proto.MsgZoneHandoff.deserialize(new BytesInput(handoffFrame.payload));
+    Assert.equals("127.0.0.1", handoff.zoneHost);
+    Assert.equals(7778, handoff.zonePort);
+    Assert.isTrue(handoff.handoffToken.length > 0);
+
+    var parsed = shared.security.HandoffToken.verify(handoff.handoffToken);
+    Assert.notNull(parsed);
 
     s.close();
   }
