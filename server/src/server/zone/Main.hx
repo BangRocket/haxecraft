@@ -11,6 +11,11 @@ class Main {
   public static function main() {
     var db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     var characterDal = new CharacterDal(db);
+
+    Sys.println("[zone] loading map...");
+    var map = MapLoader.loadFromFile("res/maps/starter.tmx");
+    Sys.println('[zone] map loaded: ${map.width}x${map.height}');
+
     var enterHandler = new EnterZoneHandler(characterDal);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
