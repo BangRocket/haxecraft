@@ -45,29 +45,33 @@ class LoginScreen extends Object {
   }
 
   public function handleKey(e:Event):Void {
-    if (e.kind != EKeyDown) return;
-    switch e.keyCode {
-      case hxd.Key.TAB:
-        focused = 1 - focused;
-        refresh();
-      case hxd.Key.ENTER:
-        if (usernameValue.length > 0 && passwordValue.length > 0) {
-          if (onSubmit != null) onSubmit(usernameValue, passwordValue);
-          setStatus("connecting...");
+    switch e.kind {
+      case EKeyDown:
+        switch e.keyCode {
+          case hxd.Key.TAB:
+            focused = 1 - focused;
+            refresh();
+          case hxd.Key.ENTER:
+            if (usernameValue.length > 0 && passwordValue.length > 0) {
+              if (onSubmit != null) onSubmit(usernameValue, passwordValue);
+              setStatus("connecting...");
+            }
+          case hxd.Key.BACKSPACE:
+            if (focused == 0 && usernameValue.length > 0)
+              usernameValue = usernameValue.substr(0, usernameValue.length - 1);
+            else if (focused == 1 && passwordValue.length > 0)
+              passwordValue = passwordValue.substr(0, passwordValue.length - 1);
+            refresh();
+          default:
         }
-      case hxd.Key.BACKSPACE:
-        if (focused == 0 && usernameValue.length > 0)
-          usernameValue = usernameValue.substr(0, usernameValue.length - 1);
-        else if (focused == 1 && passwordValue.length > 0)
-          passwordValue = passwordValue.substr(0, passwordValue.length - 1);
-        refresh();
-      default:
+      case ETextInput:
         if (e.charCode > 31 && e.charCode < 127) {
           var ch = String.fromCharCode(e.charCode);
           if (focused == 0) usernameValue += ch;
           else passwordValue += ch;
           refresh();
         }
+      default:
     }
   }
 
