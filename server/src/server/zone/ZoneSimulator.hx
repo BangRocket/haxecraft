@@ -7,8 +7,30 @@ class ZoneSimulator {
   public var map(default, null):MapData;
   var entities:Map<Int, Character> = new Map();
 
-  public function new(map:MapData) {
+  public var lastFlushTick:Int = 0;
+  public static inline var FLUSH_TICK_INTERVAL:Int = 50;  // 5s at 10 Hz
+
+  var characterDal:server.db.CharacterDal;
+
+  public function new(map:MapData, ?characterDal:server.db.CharacterDal) {
     this.map = map;
+    this.characterDal = characterDal;
+  }
+
+  public function shouldFlushNow():Bool {
+    return (currentTick - lastFlushTick) >= FLUSH_TICK_INTERVAL;
+  }
+
+  public function markFlushed():Void {
+    lastFlushTick = currentTick;
+  }
+
+  public function flushPositions():Void {
+    if (characterDal == null) return;
+    for (e in entities) {
+      characterDal.savePosition(e.id, e.tileX, e.tileY);
+    }
+    markFlushed();
   }
 
   public function tick():Void {

@@ -16,7 +16,7 @@ class Main {
     var map = MapLoader.loadFromFile("res/maps/starter.tmx");
     Sys.println('[zone] map loaded: ${map.width}x${map.height}');
 
-    var sim = new ZoneSimulator(map);
+    var sim = new ZoneSimulator(map, characterDal);
     var enterHandler = new EnterZoneHandler(characterDal, sim);
     var moveHandler = new MoveIntentHandler(sim, enterHandler);
 
@@ -69,6 +69,7 @@ class Main {
       var now = Sys.time();
       if (now >= nextTickAt) {
         sim.tick();
+        if (sim.shouldFlushNow()) sim.flushPositions();
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {
           nextTickAt = now + tickInterval;
