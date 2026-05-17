@@ -40,8 +40,17 @@ class Main {
     for (y in 0...height) {
       for (x in 0...width) {
         rng = mix32(rng + x * 374761393 + y * 668265263);
-        if (tiles[y * width + x] == (TileType.GRASS : Int) && (rng & 0xff) < 6) {
-          tiles[y * width + x] = (TileType.TREE : Int);
+        var idx = y * width + x;
+        var t = tiles[idx];
+        var roll = rng & 0xff;
+        if (t == (TileType.GRASS : Int)) {
+          if (roll < 6)        tiles[idx] = (TileType.TREE : Int);
+          else if (roll < 30)  tiles[idx] = (TileType.DIRT : Int);
+          else if (roll < 38)  tiles[idx] = (TileType.FLOWER : Int);
+        } else if (t == (TileType.SAND : Int)) {
+          if (roll < 5)        tiles[idx] = (TileType.CACTUS : Int);
+        } else if (t == (TileType.ROCK : Int)) {
+          if (roll < 8)        tiles[idx] = (TileType.LAVA : Int);
         }
       }
     }
@@ -84,7 +93,7 @@ class Main {
     sb.add('<?xml version="1.0" encoding="UTF-8"?>\n');
     sb.add('<map version="1.10" orientation="orthogonal" renderorder="right-down" ');
     sb.add('width="$width" height="$height" tilewidth="8" tileheight="8" infinite="0">\n');
-    sb.add('  <tileset firstgid="1" name="terrain" tilewidth="8" tileheight="8" tilecount="6"/>\n');
+    sb.add('  <tileset firstgid="1" name="terrain" tilewidth="8" tileheight="8" tilecount="10"/>\n');
     sb.add('  <layer id="1" name="terrain" width="$width" height="$height">\n');
     sb.add('    <data encoding="csv">\n');
     for (y in 0...height) {
