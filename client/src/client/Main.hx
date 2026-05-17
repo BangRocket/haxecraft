@@ -28,6 +28,7 @@ import sys.io.File;
 import shared.world.MapData;
 import shared.world.TmxParser;
 import client.game.Camera;
+import client.render.ZoneRenderer;
 
 enum ClientState {
   LOGGING_IN;
@@ -60,6 +61,7 @@ class Main extends App {
   var camera:Camera;
   var worldRenderer:client.game.WorldRenderer;
   var entityRenderer:EntityRenderer;
+  var zoneRenderer:ZoneRenderer;
   var inputDispatcher:client.game.InputDispatcher;
 
   static function main() {
@@ -185,8 +187,8 @@ class Main extends App {
     camera.centerWorldX = ownTileX;
     camera.centerWorldY = ownTileY;
     inZoneScreen = new InZoneScreen(s2d);
-    worldRenderer = new client.game.WorldRenderer(inZoneScreen, map, camera);
     entityRenderer = new EntityRenderer(inZoneScreen, camera, ownEntityId);
+    zoneRenderer = new ZoneRenderer(s2d, map);
     inputDispatcher = new client.game.InputDispatcher(zoneConn);
   }
 
@@ -222,10 +224,14 @@ class Main extends App {
       var frames = zoneConn.poll();
       for (f in frames) zoneDispatcher.dispatch(f.msgType, f.payload);
     }
-    if (state == IN_ZONE && worldRenderer != null) {
-      worldRenderer.redraw();
+    if (state == IN_ZONE && zoneRenderer != null) {
+      zoneRenderer.render(camera.centerWorldX, camera.centerWorldY);
       if (entityRenderer != null) entityRenderer.redraw();
       if (inputDispatcher != null) inputDispatcher.update();
     }
+  }
+
+  override function onResize() {
+    if (zoneRenderer != null) zoneRenderer.onResize();
   }
 }
