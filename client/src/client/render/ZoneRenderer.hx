@@ -6,6 +6,7 @@ import engine.gfx.SpriteRegistry;
 import engine.gfx.SpriteSheet;
 import engine.gfx.SpriteId;
 import shared.world.MapData;
+import shared.world.Direction;
 
 /**
  * Renders the zone into a fixed 320x240 Screen buffer, scaled to the window.
@@ -24,8 +25,21 @@ class ZoneRenderer {
   // Resolved terrain sprites, keyed by TileType-as-Int.
   var tileSprites:Map<Int, {id:SpriteId, colors:Int}> = new Map();
 
-  public function new(scene:h2d.Scene, map:MapData) {
+  var entities:Map<Int, EntityVisual> = new Map();
+  var ownEntityId:Int = 0;
+  // Player body cells [TL,TR,BL,BR], keyed by "south"/"north"/"side0"/"side1".
+  var playerSprites:Map<String, Array<SpriteId>> = new Map();
+
+  public function new(scene:h2d.Scene, map:MapData, ownEntityId:Int) {
     this.map = map;
+    this.ownEntityId = ownEntityId;
+    // Default to a clean 4x window (1280x960). The scene scaleMode below makes
+    // this purely cosmetic — rendering fills whatever size the window is.
+    hxd.Window.getInstance().resize(SCREEN_W * 4, SCREEN_H * 4);
+    // Render in 320x240 logical space; Heaps stretches the whole scene to fill
+    // the window. One scene-level transform => no inter-tile seams, edge to
+    // edge at any window size (exactly 4x at the 1280x960 default).
+    scene.scaleMode = h2d.Scene.ScaleMode.Stretch(SCREEN_W, SCREEN_H);
     Screen.initPalette();
     screen = new Screen(SCREEN_W, SCREEN_H);
     gpu = new GpuRenderer(SCREEN_W, SCREEN_H, scene);
@@ -33,7 +47,6 @@ class ZoneRenderer {
     registry = new SpriteRegistry();
     loadSheets();
     screen.spriteRegistry = registry;
-    applyScale();
   }
 
   /** Decode a PNG from disk into hxd.Pixels (no hxd.Res / resourcesPath). */
@@ -51,16 +64,22 @@ class ZoneRenderer {
       var id = registry.defineSprite("tile_" + (tt : Int), e.sheet, e.col, e.row);
       tileSprites.set((tt : Int), {id: id, colors: e.colors});
     }
-  }
 
-  /** Scale the 320x240 Screen up to fill the window. */
-  public function applyScale():Void {
-    var win = hxd.Window.getInstance();
-    gpu.setScale(win.width / SCREEN_W, win.height / SCREEN_H);
-  }
-
-  public function onResize():Void {
-    applyScale();
+    // Player body: 4 cells (TL,TR,BL,BR) per direction+phase. The legacy
+    // player sheet uses sheet-local rows 0 (top) and 1 (bottom); column
+    // offsets: SOUTH=0, NORTH=2, side walk frames at 4 and 6.
+    function playerCells(name:String, colBase:Int):Void {
+      playerSprites.set(name, [
+        registry.defineSprite('p_${name}_tl', "player", colBase,     0),
+        registry.defineSprite('p_${name}_tr', "player", colBase + 1, 0),
+        registry.defineSprite('p_${name}_bl', "player", colBase,     1),
+        registry.defineSprite('p_${name}_br', "player", colBase + 1, 1),
+      ]);
+    }
+    playerCells("south", 0);
+    playerCells("north", 2);
+    playerCells("side0", 4);
+    playerCells("side1", 6);
   }
 
   /**
@@ -99,7 +118,61 @@ class ZoneRenderer {
       }
     }
 
+    drawEntities();
     endFrame();
+  }
+
+  public function spawnEntity(id:Int, name:String, tileX:Int, tileY:Int):Void {
+    var v = new EntityVisual(id, name);
+    v.spawnAt(tileX, tileY);
+    entities.set(id, v);
+  }
+
+  public function despawnEntity(id:Int):Void {
+    entities.remove(id);
+  }
+
+  public function moveEntity(id:Int, toX:Int, toY:Int, durationMs:Int):Void {
+    var v = entities.get(id);
+    if (v != null) v.applyMove(toX, toY, durationMs);
+  }
+
+  /** The local player's interpolated tile position (for camera centering). */
+  public function ownPos():{x:Float, y:Float} {
+    var v = entities.get(ownEntityId);
+    if (v == null) return {x: 0, y: 0};
+    return v.currentPos();
+  }
+
+  function drawEntities():Void {
+    for (v in entities) {
+      var p = v.currentPos();
+      var px = Std.int(p.x * TILE) - 4;   // 16px sprite centered on 8px tile
+      var py = Std.int(p.y * TILE) - 8;   // anchored so feet sit on the tile
+
+      var name:String;
+      var flip:Int = 0;
+      switch (v.facing) {
+        case SOUTH: name = "south";
+        case NORTH: name = "north";
+        case EAST:  name = (v.walkPhase() == 0) ? "side0" : "side1";
+        case WEST:  name = (v.walkPhase() == 0) ? "side0" : "side1"; flip = 1;
+      }
+      var cells = playerSprites.get(name);   // [TL, TR, BL, BR]
+      var c = SpriteCatalog.PLAYER_COLORS;
+      if (flip == 0) {
+        screen.renderSprite(px + 0, py + 0, cells[0], c, 0, 0);
+        screen.renderSprite(px + 8, py + 0, cells[1], c, 0, 0);
+        screen.renderSprite(px + 0, py + 8, cells[2], c, 0, 0);
+        screen.renderSprite(px + 8, py + 8, cells[3], c, 0, 0);
+      } else {
+        // Mirror: the left column shows the mirrored right cell, and vice versa.
+        screen.renderSprite(px + 0, py + 0, cells[1], c, 1, 0);
+        screen.renderSprite(px + 8, py + 0, cells[0], c, 1, 0);
+        screen.renderSprite(px + 0, py + 8, cells[3], c, 1, 0);
+        screen.renderSprite(px + 8, py + 8, cells[2], c, 1, 0);
+      }
+    }
   }
 
   function drawMissing(px:Int, py:Int):Void {

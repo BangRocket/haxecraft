@@ -187,32 +187,23 @@ class Main extends App {
     camera.centerWorldX = ownTileX;
     camera.centerWorldY = ownTileY;
     inZoneScreen = new InZoneScreen(s2d);
-    entityRenderer = new EntityRenderer(inZoneScreen, camera, ownEntityId);
-    zoneRenderer = new ZoneRenderer(s2d, map);
+    zoneRenderer = new ZoneRenderer(s2d, map, ownEntityId);
     inputDispatcher = new client.game.InputDispatcher(zoneConn);
   }
 
   function onEntitySpawn(payload:Bytes):Void {
     var m = MsgEntitySpawn.deserialize(new BytesInput(payload));
-    if (entityRenderer != null) entityRenderer.spawn(m.entityId, m.name, m.tileX, m.tileY);
+    if (zoneRenderer != null) zoneRenderer.spawnEntity(m.entityId, m.name, m.tileX, m.tileY);
   }
 
   function onEntityMove(payload:Bytes):Void {
     var m = MsgEntityMove.deserialize(new BytesInput(payload));
-    if (entityRenderer != null) entityRenderer.applyMove(m.entityId, m.fromX, m.fromY, m.toX, m.toY, m.durationMs);
-    if (m.entityId == ownEntityId) {
-      ownTileX = m.toX;
-      ownTileY = m.toY;
-      if (camera != null) {
-        camera.centerWorldX = m.toX;
-        camera.centerWorldY = m.toY;
-      }
-    }
+    if (zoneRenderer != null) zoneRenderer.moveEntity(m.entityId, m.toX, m.toY, m.durationMs);
   }
 
   function onEntityDespawn(payload:Bytes):Void {
     var m = MsgEntityDespawn.deserialize(new BytesInput(payload));
-    if (entityRenderer != null) entityRenderer.despawn(m.entityId);
+    if (zoneRenderer != null) zoneRenderer.despawnEntity(m.entityId);
   }
 
   override function update(dt:Float) {
@@ -225,13 +216,9 @@ class Main extends App {
       for (f in frames) zoneDispatcher.dispatch(f.msgType, f.payload);
     }
     if (state == IN_ZONE && zoneRenderer != null) {
-      zoneRenderer.render(camera.centerWorldX, camera.centerWorldY);
-      if (entityRenderer != null) entityRenderer.redraw();
+      var own = zoneRenderer.ownPos();
+      zoneRenderer.render(own.x, own.y);
       if (inputDispatcher != null) inputDispatcher.update();
     }
-  }
-
-  override function onResize() {
-    if (zoneRenderer != null) zoneRenderer.onResize();
   }
 }
