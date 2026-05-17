@@ -1,6 +1,13 @@
-.PHONY: all shared-test gateway zone server-cli client test server-test worldgen-tmx regenerate-map clean
+.PHONY: all shared-test gateway zone server-cli client test server-test worldgen-tmx regenerate-map native native-test clean
 
 all: out shared-test gateway zone server-cli client worldgen-tmx
+
+# Native HLC build for Apple Silicon Macs (no `hl` JIT VM available there).
+native:
+	./build_native.sh
+
+native-test: native
+	./bin/shared-test
 
 out:
 	@mkdir -p out
@@ -23,11 +30,19 @@ client: out
 worldgen-tmx: out
 	cd tools/worldgen-tmx && haxe build-worldgen-tmx.hxml
 
-regenerate-map: worldgen-tmx
-	hl out/worldgen-tmx.hl 1024 1024 res/maps/starter.tmx
+regenerate-map:
+	@if command -v hl >/dev/null 2>&1; then \
+		$(MAKE) worldgen-tmx && hl out/worldgen-tmx.hl 1024 1024 res/maps/starter.tmx; \
+	else \
+		./build_native.sh worldgen-tmx && ./bin/worldgen-tmx 1024 1024 res/maps/starter.tmx; \
+	fi
 
-test: shared-test
-	hl out/shared-test.hl
+test:
+	@if command -v hl >/dev/null 2>&1; then \
+		$(MAKE) shared-test && hl out/shared-test.hl; \
+	else \
+		./build_native.sh shared-test && ./bin/shared-test; \
+	fi
 
 server-test: out
 	cd server && haxe build-server-test.hxml

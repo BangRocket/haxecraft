@@ -9,11 +9,19 @@ for _ in {1..60}; do
   sleep 1
 done
 ./db/apply-migrations.sh
-make gateway zone
+
+# Apple Silicon Macs have no `hl` JIT VM — fall back to native HLC binaries.
+if command -v hl >/dev/null 2>&1; then
+  make gateway zone
+  ZONE_CMD=(hl out/zone.hl); GATEWAY_CMD=(hl out/gateway.hl)
+else
+  ./build_native.sh gateway zone
+  ZONE_CMD=(./bin/zone); GATEWAY_CMD=(./bin/gateway)
+fi
 
 # Start zone in background, gateway in foreground.
-hl out/zone.hl &
+"${ZONE_CMD[@]}" &
 ZONE_PID=$!
 trap "kill $ZONE_PID 2>/dev/null || true" EXIT
 sleep 0.5
-exec hl out/gateway.hl
+exec "${GATEWAY_CMD[@]}"

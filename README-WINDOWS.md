@@ -93,9 +93,23 @@ cd server; haxe build-server-cli.hxml; cd ..
 hl out\server-cli.hl create-account joshua hunter2
 ```
 
-## Not ported
+## Native `.exe` build (optional)
 
-`build_macos.sh` (native HLC binary via clang + Cocoa frameworks) has no
-Windows equivalent. Running through the `hl` interpreter is cross-platform
-and sufficient for development. A native Windows `.exe` would need a separate
-HLC + MSVC build script — not yet written.
+Running through the `hl` interpreter is cross-platform and sufficient for
+development on Windows. For a standalone `.exe` with no `hl.exe` dependency,
+`build_native.ps1` compiles every target via HashLink/C:
+
+```powershell
+.\build_native.ps1                       # all targets -> bin\*.exe
+.\build_native.ps1 zone gateway          # selected targets
+.\build_native.ps1 -HashlinkDir D:\hl    # custom HashLink location
+```
+
+Run it from an "x64 Native Tools Command Prompt for VS" (or ARM64 equivalent)
+so `cl.exe` / `lib.exe` / `dumpbin.exe` resolve. It synthesizes import libs
+from each `.hdll`'s export table and copies the HashLink runtime DLLs into
+`bin\`. **This path has not yet been verified on a Windows host** — treat the
+first run as bring-up; the macOS/Linux `build_native.sh` is the tested one.
+
+`build_macos.sh` (the legacy standalone-game build) has no Windows equivalent
+and is unrelated to the MMO client.

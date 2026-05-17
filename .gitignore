@@ -5,6 +5,7 @@ haxecraft.hl
 haxecraft
 libhl.dylib
 out/
+bin/
 tools/hl-stbtt/build/
 
 # Deployed native libs — synced from prebuilt/<os>/ by tools/sync-hdll.*
