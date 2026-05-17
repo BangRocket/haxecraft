@@ -180,6 +180,12 @@ function Build-ServerTest {
   Gen-C 'server-test' 'server' @('-cp','src','-cp','test','-cp','..\shared\src','-cp','..\client\src\headless','-lib','utest','-main','TestMain')
   Compile-Target 'server-test' @('mysql','fmt') $HeadlessSys
 }
+function Build-ClientTest {
+  Write-Host '[client-test]'
+  Gen-C 'client-test' 'client' @('-cp','src','-cp','test','-cp','..\shared\src','-cp','..\engine\src','-lib','utest','-main','TestMain','-D','analyzer-optimize')
+  Compile-Target 'client-test' @() $HeadlessSys
+}
+
 function Build-Client {
   Write-Host '[client]'
   Gen-C 'client' 'client' @('-cp','src','-cp','..\shared\src','-cp','..\engine\src','-lib','heaps','-lib','hlsdl','-main','client.Main','-D','resourcesPath=..\res','-D','analyzer-optimize')
@@ -187,7 +193,7 @@ function Build-Client {
 }
 
 # ---- dispatch --------------------------------------------------------------
-$All = @('worldgen-tmx','server-cli','gateway','zone','shared-test','server-test','client')
+$All = @('worldgen-tmx','server-cli','gateway','zone','shared-test','server-test','client-test','client')
 if (-not $Targets -or $Targets.Count -eq 0) { $Targets = $All }
 
 foreach ($t in $Targets) {
@@ -198,6 +204,7 @@ foreach ($t in $Targets) {
     'zone'         { Build-Zone }
     'shared-test'  { Build-SharedTest }
     'server-test'  { Build-ServerTest }
+    'client-test'  { Build-ClientTest }
     'client'       { Build-Client }
     default        { throw "unknown target: $t" }
   }

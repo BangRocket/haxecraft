@@ -1,4 +1,4 @@
-.PHONY: all shared-test gateway zone server-cli client test server-test worldgen-tmx regenerate-map native native-test clean
+.PHONY: all shared-test gateway zone server-cli client test server-test client-test worldgen-tmx regenerate-map native native-test clean
 
 all: out shared-test gateway zone server-cli client worldgen-tmx
 
@@ -47,6 +47,10 @@ test:
 server-test: out
 	cd server && haxe build-server-test.hxml
 	hl out/server-test.hl
+
+client-test: out
+	cd client && haxe build-client-test.hxml
+	hl out/client-test.hl
 
 clean:
 	rm -rf out/*.hl

@@ -173,6 +173,13 @@ build_server_test() {
   compile server-test "$(hdll mysql)" "$(hdll fmt)" "${SYS_HEADLESS[@]}"
 }
 
+build_client_test() {
+  echo "[client-test]"
+  gen_c client-test client -cp src -cp test -cp ../shared/src -cp ../engine/src \
+    -lib utest -main TestMain -D analyzer-optimize
+  compile client-test "${SYS_HEADLESS[@]}"
+}
+
 build_client() {
   echo "[client]"
   gen_c client client -cp src -cp ../shared/src -cp ../engine/src -lib heaps -lib hlsdl \
@@ -184,7 +191,7 @@ build_client() {
 
 # ---- dispatch --------------------------------------------------------------
 
-ALL=(worldgen-tmx server-cli gateway zone shared-test server-test client)
+ALL=(worldgen-tmx server-cli gateway zone shared-test server-test client-test client)
 TARGETS=("$@")
 [ ${#TARGETS[@]} -eq 0 ] && TARGETS=("${ALL[@]}")
 
@@ -196,6 +203,7 @@ for t in "${TARGETS[@]}"; do
     zone)         build_zone ;;
     shared-test)  build_shared_test ;;
     server-test)  build_server_test ;;
+    client-test)  build_client_test ;;
     client)       build_client ;;
     *) echo "unknown target: $t" >&2; exit 1 ;;
   esac
