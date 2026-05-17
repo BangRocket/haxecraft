@@ -9,7 +9,6 @@ import client.net.TcpConnection;
 import client.net.ClientDispatcher;
 import client.ui.LoginScreen;
 import client.ui.ConnectingZoneScreen;
-import client.ui.InZoneScreen;
 import shared.Constants;
 import shared.proto.FrameCodec;
 import shared.proto.MsgHello;
@@ -23,11 +22,10 @@ import shared.proto.MsgEntitySpawn;
 import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntityDespawn;
 import shared.proto.MsgType;
-import client.game.EntityRenderer;
 import sys.io.File;
 import shared.world.MapData;
 import shared.world.TmxParser;
-import client.game.Camera;
+import client.render.ZoneRenderer;
 
 enum ClientState {
   LOGGING_IN;
@@ -47,19 +45,14 @@ class Main extends App {
 
   var loginScreen:LoginScreen;
   var connectingScreen:ConnectingZoneScreen;
-  var inZoneScreen:InZoneScreen;
 
   var pendingUsername:String = "";
   var pendingPassword:String = "";
 
   var ownEntityId:Int = 0;
-  var ownTileX:Int = 0;
-  var ownTileY:Int = 0;
 
   var map:MapData;
-  var camera:Camera;
-  var worldRenderer:client.game.WorldRenderer;
-  var entityRenderer:EntityRenderer;
+  var zoneRenderer:ZoneRenderer;
   var inputDispatcher:client.game.InputDispatcher;
 
   static function main() {
@@ -162,8 +155,6 @@ class Main extends App {
       return;
     }
     ownEntityId = ack.entityId;
-    ownTileX = ack.tileX;
-    ownTileY = ack.tileY;
     transitionToInZone();
   }
 
@@ -180,37 +171,23 @@ class Main extends App {
       var xml = File.getContent("res/maps/starter.tmx");
       map = TmxParser.parse(xml);
     }
-    var win = hxd.Window.getInstance();
-    camera = new Camera(16, win.width, win.height);
-    camera.centerWorldX = ownTileX;
-    camera.centerWorldY = ownTileY;
-    inZoneScreen = new InZoneScreen(s2d);
-    worldRenderer = new client.game.WorldRenderer(inZoneScreen, map, camera);
-    entityRenderer = new EntityRenderer(inZoneScreen, camera, ownEntityId);
+    zoneRenderer = new ZoneRenderer(s2d, map, ownEntityId);
     inputDispatcher = new client.game.InputDispatcher(zoneConn);
   }
 
   function onEntitySpawn(payload:Bytes):Void {
     var m = MsgEntitySpawn.deserialize(new BytesInput(payload));
-    if (entityRenderer != null) entityRenderer.spawn(m.entityId, m.name, m.tileX, m.tileY);
+    if (zoneRenderer != null) zoneRenderer.spawnEntity(m.entityId, m.name, m.tileX, m.tileY);
   }
 
   function onEntityMove(payload:Bytes):Void {
     var m = MsgEntityMove.deserialize(new BytesInput(payload));
-    if (entityRenderer != null) entityRenderer.applyMove(m.entityId, m.fromX, m.fromY, m.toX, m.toY, m.durationMs);
-    if (m.entityId == ownEntityId) {
-      ownTileX = m.toX;
-      ownTileY = m.toY;
-      if (camera != null) {
-        camera.centerWorldX = m.toX;
-        camera.centerWorldY = m.toY;
-      }
-    }
+    if (zoneRenderer != null) zoneRenderer.moveEntity(m.entityId, m.toX, m.toY, m.durationMs);
   }
 
   function onEntityDespawn(payload:Bytes):Void {
     var m = MsgEntityDespawn.deserialize(new BytesInput(payload));
-    if (entityRenderer != null) entityRenderer.despawn(m.entityId);
+    if (zoneRenderer != null) zoneRenderer.despawnEntity(m.entityId);
   }
 
   override function update(dt:Float) {
@@ -222,9 +199,9 @@ class Main extends App {
       var frames = zoneConn.poll();
       for (f in frames) zoneDispatcher.dispatch(f.msgType, f.payload);
     }
-    if (state == IN_ZONE && worldRenderer != null) {
-      worldRenderer.redraw();
-      if (entityRenderer != null) entityRenderer.redraw();
+    if (state == IN_ZONE && zoneRenderer != null) {
+      var own = zoneRenderer.ownPos();
+      zoneRenderer.render(own.x, own.y);
       if (inputDispatcher != null) inputDispatcher.update();
     }
   }

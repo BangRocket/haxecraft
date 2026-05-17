@@ -79,7 +79,7 @@ fi
 echo ""
 echo "Generating C code..."
 mkdir -p out
-haxe -lib heaps -lib hlsdl -lib hlopenal -D hlopenal -cp src -main game.Game -D resourcesPath=res -hl out/main.c
+haxe -lib heaps -lib hlsdl -lib hlopenal -D hlopenal -cp src -cp engine/src -main game.Game -D resourcesPath=res -hl out/main.c
 
 echo "Compiling native binary..."
 clang -O2 -o haxecraft out/main.c \

@@ -15,6 +15,7 @@ class TestMain {
     r.addCase(new TestHandoffToken());
     r.addCase(new TestMapData());
     r.addCase(new TestTmxParser());
+    r.addCase(new TestTileType());
     Report.create(r);
     r.run();
   }
