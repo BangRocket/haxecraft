@@ -9,7 +9,6 @@ import client.net.TcpConnection;
 import client.net.ClientDispatcher;
 import client.ui.LoginScreen;
 import client.ui.ConnectingZoneScreen;
-import client.ui.InZoneScreen;
 import shared.Constants;
 import shared.proto.FrameCodec;
 import shared.proto.MsgHello;
@@ -23,11 +22,9 @@ import shared.proto.MsgEntitySpawn;
 import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntityDespawn;
 import shared.proto.MsgType;
-import client.game.EntityRenderer;
 import sys.io.File;
 import shared.world.MapData;
 import shared.world.TmxParser;
-import client.game.Camera;
 import client.render.ZoneRenderer;
 
 enum ClientState {
@@ -48,19 +45,13 @@ class Main extends App {
 
   var loginScreen:LoginScreen;
   var connectingScreen:ConnectingZoneScreen;
-  var inZoneScreen:InZoneScreen;
 
   var pendingUsername:String = "";
   var pendingPassword:String = "";
 
   var ownEntityId:Int = 0;
-  var ownTileX:Int = 0;
-  var ownTileY:Int = 0;
 
   var map:MapData;
-  var camera:Camera;
-  var worldRenderer:client.game.WorldRenderer;
-  var entityRenderer:EntityRenderer;
   var zoneRenderer:ZoneRenderer;
   var inputDispatcher:client.game.InputDispatcher;
 
@@ -164,8 +155,6 @@ class Main extends App {
       return;
     }
     ownEntityId = ack.entityId;
-    ownTileX = ack.tileX;
-    ownTileY = ack.tileY;
     transitionToInZone();
   }
 
@@ -182,11 +171,6 @@ class Main extends App {
       var xml = File.getContent("res/maps/starter.tmx");
       map = TmxParser.parse(xml);
     }
-    var win = hxd.Window.getInstance();
-    camera = new Camera(16, win.width, win.height);
-    camera.centerWorldX = ownTileX;
-    camera.centerWorldY = ownTileY;
-    inZoneScreen = new InZoneScreen(s2d);
     zoneRenderer = new ZoneRenderer(s2d, map, ownEntityId);
     inputDispatcher = new client.game.InputDispatcher(zoneConn);
   }
