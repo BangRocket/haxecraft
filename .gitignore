@@ -7,8 +7,23 @@ libhl.dylib
 out/
 tools/hl-stbtt/build/
 
+# Deployed native libs — synced from prebuilt/<os>/ by tools/sync-hdll.*
+# The canonical copies live under prebuilt/ and ARE tracked.
+/ssl.hdll
+/stbtt.hdll
+
 # macOS
 .DS_Store
+._*
+
+# Windows
+*.exe
+haxecraft.pdb
+
+# stbtt.hdll build intermediates (MSVC)
+tools/hl-stbtt/*.obj
+tools/hl-stbtt/*.exp
+tools/hl-stbtt/*.lib
 
 # Original Java reference (not part of port)
 Minicraft-master/

@@ -2,6 +2,7 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
+bash "$HERE/tools/sync-hdll.sh"
 docker compose up -d mysql
 for _ in {1..60}; do
   if [ "$(docker compose ps mysql --format '{{.Health}}' 2>/dev/null)" = "healthy" ]; then break; fi
