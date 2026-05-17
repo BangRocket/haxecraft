@@ -3,6 +3,7 @@
 -lib hlopenal
 -D hlopenal
 -cp src
+-cp engine/src
 -main game.Game
 -hl haxecraft.hl
 -D resourcesPath=res
