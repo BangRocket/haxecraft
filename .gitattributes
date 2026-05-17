@@ -1,0 +1,12 @@
+# Line endings: store LF in the repo and check out LF on every platform.
+# Keeps multi-line string literals and shell scripts byte-identical across
+# macOS and Windows. (A CRLF checkout previously broke TestTmxParser on
+# Windows: a `\n`-based StringTools.replace silently missed CRLF newlines.)
+* text=auto eol=lf
+
+# Binary assets — never apply text or end-of-line conversion.
+*.png   binary
+*.ttf   binary
+*.hdll  binary
+*.hl    binary
+*.zip   binary

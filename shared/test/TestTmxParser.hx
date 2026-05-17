@@ -34,7 +34,9 @@ class TestTmxParser extends Test {
   }
 
   function testRejectsMismatchedRowCount() {
-    var bad = StringTools.replace(TINY_TMX, '1,2,3,\n4,5,6', '1,2,3');
+    // Drop the second CSV row: 3 tiles for a 3x2 (=6) map. The search
+    // string has no newline, so this stays correct under CRLF or LF.
+    var bad = StringTools.replace(TINY_TMX, '4,5,6', '');
     Assert.raises(() -> TmxParser.parse(bad));
   }
 }
