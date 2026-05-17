@@ -182,7 +182,7 @@ function Build-ServerTest {
 }
 function Build-Client {
   Write-Host '[client]'
-  Gen-C 'client' 'client' @('-cp','src','-cp','..\shared\src','-lib','heaps','-lib','hlsdl','-main','client.Main','-D','resourcesPath=..\res','-D','analyzer-optimize')
+  Gen-C 'client' 'client' @('-cp','src','-cp','..\shared\src','-cp','..\engine\src','-lib','heaps','-lib','hlsdl','-main','client.Main','-D','resourcesPath=..\res','-D','analyzer-optimize')
   Compile-Target 'client' @('sdl','ui','fmt','openal','uv') $ClientSys
 }
 

@@ -175,7 +175,7 @@ build_server_test() {
 
 build_client() {
   echo "[client]"
-  gen_c client client -cp src -cp ../shared/src -lib heaps -lib hlsdl \
+  gen_c client client -cp src -cp ../shared/src -cp ../engine/src -lib heaps -lib hlsdl \
     -main client.Main -D resourcesPath=../res -D analyzer-optimize
   compile client \
     "$(hdll sdl)" "$(hdll ui)" "$(hdll fmt)" "$(hdll openal)" "$(hdll uv)" \

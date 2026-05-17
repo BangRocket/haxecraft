@@ -1,5 +1,6 @@
 -cp src
 -cp ../shared/src
+-cp ../engine/src
 -lib heaps
 -lib hlsdl
 -main client.Main
