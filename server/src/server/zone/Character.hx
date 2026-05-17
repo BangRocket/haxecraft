@@ -9,6 +9,9 @@ class Character {
   public var tileX:Int;
   public var tileY:Int;
   public var nextMoveTick:Int = 0;
+  /** Latest queued Direction (0..3) from a MoveIntent; -1 = nothing held.
+      Applied and possibly retained by ZoneSimulator.tick(). */
+  public var pendingDir:Int = -1;
 
   public function new(id:Int, name:String, conn:ClientConnection, tileX:Int, tileY:Int) {
     this.id = id;

@@ -10,8 +10,8 @@ enum abstract TileType(Int) to Int from Int {
 
   public inline function isWalkable():Bool {
     return switch (cast this : TileType) {
-      case GRASS | SAND | STONE: true;
-      case WATER | ROCK | TREE: false;
+      case GRASS | SAND: true;
+      case WATER | STONE | ROCK | TREE: false;
       default: false;
     }
   }

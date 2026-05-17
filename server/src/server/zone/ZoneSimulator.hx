@@ -1,6 +1,11 @@
 package server.zone;
 
+import shared.Constants;
 import shared.world.MapData;
+import shared.world.Direction;
+
+/** A tile step applied during a tick; the caller turns these into MsgEntityMove. */
+typedef MoveResult = { entityId:Int, fromX:Int, fromY:Int, toX:Int, toY:Int };
 
 class ZoneSimulator {
   public var currentTick(default, null):Int = 0;
@@ -9,6 +14,9 @@ class ZoneSimulator {
 
   public var lastFlushTick:Int = 0;
   public static inline var FLUSH_TICK_INTERVAL:Int = 50;  // 5s at 10 Hz
+
+  /** Moves applied by the most recent tick(). The zone loop broadcasts these. */
+  public var movesThisTick(default, null):Array<MoveResult> = [];
 
   var characterDal:server.db.CharacterDal;
 
@@ -35,7 +43,32 @@ class ZoneSimulator {
 
   public function tick():Void {
     currentTick++;
-    // Movement processing wired in Task 18.
+    movesThisTick = [];
+    // Apply each entity's queued move once its per-step cooldown has elapsed.
+    // Intents that arrive mid-cooldown stay queued (not dropped), so a held
+    // direction steps on an exact, steady cadence instead of stuttering.
+    for (e in entities) {
+      if (e.pendingDir < 0) continue;
+      if (currentTick < e.nextMoveTick) continue;  // cooldown — keep the intent
+
+      var dir:Direction = cast e.pendingDir;
+      e.pendingDir = -1;  // consume
+
+      var dx = dir.dx();
+      var dy = dir.dy();
+      if (dx == 0 && dy == 0) continue;
+
+      var nx = e.tileX + dx;
+      var ny = e.tileY + dy;
+      if (!map.isWalkable(nx, ny)) continue;
+      if (entityAt(nx, ny) != null) continue;
+
+      var fromX = e.tileX, fromY = e.tileY;
+      e.tileX = nx;
+      e.tileY = ny;
+      e.nextMoveTick = currentTick + Constants.MOVE_TICKS;
+      movesThisTick.push({ entityId: e.id, fromX: fromX, fromY: fromY, toX: nx, toY: ny });
+    }
   }
 
   public function spawn(ch:Character):Void {

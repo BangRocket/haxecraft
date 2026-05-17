@@ -69,6 +69,7 @@ class Main {
       var now = Sys.time();
       if (now >= nextTickAt) {
         sim.tick();
+        moveHandler.broadcastMoves();
         if (sim.shouldFlushNow()) sim.flushPositions();
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {
