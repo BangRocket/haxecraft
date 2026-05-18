@@ -5,12 +5,14 @@ import haxe.io.Bytes;
 class MapData {
   public var width(default, null):Int;
   public var height(default, null):Int;
-  var tiles:Bytes;  // row-major, 1 byte per tile
+  var tiles:Bytes;  // row-major, 1 byte per tile — the TileType id
+  var data:Bytes;   // row-major, 1 byte per tile — per-tile state (growth/age)
 
-  public function new(width:Int, height:Int, tiles:Bytes) {
+  public function new(width:Int, height:Int, tiles:Bytes, ?data:Bytes) {
     this.width = width;
     this.height = height;
     this.tiles = tiles;
+    this.data = (data != null) ? data : Bytes.alloc(width * height);
   }
 
   public static function filled(width:Int, height:Int, fill:TileType):MapData {
@@ -36,6 +38,19 @@ class MapData {
   }
 
   public function rawBytes():Bytes return tiles;
+
+  /** Per-tile state byte (growth age, mining damage); 0 out of bounds. */
+  public function tileData(x:Int, y:Int):Int {
+    if (x < 0 || y < 0 || x >= width || y >= height) return 0;
+    return data.get(y * width + x);
+  }
+
+  public function setTileData(x:Int, y:Int, v:Int):Void {
+    if (x < 0 || y < 0 || x >= width || y >= height) return;
+    data.set(y * width + x, v & 0xff);
+  }
+
+  public function rawData():Bytes return data;
 
   /** Spiral outward from (sx, sy) until a walkable tile is found. Returns (sx, sy)
       if it's already walkable. Bounded scan radius keeps this O(maxRadius^2) worst case. **/
