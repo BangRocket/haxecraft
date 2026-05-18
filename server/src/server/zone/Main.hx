@@ -33,6 +33,7 @@ class Main {
     var moveHandler = new MoveIntentHandler(sim, enterHandler);
     var inventoryHandler = new InventoryHandler(sim, enterHandler);
     var tileHandler = new TileHandler(sim, enterHandler);
+    var craftHandler = new CraftHandler(sim, enterHandler);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
@@ -40,6 +41,8 @@ class Main {
     dispatcher.register(MsgType.MOVE_INTENT, moveHandler.handle);
     dispatcher.register(MsgType.SELECT_ACTIVE_ITEM, inventoryHandler.handle);
     dispatcher.register(MsgType.USE_ITEM_ON_TILE, tileHandler.handle);
+    dispatcher.register(MsgType.CRAFT, craftHandler.handleCraft);
+    dispatcher.register(MsgType.PLACE_FURNITURE, craftHandler.handlePlace);
 
     var tickInterval = 1.0 / Constants.TICK_HZ;
     var nextTickAt = Sys.time() + tickInterval;
