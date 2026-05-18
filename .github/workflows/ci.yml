@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Full suite: build everything, run all tests, plus the headless-bot
+  # multi-player smoke test (MySQL via the docker-compose service).
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install HashLink build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libpng-dev libturbojpeg-dev libjpeg-dev libvorbis-dev \
+            libopenal-dev libsdl2-dev libmbedtls-dev libuv1-dev \
+            libsqlite3-dev zlib1g-dev
+
+      - name: Build and install HashLink 1.15
+        run: |
+          git clone --depth 1 --branch 1.15 https://github.com/HaxeFoundation/hashlink.git /tmp/hashlink
+          make -C /tmp/hashlink
+          sudo make -C /tmp/hashlink install
+          sudo ldconfig
+          hl --version
+
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      - name: Install haxelibs
+        run: |
+          haxelib install heaps --quiet
+          haxelib install hlsdl --quiet
+          haxelib install hlopenal --quiet
+          haxelib install utest --quiet
+
+      - name: Start MySQL and apply migrations
+        run: |
+          docker compose up -d mysql
+          for _ in $(seq 1 60); do
+            [ "$(docker compose ps mysql --format '{{.Health}}' 2>/dev/null)" = "healthy" ] && break
+            sleep 1
+          done
+          ./db/apply-migrations.sh
+
+      - name: Build all targets
+        run: |
+          make all
+          make zone-bots
+          (cd server && haxe build-server-test.hxml)
+          (cd client && haxe build-client-test.hxml)
+
+      - name: Unit tests
+        run: |
+          hl out/shared-test.hl
+          hl out/client-test.hl
+
+      - name: Integration + headless-bot smoke test
+        run: |
+          hl out/zone.hl > /tmp/zone.log 2>&1 &
+          hl out/gateway.hl > /tmp/gateway.log 2>&1 &
+          sleep 3
+          hl out/server-test.hl
+          hl out/zone-bots.hl --count 8 --duration 12
+
+  # Build + pure-unit guard: confirms the project still builds on Windows
+  # (it ships there). No MySQL — GitHub's service containers are Linux-only.
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: krdlab/setup-haxe@v1
+        with:
+          haxe-version: 4.3.6
+
+      - name: Install haxelibs
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          haxelib install heaps --quiet
+          haxelib install hlsdl --quiet
+          haxelib install hlopenal --quiet
+          haxelib install utest --quiet
+
+      - name: Install HashLink
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Invoke-WebRequest 'https://github.com/HaxeFoundation/hashlink/releases/download/1.15/hashlink-1.15.0-win.zip' -OutFile hl.zip
+          Expand-Archive hl.zip -DestinationPath hashlink -Force
+          $inner = Get-ChildItem hashlink -Directory | Select-Object -First 1
+          $hldir = if ($inner) { $inner.FullName } else { "$PWD\hashlink" }
+          Add-Content $env:GITHUB_PATH $hldir
+
+      - name: Build all targets
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          New-Item -ItemType Directory -Force out | Out-Null
+          foreach ($t in @(
+            @('shared',           'build-shared-test.hxml'),
+            @('server',           'build-gateway.hxml'),
+            @('server',           'build-zone.hxml'),
+            @('server',           'build-server-cli.hxml'),
+            @('server',           'build-server-test.hxml'),
+            @('client',           'build-client.hxml'),
+            @('client',           'build-client-test.hxml'),
+            @('tools/worldgen-tmx','build-worldgen-tmx.hxml'),
+            @('tools/zone-bots',   'build-zone-bots.hxml')
+          )) {
+            Push-Location $t[0]
+            try { haxe $t[1] } finally { Pop-Location }
+          }
+
+      - name: Unit tests
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          hl out/shared-test.hl
+          hl out/client-test.hl
