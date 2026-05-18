@@ -9,6 +9,7 @@ class TestMain {
     r.addCase(new TestDbClient());
     r.addCase(new TestAccountDal());
     r.addCase(new TestCharacterDal());
+    r.addCase(new TestZoneTileDal());
     r.addCase(new TestZoneSimulator());
     r.addCase(new TestWorldPopulator());
     r.addCase(new TestInventory());

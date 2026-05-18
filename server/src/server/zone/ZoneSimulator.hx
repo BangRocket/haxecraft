@@ -38,10 +38,13 @@ class ZoneSimulator {
   var nextObjectId:Int = 1;
 
   var characterDal:server.db.CharacterDal;
+  var tileDal:server.db.ZoneTileDal;
 
-  public function new(map:MapData, ?characterDal:server.db.CharacterDal) {
+  public function new(map:MapData, ?characterDal:server.db.CharacterDal,
+      ?tileDal:server.db.ZoneTileDal) {
     this.map = map;
     this.characterDal = characterDal;
+    this.tileDal = tileDal;
   }
 
   public function shouldFlushNow():Bool {
@@ -148,11 +151,13 @@ class ZoneSimulator {
     return gi;
   }
 
-  /** Mutate a tile's type + data and record a change for broadcast. */
+  /** Mutate a tile's type + data, record a change for broadcast, and
+      persist the edit so it survives a zone restart. */
   public function changeTile(x:Int, y:Int, type:TileType, data:Int):Void {
     map.setTile(x, y, type);
     map.setTileData(x, y, data);
     pendingTileChanges.push({ x: x, y: y, type: (type : Int), data: data });
+    if (tileDal != null) tileDal.upsert(x, y, (type : Int), data);
   }
 
   /** Clear the pending tile/item event lists (after the zone loop flushes them). */

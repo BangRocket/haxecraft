@@ -4,6 +4,7 @@ import server.net.TcpServer;
 import server.net.MessageDispatcher;
 import server.db.DbClient;
 import server.db.CharacterDal;
+import server.db.ZoneTileDal;
 import shared.Constants;
 import shared.proto.MsgType;
 
@@ -11,12 +12,21 @@ class Main {
   public static function main() {
     var db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     var characterDal = new CharacterDal(db);
+    var tileDal = new ZoneTileDal(db);
 
     Sys.println("[zone] loading map...");
     var map = MapLoader.loadFromFile("res/maps/starter.tmx");
     Sys.println('[zone] map loaded: ${map.width}x${map.height}');
 
-    var sim = new ZoneSimulator(map, characterDal);
+    // Apply persisted tile edits over the base map.
+    var overrides = tileDal.loadOverrides();
+    for (o in overrides) {
+      map.setTile(o.x, o.y, o.tileType);
+      map.setTileData(o.x, o.y, o.data);
+    }
+    Sys.println('[zone] applied ${overrides.length} persisted tile edits');
+
+    var sim = new ZoneSimulator(map, characterDal, tileDal);
     WorldPopulator.populate(sim);
     Sys.println('[zone] populated: ${sim.worldObjects.length} objects, ${sim.groundItems.length} ground items');
     var enterHandler = new EnterZoneHandler(characterDal, sim);
