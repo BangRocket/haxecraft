@@ -84,6 +84,25 @@ class EnterZoneHandler {
     conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, spBytes);
     // Existing entities are synced to this client (and vice versa) by the
     // per-tick InterestManager diff in the zone loop.
+
+    // SP2: send the zone's static world content to the joining client.
+    for (o in sim.worldObjects) {
+      var os = new shared.proto.MsgWorldObjectSpawn();
+      os.objectId = o.id;
+      os.objectTypeId = (o.objectType : Int);
+      os.tileX = o.tileX; os.tileY = o.tileY;
+      var oo = new haxe.io.BytesOutput(); os.serialize(oo);
+      conn.sendFrame(shared.proto.MsgType.WORLD_OBJECT_SPAWN, oo.getBytes());
+    }
+    for (gi in sim.groundItems) {
+      var gs = new shared.proto.MsgGroundItemSpawn();
+      gs.worldItemId = gi.id;
+      gs.itemTypeId = (gi.itemType : Int);
+      gs.count = gi.count;
+      gs.tileX = gi.tileX; gs.tileY = gi.tileY;
+      var go = new haxe.io.BytesOutput(); gs.serialize(go);
+      conn.sendFrame(shared.proto.MsgType.GROUND_ITEM_SPAWN, go.getBytes());
+    }
   }
 
   public function entityIdForConn(conn:ClientConnection):Null<Int> {

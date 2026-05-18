@@ -18,6 +18,8 @@ class Main {
 
     var sim = new ZoneSimulator(map, characterDal);
     var interest = new InterestManager();
+    WorldPopulator.populate(sim);
+    Sys.println('[zone] populated: ${sim.worldObjects.length} objects, ${sim.groundItems.length} ground items');
     var enterHandler = new EnterZoneHandler(characterDal, sim);
     var moveHandler = new MoveIntentHandler(sim, enterHandler, interest);
 

@@ -18,6 +18,10 @@ class ZoneSimulator {
   /** Moves applied by the most recent tick(). The zone loop broadcasts these. */
   public var movesThisTick(default, null):Array<MoveResult> = [];
 
+  /** Static world content (SP2). Ground items never block; objects do. */
+  public var groundItems(default, null):Array<GroundItem> = [];
+  public var worldObjects(default, null):Array<WorldObject> = [];
+
   var characterDal:server.db.CharacterDal;
 
   public function new(map:MapData, ?characterDal:server.db.CharacterDal) {
@@ -60,8 +64,7 @@ class ZoneSimulator {
 
       var nx = e.tileX + dx;
       var ny = e.tileY + dy;
-      if (!map.isWalkable(nx, ny)) continue;
-      if (entityAt(nx, ny) != null) continue;
+      if (!canStep(nx, ny)) continue;
 
       var fromX = e.tileX, fromY = e.tileY;
       e.tileX = nx;
@@ -98,5 +101,27 @@ class ZoneSimulator {
       if (e.tileX == x && e.tileY == y) return e;
     }
     return null;
+  }
+
+  public function addGroundItem(gi:GroundItem):Void {
+    groundItems.push(gi);
+  }
+
+  public function addWorldObject(wo:WorldObject):Void {
+    worldObjects.push(wo);
+  }
+
+  /** True if a world object occupies (x, y). */
+  public function objectAt(x:Int, y:Int):Bool {
+    for (o in worldObjects) {
+      if (o.tileX == x && o.tileY == y) return true;
+    }
+    return false;
+  }
+
+  /** Unified walkability: walkable terrain, no player, no world object.
+      Ground items never block. */
+  public function canStep(x:Int, y:Int):Bool {
+    return map.isWalkable(x, y) && entityAt(x, y) == null && !objectAt(x, y);
   }
 }

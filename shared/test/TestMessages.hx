@@ -151,4 +151,36 @@ class TestMessages extends Test {
     Assert.equals(11, m2.toX);
     Assert.equals(200, m2.durationMs);
   }
+
+  function testGroundItemSpawn() {
+    var m = new shared.proto.MsgGroundItemSpawn();
+    m.worldItemId = 5;
+    m.itemTypeId = 1;
+    m.count = 3;
+    m.tileX = 100;
+    m.tileY = 200;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgGroundItemSpawn.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(5, m2.worldItemId);
+    Assert.equals(1, m2.itemTypeId);
+    Assert.equals(3, m2.count);
+    Assert.equals(100, m2.tileX);
+    Assert.equals(200, m2.tileY);
+  }
+
+  function testWorldObjectSpawn() {
+    var m = new shared.proto.MsgWorldObjectSpawn();
+    m.objectId = 2;
+    m.objectTypeId = 64;
+    m.tileX = 514;
+    m.tileY = 513;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgWorldObjectSpawn.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(2, m2.objectId);
+    Assert.equals(64, m2.objectTypeId);
+    Assert.equals(514, m2.tileX);
+    Assert.equals(513, m2.tileY);
+  }
 }

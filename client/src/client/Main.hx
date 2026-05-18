@@ -21,6 +21,8 @@ import shared.proto.MsgEnterZoneAck;
 import shared.proto.MsgEntitySpawn;
 import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntityDespawn;
+import shared.proto.MsgGroundItemSpawn;
+import shared.proto.MsgWorldObjectSpawn;
 import shared.proto.MsgType;
 import sys.io.File;
 import shared.world.MapData;
@@ -70,6 +72,8 @@ class Main extends App {
     zoneDispatcher.on(MsgType.ENTITY_SPAWN, onEntitySpawn);
     zoneDispatcher.on(MsgType.ENTITY_MOVE, onEntityMove);
     zoneDispatcher.on(MsgType.ENTITY_DESPAWN, onEntityDespawn);
+    zoneDispatcher.on(MsgType.GROUND_ITEM_SPAWN, onGroundItemSpawn);
+    zoneDispatcher.on(MsgType.WORLD_OBJECT_SPAWN, onWorldObjectSpawn);
 
     loginScreen = new LoginScreen(s2d);
     loginScreen.onSubmit = onLoginSubmit;
@@ -188,6 +192,18 @@ class Main extends App {
   function onEntityDespawn(payload:Bytes):Void {
     var m = MsgEntityDespawn.deserialize(new BytesInput(payload));
     if (zoneRenderer != null) zoneRenderer.despawnEntity(m.entityId);
+  }
+
+  function onGroundItemSpawn(payload:Bytes):Void {
+    var m = MsgGroundItemSpawn.deserialize(new BytesInput(payload));
+    if (zoneRenderer != null)
+      zoneRenderer.addGroundItem(m.worldItemId, m.itemTypeId, m.count, m.tileX, m.tileY);
+  }
+
+  function onWorldObjectSpawn(payload:Bytes):Void {
+    var m = MsgWorldObjectSpawn.deserialize(new BytesInput(payload));
+    if (zoneRenderer != null)
+      zoneRenderer.addWorldObject(m.objectId, m.objectTypeId, m.tileX, m.tileY);
   }
 
   override function update(dt:Float) {
