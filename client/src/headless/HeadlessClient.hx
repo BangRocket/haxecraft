@@ -33,6 +33,9 @@ class HeadlessClient {
   public var tileY(default, null):Int = 0;
   public var sessionToken(default, null):String = "";
   public var handoffToken(default, null):String = "";
+  // SP2: counts from the zone-entry static-world burst.
+  public var worldObjectCount(default, null):Int = 0;
+  public var groundItemCount(default, null):Int = 0;
 
   public function new() {}
 
@@ -85,6 +88,24 @@ class HeadlessClient {
     var spawnFrame = FrameCodec.readFrame(zone.input);
     if ((spawnFrame.msgType : Int) != (MsgType.ENTITY_SPAWN : Int)) {
       throw 'expected ENTITY_SPAWN got ${spawnFrame.msgType}';
+    }
+
+    // SP2: drain the static-world spawn burst (world objects + ground items).
+    worldObjectCount = 0;
+    groundItemCount = 0;
+    var deadline = haxe.Timer.stamp() + 1.0;
+    while (haxe.Timer.stamp() < deadline) {
+      zone.setTimeout(0.05);
+      try {
+        var f = FrameCodec.readFrame(zone.input);
+        var mt:Int = f.msgType;
+        if (mt == (MsgType.WORLD_OBJECT_SPAWN : Int)) worldObjectCount++;
+        else if (mt == (MsgType.GROUND_ITEM_SPAWN : Int)) groundItemCount++;
+      } catch (_:haxe.io.Eof) {
+        break;
+      } catch (_:Dynamic) {
+        break;  // read timeout — the burst is drained
+      }
     }
   }
 

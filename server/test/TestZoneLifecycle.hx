@@ -40,6 +40,8 @@ class TestZoneLifecycle extends Test {
     c1.connectGateway();
     Assert.isTrue(c1.login(username, password));
     c1.enterZone();
+    Assert.isTrue(c1.groundItemCount >= 1, "expected ground items in the zone-entry burst");
+    Assert.isTrue(c1.worldObjectCount >= 1, "expected world objects in the zone-entry burst");
     var spawnX = c1.tileX;
     var spawnY = c1.tileY;
 

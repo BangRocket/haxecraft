@@ -29,8 +29,11 @@ class WorldPopulator {
   static inline var SEED = 0x5C2117E;
 
   public static function populate(sim:ZoneSimulator):Void {
-    var spawnX = Constants.DEFAULT_SPAWN_X;
-    var spawnY = Constants.DEFAULT_SPAWN_Y;
+    // Anchor on a guaranteed-walkable tile near the nominal spawn — on the
+    // procgen map DEFAULT_SPAWN itself may land in water/rock.
+    var anchor = sim.map.findWalkableNear(Constants.DEFAULT_SPAWN_X, Constants.DEFAULT_SPAWN_Y);
+    var spawnX = anchor.x;
+    var spawnY = anchor.y;
 
     // World objects: a fixed furniture camp just off the spawn tile.
     var oid = 1;
