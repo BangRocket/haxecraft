@@ -9,6 +9,7 @@ import client.net.TcpConnection;
 import client.net.ClientDispatcher;
 import client.ui.LoginScreen;
 import client.ui.ConnectingZoneScreen;
+import client.ui.InventoryScreen;
 import shared.Constants;
 import shared.proto.FrameCodec;
 import shared.proto.MsgHello;
@@ -23,6 +24,9 @@ import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntityDespawn;
 import shared.proto.MsgGroundItemSpawn;
 import shared.proto.MsgWorldObjectSpawn;
+import shared.proto.MsgInventory;
+import shared.proto.MsgGroundItemDespawn;
+import shared.proto.MsgSelectActiveItem;
 import shared.proto.MsgType;
 import sys.io.File;
 import shared.world.MapData;
@@ -57,6 +61,11 @@ class Main extends App {
   var zoneRenderer:ZoneRenderer;
   var inputDispatcher:client.game.InputDispatcher;
 
+  var inventoryScreen:InventoryScreen;
+  var inventoryOpen:Bool = false;
+  var invSlots:Array<{itemTypeId:Int, count:Int}> = [];
+  var invActiveSlot:Int = 0;
+
   static function main() {
     new Main();
   }
@@ -74,6 +83,8 @@ class Main extends App {
     zoneDispatcher.on(MsgType.ENTITY_DESPAWN, onEntityDespawn);
     zoneDispatcher.on(MsgType.GROUND_ITEM_SPAWN, onGroundItemSpawn);
     zoneDispatcher.on(MsgType.WORLD_OBJECT_SPAWN, onWorldObjectSpawn);
+    zoneDispatcher.on(MsgType.INVENTORY, onInventory);
+    zoneDispatcher.on(MsgType.GROUND_ITEM_DESPAWN, onGroundItemDespawn);
 
     loginScreen = new LoginScreen(s2d);
     loginScreen.onSubmit = onLoginSubmit;
@@ -83,7 +94,50 @@ class Main extends App {
   function onEvent(e:Event):Void {
     if (state == LOGGING_IN && loginScreen != null && loginScreen.parent != null) {
       loginScreen.handleKey(e);
+      return;
     }
+    if (state == IN_ZONE) {
+      switch e.kind {
+        case EKeyDown:
+          if (e.keyCode == hxd.Key.I) {
+            toggleInventory();
+          } else if (e.keyCode >= hxd.Key.NUMBER_1 && e.keyCode <= hxd.Key.NUMBER_9) {
+            selectActiveSlot(e.keyCode - hxd.Key.NUMBER_1);
+          }
+        default:
+      }
+    }
+  }
+
+  function onInventory(payload:Bytes):Void {
+    var m = MsgInventory.deserialize(new BytesInput(payload));
+    invSlots = m.slots;
+    invActiveSlot = m.activeSlot;
+    if (inventoryScreen != null) inventoryScreen.setSlots(invSlots, invActiveSlot);
+  }
+
+  function onGroundItemDespawn(payload:Bytes):Void {
+    var m = MsgGroundItemDespawn.deserialize(new BytesInput(payload));
+    if (zoneRenderer != null) zoneRenderer.removeGroundItem(m.worldItemId);
+  }
+
+  function toggleInventory():Void {
+    inventoryOpen = !inventoryOpen;
+    if (inventoryOpen) {
+      inventoryScreen = new InventoryScreen(s2d);
+      inventoryScreen.setSlots(invSlots, invActiveSlot);
+    } else if (inventoryScreen != null) {
+      inventoryScreen.remove();
+      inventoryScreen = null;
+    }
+  }
+
+  function selectActiveSlot(slot:Int):Void {
+    if (zoneConn == null) return;
+    var m = new MsgSelectActiveItem();
+    m.slot = slot;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.SELECT_ACTIVE_ITEM, out.getBytes());
   }
 
   function onLoginSubmit(username:String, password:String):Void {

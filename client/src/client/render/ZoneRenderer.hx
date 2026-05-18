@@ -156,6 +156,12 @@ class ZoneRenderer {
     groundItems.push(new GroundItemVisual(id, itemTypeId, count, tileX, tileY));
   }
 
+  public function removeGroundItem(id:Int):Void {
+    for (gi in groundItems) {
+      if (gi.id == id) { groundItems.remove(gi); return; }
+    }
+  }
+
   public function addWorldObject(id:Int, objectTypeId:Int, tileX:Int, tileY:Int):Void {
     worldObjects.push({ id: id, typeId: objectTypeId, tileX: tileX, tileY: tileY });
   }
