@@ -16,6 +16,7 @@ class TestMain {
     r.addCase(new TestMapData());
     r.addCase(new TestTmxParser());
     r.addCase(new TestTileType());
+    r.addCase(new TestItemCatalog());
     Report.create(r);
     r.run();
   }
