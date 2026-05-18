@@ -22,4 +22,15 @@ class TestSpriteCatalog extends Test {
     Assert.equals("terrain", tree.sheet);
     Assert.equals(10, tree.col);
   }
+
+  function testEveryItemTypeHasASprite() {
+    Assert.isTrue(SpriteCatalog.itemsComplete());
+  }
+
+  function testAllItemsCoversCatalog() {
+    Assert.equals(52, SpriteCatalog.ALL_ITEMS.length);
+    for (it in SpriteCatalog.ALL_ITEMS) {
+      Assert.isTrue(SpriteCatalog.ITEM_TABLE.exists((it : Int)));
+    }
+  }
 }
