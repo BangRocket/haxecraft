@@ -22,12 +22,14 @@ class Main {
     var enterHandler = new EnterZoneHandler(characterDal, sim);
     var moveHandler = new MoveIntentHandler(sim, enterHandler);
     var inventoryHandler = new InventoryHandler(sim, enterHandler);
+    var tileHandler = new TileHandler(sim, enterHandler);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
     dispatcher.register(MsgType.ENTER_ZONE, enterHandler.handle);
     dispatcher.register(MsgType.MOVE_INTENT, moveHandler.handle);
     dispatcher.register(MsgType.SELECT_ACTIVE_ITEM, inventoryHandler.handle);
+    dispatcher.register(MsgType.USE_ITEM_ON_TILE, tileHandler.handle);
 
     var tickInterval = 1.0 / Constants.TICK_HZ;
     var nextTickAt = Sys.time() + tickInterval;
@@ -76,6 +78,7 @@ class Main {
         sim.tick();
         moveHandler.broadcastMoves();
         inventoryHandler.broadcastPickups();
+        tileHandler.flush();
         if (sim.shouldFlushNow()) sim.flushPositions();
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {

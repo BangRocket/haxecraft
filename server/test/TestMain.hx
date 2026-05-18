@@ -12,6 +12,7 @@ class TestMain {
     r.addCase(new TestZoneSimulator());
     r.addCase(new TestWorldPopulator());
     r.addCase(new TestInventory());
+    r.addCase(new TestTileInteraction());
     r.addCase(new TestFrameBuffer());
     r.addCase(new TestSessionStore());
     r.addCase(new TestLoginFlow());
