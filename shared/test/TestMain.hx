@@ -18,6 +18,7 @@ class TestMain {
     r.addCase(new TestTileType());
     r.addCase(new TestItemCatalog());
     r.addCase(new TestItemStack());
+    r.addCase(new TestRecipeBook());
     Report.create(r);
     r.run();
   }
