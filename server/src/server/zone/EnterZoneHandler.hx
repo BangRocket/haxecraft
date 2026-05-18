@@ -10,6 +10,7 @@ import shared.proto.MsgEnterZone;
 import shared.proto.MsgEnterZoneAck;
 import shared.proto.MsgType;
 import shared.security.HandoffToken;
+import shared.item.ItemType;
 
 class EnterZoneHandler {
   var characterDal:CharacterDal;
@@ -69,6 +70,15 @@ class EnterZoneHandler {
     sendAck(conn, ack);
 
     var runtime = new Character(ch.id, ch.name, conn, sx, sy);
+    runtime.inventory = Inventory.fromRows(characterDal.loadInventory(ch.id));
+    // Bootstrap: an empty inventory gets the basic wood tool kit, so the
+    // gather -> craft loop is reachable from a fresh start.
+    if (runtime.inventory.isEmpty()) {
+      runtime.inventory.add(ItemType.WOOD_PICKAXE, 1);
+      runtime.inventory.add(ItemType.WOOD_AXE, 1);
+      runtime.inventory.add(ItemType.WOOD_SHOVEL, 1);
+      runtime.inventory.add(ItemType.WOOD_HOE, 1);
+    }
     sim.spawn(runtime);
     connToEntity.set(conn.id, ch.id);
     Sys.println('[zone] conn ${conn.id} spawned char=${ch.id} at (${ch.tileX},${ch.tileY})');
@@ -82,6 +92,10 @@ class EnterZoneHandler {
     var spOut = new haxe.io.BytesOutput(); sp.serialize(spOut);
     var spBytes = spOut.getBytes();
     conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, spBytes);
+
+    // SP3: send the joining client its inventory.
+    InventoryHandler.send(runtime);
+
     // Existing entities are synced to this client (and vice versa) by the
     // per-tick InterestManager diff in the zone loop.
 

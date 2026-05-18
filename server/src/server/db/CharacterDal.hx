@@ -47,4 +47,28 @@ class CharacterDal {
       [tileX, tileY, characterId]
     );
   }
+
+  /** Inventory slots for a character, ordered by slot index. */
+  public function loadInventory(characterId:Int):Array<{itemTypeId:Int, count:Int}> {
+    var rows = db.query(
+      "SELECT item_type_id, count FROM character_items WHERE character_id = ? ORDER BY slot",
+      [characterId]
+    );
+    var out:Array<{itemTypeId:Int, count:Int}> = [];
+    for (r in rows) {
+      out.push({ itemTypeId: (r.item_type_id : Int), count: (r.count : Int) });
+    }
+    return out;
+  }
+
+  /** Replace a character's stored inventory with the given ordered slots. */
+  public function saveInventory(characterId:Int, stacks:Array<{itemTypeId:Int, count:Int}>):Void {
+    db.exec("DELETE FROM character_items WHERE character_id = ?", [characterId]);
+    for (i in 0...stacks.length) {
+      db.exec(
+        "INSERT INTO character_items (character_id, slot, item_type_id, count) VALUES (?, ?, ?, ?)",
+        [characterId, i, stacks[i].itemTypeId, stacks[i].count]
+      );
+    }
+  }
 }

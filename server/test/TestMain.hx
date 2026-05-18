@@ -9,9 +9,13 @@ class TestMain {
     r.addCase(new TestDbClient());
     r.addCase(new TestAccountDal());
     r.addCase(new TestCharacterDal());
+    r.addCase(new TestZoneTileDal());
     r.addCase(new TestZoneSimulator());
     r.addCase(new TestInterestManager());
     r.addCase(new TestWorldPopulator());
+    r.addCase(new TestInventory());
+    r.addCase(new TestTileInteraction());
+    r.addCase(new TestCrafting());
     r.addCase(new TestFrameBuffer());
     r.addCase(new TestSessionStore());
     r.addCase(new TestLoginFlow());

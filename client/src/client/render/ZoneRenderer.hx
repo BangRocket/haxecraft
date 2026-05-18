@@ -156,6 +156,12 @@ class ZoneRenderer {
     groundItems.push(new GroundItemVisual(id, itemTypeId, count, tileX, tileY));
   }
 
+  public function removeGroundItem(id:Int):Void {
+    for (gi in groundItems) {
+      if (gi.id == id) { groundItems.remove(gi); return; }
+    }
+  }
+
   public function addWorldObject(id:Int, objectTypeId:Int, tileX:Int, tileY:Int):Void {
     worldObjects.push({ id: id, typeId: objectTypeId, tileX: tileX, tileY: tileY });
   }
@@ -209,6 +215,14 @@ class ZoneRenderer {
     var v = entities.get(ownEntityId);
     if (v == null) return {x: 0, y: 0};
     return v.currentPos();
+  }
+
+  /** The tile the local player faces — the SP4 interaction target. */
+  public function ownInteractTarget():{x:Int, y:Int} {
+    var v = entities.get(ownEntityId);
+    if (v == null) return {x: 0, y: 0};
+    var d:Direction = v.facing;
+    return { x: Std.int(v.toX) + d.dx(), y: Std.int(v.toY) + d.dy() };
   }
 
   function drawEntities():Void {

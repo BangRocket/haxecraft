@@ -36,18 +36,16 @@ class WorldPopulator {
     var spawnY = anchor.y;
 
     // World objects: a fixed furniture camp just off the spawn tile.
-    var oid = 1;
     for (slot in CAMP) {
       var tx = spawnX + slot.dx;
       var ty = spawnY + slot.dy;
       // Procgen variance: skip a slot whose tile is not walkable terrain.
       if (!sim.map.isWalkable(tx, ty)) continue;
-      sim.addWorldObject(new WorldObject(oid++, slot.t, tx, ty));
+      sim.addWorldObject(new WorldObject(sim.freshObjectId(), slot.t, tx, ty));
     }
 
     // Ground items: deterministic scatter across walkable tiles near spawn.
     var rng = new SeededRng(SEED);
-    var iid = 1;
     var placed = 0;
     var attempts = 0;
     while (placed < SCATTER_COUNT && attempts < SCATTER_COUNT * 100) {
@@ -58,7 +56,7 @@ class WorldPopulator {
       if (sim.objectAt(tx, ty)) continue;
       var t = SCATTER[rng.nextInt(SCATTER.length)];
       var count = t.stackable() ? 1 + rng.nextInt(5) : 1;
-      sim.addGroundItem(new GroundItem(iid++, t, count, tx, ty));
+      sim.addGroundItem(new GroundItem(sim.freshGroundItemId(), t, count, tx, ty));
       placed++;
     }
   }

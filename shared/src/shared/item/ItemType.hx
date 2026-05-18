@@ -95,6 +95,20 @@ enum abstract ItemType(Int) to Int from Int {
     return NAMES.exists(id) ? NAMES.get(id) : 'item#$id';
   }
 
+  /** Tool kind: 0=shovel, 1=hoe, 2=sword, 3=pickaxe, 4=axe; -1 if not a tool. */
+  public function toolKind():Int {
+    var id:Int = this;
+    if (id < 30 || id > 54) return -1;
+    return Std.int((id - 30) / 5);
+  }
+
+  /** Material tier: 0=wood, 1=rock, 2=iron, 3=gold, 4=gem; -1 if not a tool. */
+  public function toolTier():Int {
+    var id:Int = this;
+    if (id < 30 || id > 54) return -1;
+    return (id - 30) % 5;
+  }
+
   static var TOOL_TIERS:Array<String> = ["Wood", "Rock", "Iron", "Gold", "Gem"];
   static var TOOL_TYPES:Array<String> = ["Shovel", "Hoe", "Sword", "Pickaxe", "Axe"];
 

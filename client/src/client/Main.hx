@@ -11,6 +11,8 @@ import client.ui.LoginScreen;
 import client.ui.ConnectingZoneScreen;
 import client.ui.ChatBox;
 import client.ui.ChatCommandParser;
+import client.ui.InventoryScreen;
+import client.ui.CraftingScreen;
 import shared.Constants;
 import shared.proto.MsgChat;
 import shared.proto.ChatChannel;
@@ -27,6 +29,13 @@ import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntityDespawn;
 import shared.proto.MsgGroundItemSpawn;
 import shared.proto.MsgWorldObjectSpawn;
+import shared.proto.MsgInventory;
+import shared.proto.MsgGroundItemDespawn;
+import shared.proto.MsgSelectActiveItem;
+import shared.proto.MsgUseItemOnTile;
+import shared.proto.MsgTileChange;
+import shared.proto.MsgCraft;
+import shared.proto.MsgPlaceFurniture;
 import shared.proto.MsgType;
 import sys.io.File;
 import shared.world.MapData;
@@ -62,6 +71,12 @@ class Main extends App {
   var inputDispatcher:client.game.InputDispatcher;
   var chatBox:ChatBox;
 
+  var inventoryScreen:InventoryScreen;
+  var inventoryOpen:Bool = false;
+  var invSlots:Array<{itemTypeId:Int, count:Int}> = [];
+  var invActiveSlot:Int = 0;
+  var craftingScreen:CraftingScreen;
+
   static function main() {
     new Main();
   }
@@ -81,6 +96,9 @@ class Main extends App {
     zoneDispatcher.on(MsgType.GROUND_ITEM_SPAWN, onGroundItemSpawn);
     zoneDispatcher.on(MsgType.WORLD_OBJECT_SPAWN, onWorldObjectSpawn);
     zoneDispatcher.on(MsgType.CHAT, onChat);
+    zoneDispatcher.on(MsgType.INVENTORY, onInventory);
+    zoneDispatcher.on(MsgType.GROUND_ITEM_DESPAWN, onGroundItemDespawn);
+    zoneDispatcher.on(MsgType.TILE_CHANGE, onTileChange);
 
     loginScreen = new LoginScreen(s2d);
     loginScreen.onSubmit = onLoginSubmit;
@@ -90,9 +108,114 @@ class Main extends App {
   function onEvent(e:Event):Void {
     if (state == LOGGING_IN && loginScreen != null && loginScreen.parent != null) {
       loginScreen.handleKey(e);
-    } else if (state == IN_ZONE && chatBox != null) {
-      chatBox.handleKey(e);
+      return;
     }
+    if (state == IN_ZONE && chatBox != null) {
+      chatBox.handleKey(e);
+      // While the chat input line is open it has key focus — don't also
+      // trigger inventory / crafting / movement keys.
+      if (chatBox.inputActive) return;
+    }
+    if (state == IN_ZONE) {
+      switch e.kind {
+        case EKeyDown:
+          if (craftingScreen != null) {
+            // Crafting menu has key focus while open.
+            if (e.keyCode == hxd.Key.C) toggleCrafting();
+            else craftingScreen.handleKey(e.keyCode);
+          } else if (e.keyCode == hxd.Key.I) {
+            toggleInventory();
+          } else if (e.keyCode == hxd.Key.C) {
+            toggleCrafting();
+          } else if (e.keyCode == hxd.Key.SPACE) {
+            useOnFacedTile();
+          } else if (e.keyCode == hxd.Key.P) {
+            placeFurniture();
+          } else if (e.keyCode >= hxd.Key.NUMBER_1 && e.keyCode <= hxd.Key.NUMBER_9) {
+            selectActiveSlot(e.keyCode - hxd.Key.NUMBER_1);
+          }
+        default:
+      }
+    }
+  }
+
+  function toggleCrafting():Void {
+    if (craftingScreen != null) {
+      craftingScreen.remove();
+      craftingScreen = null;
+      return;
+    }
+    craftingScreen = new CraftingScreen(s2d);
+    craftingScreen.onCraft = sendCraft;
+  }
+
+  function sendCraft(recipeId:Int):Void {
+    if (zoneConn == null) return;
+    var m = new MsgCraft();
+    m.recipeId = recipeId;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.CRAFT, out.getBytes());
+  }
+
+  /** Place the held furniture item on the faced tile (P). */
+  function placeFurniture():Void {
+    if (zoneConn == null || zoneRenderer == null) return;
+    var t = zoneRenderer.ownInteractTarget();
+    var m = new MsgPlaceFurniture();
+    m.tileX = t.x;
+    m.tileY = t.y;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.PLACE_FURNITURE, out.getBytes());
+  }
+
+  function onInventory(payload:Bytes):Void {
+    var m = MsgInventory.deserialize(new BytesInput(payload));
+    invSlots = m.slots;
+    invActiveSlot = m.activeSlot;
+    if (inventoryScreen != null) inventoryScreen.setSlots(invSlots, invActiveSlot);
+  }
+
+  function onGroundItemDespawn(payload:Bytes):Void {
+    var m = MsgGroundItemDespawn.deserialize(new BytesInput(payload));
+    if (zoneRenderer != null) zoneRenderer.removeGroundItem(m.worldItemId);
+  }
+
+  function toggleInventory():Void {
+    inventoryOpen = !inventoryOpen;
+    if (inventoryOpen) {
+      inventoryScreen = new InventoryScreen(s2d);
+      inventoryScreen.setSlots(invSlots, invActiveSlot);
+    } else if (inventoryScreen != null) {
+      inventoryScreen.remove();
+      inventoryScreen = null;
+    }
+  }
+
+  function selectActiveSlot(slot:Int):Void {
+    if (zoneConn == null) return;
+    var m = new MsgSelectActiveItem();
+    m.slot = slot;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.SELECT_ACTIVE_ITEM, out.getBytes());
+  }
+
+  function onTileChange(payload:Bytes):Void {
+    var m = MsgTileChange.deserialize(new BytesInput(payload));
+    if (map != null) {
+      map.setTile(m.tileX, m.tileY, m.tileType);
+      map.setTileData(m.tileX, m.tileY, m.data);
+    }
+  }
+
+  /** Use the active item on the tile the player faces (SPACE). */
+  function useOnFacedTile():Void {
+    if (zoneConn == null || zoneRenderer == null) return;
+    var t = zoneRenderer.ownInteractTarget();
+    var m = new MsgUseItemOnTile();
+    m.tileX = t.x;
+    m.tileY = t.y;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.USE_ITEM_ON_TILE, out.getBytes());
   }
 
   function onLoginSubmit(username:String, password:String):Void {

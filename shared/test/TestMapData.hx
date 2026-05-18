@@ -53,4 +53,23 @@ class TestMapData extends Test {
     Assert.isTrue(Math.abs(pos.x - 3) <= 2);
     Assert.isTrue(Math.abs(pos.y - 3) <= 2);
   }
+
+  function testTileDataDefaultsToZero() {
+    var m = MapData.filled(4, 4, TileType.GRASS);
+    Assert.equals(0, m.tileData(2, 2));
+  }
+
+  function testTileDataSetGet() {
+    var m = MapData.filled(4, 4, TileType.GRASS);
+    m.setTileData(1, 2, 42);
+    Assert.equals(42, m.tileData(1, 2));
+    Assert.equals(0, m.tileData(0, 0));  // independent of tiles
+  }
+
+  function testTileDataOutOfBounds() {
+    var m = MapData.filled(3, 3, TileType.GRASS);
+    Assert.equals(0, m.tileData(-1, 0));
+    m.setTileData(99, 99, 5);  // no-op, no crash
+    Assert.equals(0, m.tileData(99, 99));
+  }
 }

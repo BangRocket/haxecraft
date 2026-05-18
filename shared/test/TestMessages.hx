@@ -197,4 +197,83 @@ class TestMessages extends Test {
     Assert.equals("Bob", m2.senderName);
     Assert.equals("waves.", m2.text);
   }
+
+  function testInventory() {
+    var m = new shared.proto.MsgInventory();
+    m.activeSlot = 2;
+    m.slots = [{ itemTypeId: 1, count: 7 }, { itemTypeId: 54, count: 1 }];
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgInventory.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(2, m2.activeSlot);
+    Assert.equals(2, m2.slots.length);
+    Assert.equals(1, m2.slots[0].itemTypeId);
+    Assert.equals(7, m2.slots[0].count);
+    Assert.equals(54, m2.slots[1].itemTypeId);
+    Assert.equals(1, m2.slots[1].count);
+  }
+
+  function testGroundItemDespawn() {
+    var m = new shared.proto.MsgGroundItemDespawn();
+    m.worldItemId = 17;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgGroundItemDespawn.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(17, m2.worldItemId);
+  }
+
+  function testSelectActiveItem() {
+    var m = new shared.proto.MsgSelectActiveItem();
+    m.slot = 4;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgSelectActiveItem.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(4, m2.slot);
+  }
+
+  function testUseItemOnTile() {
+    var m = new shared.proto.MsgUseItemOnTile();
+    m.tileX = 480;
+    m.tileY = 543;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgUseItemOnTile.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(480, m2.tileX);
+    Assert.equals(543, m2.tileY);
+  }
+
+  function testTileChange() {
+    var m = new shared.proto.MsgTileChange();
+    m.tileX = 100;
+    m.tileY = 200;
+    m.tileType = 16;
+    m.data = 3;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgTileChange.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(100, m2.tileX);
+    Assert.equals(200, m2.tileY);
+    Assert.equals(16, m2.tileType);
+    Assert.equals(3, m2.data);
+  }
+
+  function testCraft() {
+    var m = new shared.proto.MsgCraft();
+    m.recipeId = 12;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgCraft.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(12, m2.recipeId);
+  }
+
+  function testPlaceFurniture() {
+    var m = new shared.proto.MsgPlaceFurniture();
+    m.tileX = 480;
+    m.tileY = 544;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgPlaceFurniture.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(480, m2.tileX);
+    Assert.equals(544, m2.tileY);
+  }
 }

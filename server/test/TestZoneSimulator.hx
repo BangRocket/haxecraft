@@ -124,4 +124,18 @@ class TestZoneSimulator extends Test {
     Assert.equals(2, ch.tileX);                   // walked over it
     Assert.equals(1, sim.movesThisTick.length);
   }
+
+  function testWalkOverPicksUpGroundItem() {
+    var sim = new ZoneSimulator(buildMap());
+    sim.addGroundItem(new GroundItem(7, ItemType.WOOD, 4, 2, 1));
+    var ch = new Character(1, "alice", null, 1, 1);
+    sim.spawn(ch);
+    ch.pendingDir = Direction.EAST;
+    sim.tick();
+    Assert.equals(2, ch.tileX);
+    Assert.isTrue(ch.inventory.has(ItemType.WOOD, 4));  // collected
+    Assert.equals(0, sim.groundItems.length);          // removed from the world
+    Assert.equals(1, sim.pickupsThisTick.length);
+    Assert.equals(7, sim.pickupsThisTick[0].worldItemId);
+  }
 }

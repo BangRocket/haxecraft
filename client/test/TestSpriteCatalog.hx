@@ -10,8 +10,8 @@ class TestSpriteCatalog extends Test {
     Assert.isTrue(SpriteCatalog.isComplete());
   }
 
-  function testAllTilesListCoversIds1To10() {
-    Assert.equals(10, SpriteCatalog.ALL_TILES.length);
+  function testAllTilesListCoversEveryType() {
+    Assert.equals(19, SpriteCatalog.ALL_TILES.length);
     for (tt in SpriteCatalog.ALL_TILES) {
       Assert.isTrue(SpriteCatalog.TILE_TABLE.exists((tt : Int)));
     }

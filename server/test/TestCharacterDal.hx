@@ -56,4 +56,34 @@ class TestCharacterDal extends Test {
     Assert.equals(100, c.tileX);
     Assert.equals(200, c.tileY);
   }
+
+  function testInventoryRoundTrips() {
+    var charId = charDal.autoCreate(seedAccountId, "test_char_seed");
+    charDal.saveInventory(charId, [
+      { itemTypeId: 1, count: 7 },
+      { itemTypeId: 54, count: 1 },
+      { itemTypeId: 12, count: 3 },
+    ]);
+    var loaded = charDal.loadInventory(charId);
+    Assert.equals(3, loaded.length);
+    Assert.equals(1, loaded[0].itemTypeId);
+    Assert.equals(7, loaded[0].count);
+    Assert.equals(54, loaded[1].itemTypeId);
+    Assert.equals(3, loaded[2].count);
+  }
+
+  function testSaveInventoryReplaces() {
+    var charId = charDal.autoCreate(seedAccountId, "test_char_seed");
+    charDal.saveInventory(charId, [{ itemTypeId: 1, count: 5 }]);
+    charDal.saveInventory(charId, [{ itemTypeId: 2, count: 9 }]);
+    var loaded = charDal.loadInventory(charId);
+    Assert.equals(1, loaded.length);
+    Assert.equals(2, loaded[0].itemTypeId);
+    Assert.equals(9, loaded[0].count);
+  }
+
+  function testLoadInventoryEmptyByDefault() {
+    var charId = charDal.autoCreate(seedAccountId, "test_char_seed");
+    Assert.equals(0, charDal.loadInventory(charId).length);
+  }
 }

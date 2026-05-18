@@ -28,4 +28,24 @@ class TestTileType extends Test {
     Assert.equals(9, (LAVA : Int));
     Assert.equals(10, (CACTUS : Int));
   }
+
+  function testInteractiveWalkableTypes() {
+    Assert.isTrue((FARMLAND : TileType).isWalkable());
+    Assert.isTrue((WHEAT : TileType).isWalkable());
+    Assert.isTrue((HOLE : TileType).isWalkable());
+    Assert.isTrue((TREE_SAPLING : TileType).isWalkable());
+    Assert.isTrue((CACTUS_SAPLING : TileType).isWalkable());
+  }
+
+  function testInteractiveBlockedTypes() {
+    Assert.isFalse((IRON_ORE : TileType).isWalkable());
+    Assert.isFalse((GOLD_ORE : TileType).isWalkable());
+    Assert.isFalse((GEM_ORE : TileType).isWalkable());
+    Assert.isFalse((HARD_ROCK : TileType).isWalkable());
+  }
+
+  function testInteractiveIds() {
+    Assert.equals(11, (IRON_ORE : Int));
+    Assert.equals(19, (HOLE : Int));
+  }
 }
