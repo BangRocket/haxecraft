@@ -27,6 +27,8 @@ import shared.proto.MsgWorldObjectSpawn;
 import shared.proto.MsgInventory;
 import shared.proto.MsgGroundItemDespawn;
 import shared.proto.MsgSelectActiveItem;
+import shared.proto.MsgUseItemOnTile;
+import shared.proto.MsgTileChange;
 import shared.proto.MsgType;
 import sys.io.File;
 import shared.world.MapData;
@@ -85,6 +87,7 @@ class Main extends App {
     zoneDispatcher.on(MsgType.WORLD_OBJECT_SPAWN, onWorldObjectSpawn);
     zoneDispatcher.on(MsgType.INVENTORY, onInventory);
     zoneDispatcher.on(MsgType.GROUND_ITEM_DESPAWN, onGroundItemDespawn);
+    zoneDispatcher.on(MsgType.TILE_CHANGE, onTileChange);
 
     loginScreen = new LoginScreen(s2d);
     loginScreen.onSubmit = onLoginSubmit;
@@ -101,6 +104,8 @@ class Main extends App {
         case EKeyDown:
           if (e.keyCode == hxd.Key.I) {
             toggleInventory();
+          } else if (e.keyCode == hxd.Key.SPACE) {
+            useOnFacedTile();
           } else if (e.keyCode >= hxd.Key.NUMBER_1 && e.keyCode <= hxd.Key.NUMBER_9) {
             selectActiveSlot(e.keyCode - hxd.Key.NUMBER_1);
           }
@@ -138,6 +143,25 @@ class Main extends App {
     m.slot = slot;
     var out = new BytesOutput(); m.serialize(out);
     zoneConn.sendFrame(MsgType.SELECT_ACTIVE_ITEM, out.getBytes());
+  }
+
+  function onTileChange(payload:Bytes):Void {
+    var m = MsgTileChange.deserialize(new BytesInput(payload));
+    if (map != null) {
+      map.setTile(m.tileX, m.tileY, m.tileType);
+      map.setTileData(m.tileX, m.tileY, m.data);
+    }
+  }
+
+  /** Use the active item on the tile the player faces (SPACE). */
+  function useOnFacedTile():Void {
+    if (zoneConn == null || zoneRenderer == null) return;
+    var t = zoneRenderer.ownInteractTarget();
+    var m = new MsgUseItemOnTile();
+    m.tileX = t.x;
+    m.tileY = t.y;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.USE_ITEM_ON_TILE, out.getBytes());
   }
 
   function onLoginSubmit(username:String, password:String):Void {
