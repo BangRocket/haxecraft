@@ -137,6 +137,25 @@ class HeadlessClient {
     return false;
   }
 
+  /** Read whatever zone frames arrive within `durationS`, return them all.
+      Used by tests to observe spawns/moves of other entities. **/
+  public function drainFrames(durationS:Float):Array<{msgType:Int, payload:Bytes}> {
+    var out:Array<{msgType:Int, payload:Bytes}> = [];
+    var deadline = haxe.Timer.stamp() + durationS;
+    while (haxe.Timer.stamp() < deadline) {
+      zone.setTimeout(0.05);
+      try {
+        var f = FrameCodec.readFrame(zone.input);
+        out.push({ msgType: (f.msgType : Int), payload: f.payload });
+      } catch (_:haxe.io.Eof) {
+        break;
+      } catch (_:Dynamic) {
+        // read timeout — keep polling until the deadline
+      }
+    }
+    return out;
+  }
+
   public function close():Void {
     if (zone != null) try zone.close() catch (_:Dynamic) {}
     if (gateway != null) try gateway.close() catch (_:Dynamic) {}

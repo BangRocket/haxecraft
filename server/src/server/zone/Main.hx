@@ -27,10 +27,11 @@ class Main {
     Sys.println('[zone] applied ${overrides.length} persisted tile edits');
 
     var sim = new ZoneSimulator(map, characterDal, tileDal);
+    var interest = new InterestManager();
     WorldPopulator.populate(sim);
     Sys.println('[zone] populated: ${sim.worldObjects.length} objects, ${sim.groundItems.length} ground items');
     var enterHandler = new EnterZoneHandler(characterDal, sim);
-    var moveHandler = new MoveIntentHandler(sim, enterHandler);
+    var moveHandler = new MoveIntentHandler(sim, enterHandler, interest);
     var inventoryHandler = new InventoryHandler(sim, enterHandler);
     var tileHandler = new TileHandler(sim, enterHandler);
     var craftHandler = new CraftHandler(sim, enterHandler);
@@ -59,19 +60,23 @@ class Main {
           if (owned != null) {
             var ch = sim.entityById(owned);
             if (ch != null) {
-              characterDal.savePosition(ch.id, ch.tileX, ch.tileY);
-              characterDal.saveInventory(ch.id, ch.inventory.toRows());
+              try {
+                characterDal.savePosition(ch.id, ch.tileX, ch.tileY);
+                characterDal.saveInventory(ch.id, ch.inventory.toRows());
+              } catch (err:Dynamic) {
+                Sys.println('[zone] disconnect save failed for char ${ch.id}: $err');
+              }
               Sys.println('[zone] conn ${c.id} disconnected - saved char ${ch.id} at (${ch.tileX},${ch.tileY})');
 
-              // Broadcast despawn to remaining entities BEFORE removing.
+              // Despawn for every observer that currently knows this entity.
               var dp = new shared.proto.MsgEntityDespawn();
               dp.entityId = owned;
               var dpOut = new haxe.io.BytesOutput(); dp.serialize(dpOut);
               var dpBytes = dpOut.getBytes();
-              for (other in sim.allEntities()) {
-                if (other.id == owned) continue;
-                if (other.conn != null && other.conn.alive) {
-                  other.conn.sendFrame(shared.proto.MsgType.ENTITY_DESPAWN, dpBytes);
+              for (obsId in interest.forget(owned)) {
+                var obs = sim.entityById(obsId);
+                if (obs != null && obs.conn != null && obs.conn.alive) {
+                  obs.conn.sendFrame(shared.proto.MsgType.ENTITY_DESPAWN, dpBytes);
                 }
               }
 
@@ -92,6 +97,8 @@ class Main {
         moveHandler.broadcastMoves();
         inventoryHandler.broadcastPickups();
         tileHandler.flush();
+        var entityList = [for (e in sim.allEntities()) e];
+        broadcastInterestDiffs(sim, interest.update(entityList));
         if (sim.shouldFlushNow()) sim.flushPositions();
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {
@@ -100,6 +107,30 @@ class Main {
       }
 
       Sys.sleep(0.001);
+    }
+  }
+
+  static function broadcastInterestDiffs(sim:ZoneSimulator, diffs:Array<InterestDiff>):Void {
+    for (d in diffs) {
+      var observer = sim.entityById(d.observerId);
+      if (observer == null || observer.conn == null || !observer.conn.alive) continue;
+      for (id in d.entered) {
+        var e = sim.entityById(id);
+        if (e == null) continue;
+        var sp = new shared.proto.MsgEntitySpawn();
+        sp.entityId = e.id;
+        sp.name = e.name;
+        sp.tileX = e.tileX;
+        sp.tileY = e.tileY;
+        var o = new haxe.io.BytesOutput(); sp.serialize(o);
+        observer.conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, o.getBytes());
+      }
+      for (id in d.left) {
+        var dp = new shared.proto.MsgEntityDespawn();
+        dp.entityId = id;
+        var o = new haxe.io.BytesOutput(); dp.serialize(o);
+        observer.conn.sendFrame(shared.proto.MsgType.ENTITY_DESPAWN, o.getBytes());
+      }
     }
   }
 }

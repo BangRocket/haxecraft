@@ -58,8 +58,14 @@ class ZoneSimulator {
   public function flushPositions():Void {
     if (characterDal == null) return;
     for (e in entities) {
-      characterDal.savePosition(e.id, e.tileX, e.tileY);
-      characterDal.saveInventory(e.id, e.inventory.toRows());
+      // A DB write must never crash the zone (e.g. the character row was
+      // removed out from under a live session).
+      try {
+        characterDal.savePosition(e.id, e.tileX, e.tileY);
+        characterDal.saveInventory(e.id, e.inventory.toRows());
+      } catch (err:Dynamic) {
+        Sys.println('[zone] flush save failed for char ${e.id}: $err');
+      }
     }
     markFlushed();
   }

@@ -12,10 +12,12 @@ import shared.proto.MsgType;
 class MoveIntentHandler {
   var sim:ZoneSimulator;
   var enterHandler:EnterZoneHandler;
+  var interest:InterestManager;
 
-  public function new(sim:ZoneSimulator, enterHandler:EnterZoneHandler) {
+  public function new(sim:ZoneSimulator, enterHandler:EnterZoneHandler, interest:InterestManager) {
     this.sim = sim;
     this.enterHandler = enterHandler;
+    this.interest = interest;
   }
 
   /** Records the latest held direction on the entity. The move itself is
@@ -52,7 +54,7 @@ class MoveIntentHandler {
       var bytes = out.getBytes();
 
       for (e in sim.allEntities()) {
-        if (e.conn != null && e.conn.alive) {
+        if (e.conn != null && e.conn.alive && interest.knows(e.id, mv.entityId)) {
           e.conn.sendFrame(MsgType.ENTITY_MOVE, bytes);
         }
       }

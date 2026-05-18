@@ -11,6 +11,7 @@ class TestMain {
     r.addCase(new TestCharacterDal());
     r.addCase(new TestZoneTileDal());
     r.addCase(new TestZoneSimulator());
+    r.addCase(new TestInterestManager());
     r.addCase(new TestWorldPopulator());
     r.addCase(new TestInventory());
     r.addCase(new TestTileInteraction());
@@ -19,6 +20,7 @@ class TestMain {
     r.addCase(new TestSessionStore());
     r.addCase(new TestLoginFlow());
     r.addCase(new TestZoneLifecycle());
+    r.addCase(new TestZoneInterest());
     Report.create(r);
     r.run();
   }
