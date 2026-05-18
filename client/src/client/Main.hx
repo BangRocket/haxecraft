@@ -9,7 +9,11 @@ import client.net.TcpConnection;
 import client.net.ClientDispatcher;
 import client.ui.LoginScreen;
 import client.ui.ConnectingZoneScreen;
+import client.ui.ChatBox;
+import client.ui.ChatCommandParser;
 import shared.Constants;
+import shared.proto.MsgChat;
+import shared.proto.ChatChannel;
 import shared.proto.FrameCodec;
 import shared.proto.MsgHello;
 import shared.proto.MsgHelloAck;
@@ -56,6 +60,7 @@ class Main extends App {
   var map:MapData;
   var zoneRenderer:ZoneRenderer;
   var inputDispatcher:client.game.InputDispatcher;
+  var chatBox:ChatBox;
 
   static function main() {
     new Main();
@@ -66,6 +71,7 @@ class Main extends App {
     gatewayDispatcher.on(MsgType.HELLO_ACK, onHelloAck);
     gatewayDispatcher.on(MsgType.LOGIN_ACK, onLoginAck);
     gatewayDispatcher.on(MsgType.ZONE_HANDOFF, onZoneHandoff);
+    gatewayDispatcher.on(MsgType.CHAT, onChat);
 
     zoneDispatcher = new ClientDispatcher();
     zoneDispatcher.on(MsgType.ENTER_ZONE_ACK, onEnterZoneAck);
@@ -74,6 +80,7 @@ class Main extends App {
     zoneDispatcher.on(MsgType.ENTITY_DESPAWN, onEntityDespawn);
     zoneDispatcher.on(MsgType.GROUND_ITEM_SPAWN, onGroundItemSpawn);
     zoneDispatcher.on(MsgType.WORLD_OBJECT_SPAWN, onWorldObjectSpawn);
+    zoneDispatcher.on(MsgType.CHAT, onChat);
 
     loginScreen = new LoginScreen(s2d);
     loginScreen.onSubmit = onLoginSubmit;
@@ -83,6 +90,8 @@ class Main extends App {
   function onEvent(e:Event):Void {
     if (state == LOGGING_IN && loginScreen != null && loginScreen.parent != null) {
       loginScreen.handleKey(e);
+    } else if (state == IN_ZONE && chatBox != null) {
+      chatBox.handleKey(e);
     }
   }
 
@@ -177,6 +186,8 @@ class Main extends App {
     }
     zoneRenderer = new ZoneRenderer(s2d, map, ownEntityId);
     inputDispatcher = new client.game.InputDispatcher(zoneConn);
+    chatBox = new ChatBox(s2d);
+    chatBox.onSubmit = onChatSubmit;
   }
 
   function onEntitySpawn(payload:Bytes):Void {
@@ -206,6 +217,32 @@ class Main extends App {
       zoneRenderer.addWorldObject(m.objectId, m.objectTypeId, m.tileX, m.tileY);
   }
 
+  function onChatSubmit(raw:String):Void {
+    var parsed = ChatCommandParser.parse(raw);
+    if (StringTools.trim(parsed.text).length == 0) return;
+    var m = new MsgChat();
+    m.channel = parsed.channel;
+    m.senderName = "";
+    m.text = parsed.text;
+    var out = new BytesOutput(); m.serialize(out);
+    if (parsed.channel == (ChatChannel.GLOBAL : Int)) {
+      if (gatewayConn != null) gatewayConn.sendFrame(MsgType.CHAT, out.getBytes());
+    } else {
+      if (zoneConn != null) zoneConn.sendFrame(MsgType.CHAT, out.getBytes());
+    }
+  }
+
+  function onChat(payload:Bytes):Void {
+    if (chatBox == null) return;
+    var m = MsgChat.deserialize(new BytesInput(payload));
+    var line = switch ((m.channel : ChatChannel)) {
+      case SAY:    '${m.senderName}: ${m.text}';
+      case GLOBAL: '[g] ${m.senderName}: ${m.text}';
+      case EMOTE:  '* ${m.senderName} ${m.text}';
+    }
+    chatBox.addMessage(line);
+  }
+
   override function update(dt:Float) {
     if (gatewayConn != null && gatewayConn.state == CONNECTED) {
       var frames = gatewayConn.poll();
@@ -218,7 +255,9 @@ class Main extends App {
     if (state == IN_ZONE && zoneRenderer != null) {
       var own = zoneRenderer.ownPos();
       zoneRenderer.render(own.x, own.y);
-      if (inputDispatcher != null) inputDispatcher.update();
+      if (inputDispatcher != null && (chatBox == null || !chatBox.inputActive)) {
+        inputDispatcher.update();
+      }
     }
   }
 }
