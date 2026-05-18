@@ -4,6 +4,9 @@ import utest.Assert;
 import utest.Test;
 import server.zone.Character;
 import server.zone.ZoneSimulator;
+import server.zone.WorldObject;
+import server.zone.GroundItem;
+import shared.item.ItemType;
 import shared.world.MapData;
 import shared.world.TileType;
 import shared.world.Direction;
@@ -98,5 +101,27 @@ class TestZoneSimulator extends Test {
     sim.tick();
     Assert.equals(1, a.tileX);
     Assert.equals(0, sim.movesThisTick.length);
+  }
+
+  function testWorldObjectBlocksMove() {
+    var sim = new ZoneSimulator(buildMap());
+    sim.addWorldObject(new WorldObject(1, ItemType.CHEST, 2, 1));
+    var ch = new Character(1, "alice", null, 1, 1);
+    sim.spawn(ch);
+    ch.pendingDir = Direction.EAST;               // (2,1) holds a world object
+    sim.tick();
+    Assert.equals(1, ch.tileX);                   // blocked
+    Assert.equals(0, sim.movesThisTick.length);
+  }
+
+  function testGroundItemDoesNotBlockMove() {
+    var sim = new ZoneSimulator(buildMap());
+    sim.addGroundItem(new GroundItem(1, ItemType.WOOD, 3, 2, 1));
+    var ch = new Character(1, "alice", null, 1, 1);
+    sim.spawn(ch);
+    ch.pendingDir = Direction.EAST;               // (2,1) holds a ground item
+    sim.tick();
+    Assert.equals(2, ch.tileX);                   // walked over it
+    Assert.equals(1, sim.movesThisTick.length);
   }
 }

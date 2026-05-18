@@ -17,6 +17,8 @@ class Main {
     Sys.println('[zone] map loaded: ${map.width}x${map.height}');
 
     var sim = new ZoneSimulator(map, characterDal);
+    WorldPopulator.populate(sim);
+    Sys.println('[zone] populated: ${sim.worldObjects.length} objects, ${sim.groundItems.length} ground items');
     var enterHandler = new EnterZoneHandler(characterDal, sim);
     var moveHandler = new MoveIntentHandler(sim, enterHandler);
 
