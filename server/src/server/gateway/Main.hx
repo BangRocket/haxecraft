@@ -21,8 +21,11 @@ class Main {
     var accountDal = new AccountDal(db);
     var characterDal = new CharacterDal(db);
     var sessions = new SessionStore();
-    var loginHandler = new LoginHandler(accountDal, characterDal, sessions);
+    var players = new GatewayPlayers();
+    var loginHandler = new LoginHandler(accountDal, characterDal, sessions, players);
     dispatcher.register(MsgType.LOGIN, loginHandler.handle);
+    var chatHandler = new GatewayChatHandler(players);
+    dispatcher.register(MsgType.CHAT, chatHandler.handle);
 
     while (true) {
       srv.tickAccept();
@@ -32,6 +35,7 @@ class Main {
         var frames = c.pollFrames();
         for (f in frames) dispatcher.dispatch(c, f.msgType, f.payload);
         if (!c.alive) {
+          players.remove(c.id);
           c.close();
           srv.connections.splice(i, 1);
         } else {
