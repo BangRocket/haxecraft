@@ -183,4 +183,37 @@ class TestMessages extends Test {
     Assert.equals(514, m2.tileX);
     Assert.equals(513, m2.tileY);
   }
+
+  function testInventory() {
+    var m = new shared.proto.MsgInventory();
+    m.activeSlot = 2;
+    m.slots = [{ itemTypeId: 1, count: 7 }, { itemTypeId: 54, count: 1 }];
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgInventory.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(2, m2.activeSlot);
+    Assert.equals(2, m2.slots.length);
+    Assert.equals(1, m2.slots[0].itemTypeId);
+    Assert.equals(7, m2.slots[0].count);
+    Assert.equals(54, m2.slots[1].itemTypeId);
+    Assert.equals(1, m2.slots[1].count);
+  }
+
+  function testGroundItemDespawn() {
+    var m = new shared.proto.MsgGroundItemDespawn();
+    m.worldItemId = 17;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgGroundItemDespawn.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(17, m2.worldItemId);
+  }
+
+  function testSelectActiveItem() {
+    var m = new shared.proto.MsgSelectActiveItem();
+    m.slot = 4;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgSelectActiveItem.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(4, m2.slot);
+  }
 }

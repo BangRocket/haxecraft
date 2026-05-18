@@ -19,4 +19,8 @@ enum abstract MsgType(Int) to Int from Int {
   // SP2: items + world objects
   var GROUND_ITEM_SPAWN = 30;
   var WORLD_OBJECT_SPAWN = 31;
+  // SP3: inventory
+  var INVENTORY = 32;
+  var GROUND_ITEM_DESPAWN = 33;
+  var SELECT_ACTIVE_ITEM = 34;
 }
