@@ -82,19 +82,8 @@ class EnterZoneHandler {
     var spOut = new haxe.io.BytesOutput(); sp.serialize(spOut);
     var spBytes = spOut.getBytes();
     conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, spBytes);
-
-    // Sync existing entities to this client + broadcast the new entity to existing clients.
-    for (other in sim.allEntities()) {
-      if (other.id == runtime.id) continue;
-      var osp = new shared.proto.MsgEntitySpawn();
-      osp.entityId = other.id; osp.name = other.name;
-      osp.tileX = other.tileX; osp.tileY = other.tileY;
-      var oo = new haxe.io.BytesOutput(); osp.serialize(oo);
-      conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, oo.getBytes());
-      if (other.conn != null && other.conn.alive) {
-        other.conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, spBytes);
-      }
-    }
+    // Existing entities are synced to this client (and vice versa) by the
+    // per-tick InterestManager diff in the zone loop.
   }
 
   public function entityIdForConn(conn:ClientConnection):Null<Int> {
