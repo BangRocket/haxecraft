@@ -1,0 +1,6 @@
+-cp src
+-cp ../../shared/src
+-cp ../../server/src
+-cp ../../client/src/headless
+-main Main
+--hl ../../out/zone-bots.hl
