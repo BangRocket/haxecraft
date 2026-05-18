@@ -32,6 +32,7 @@ class Main {
     Sys.println('[zone] populated: ${sim.worldObjects.length} objects, ${sim.groundItems.length} ground items');
     var enterHandler = new EnterZoneHandler(characterDal, sim);
     var moveHandler = new MoveIntentHandler(sim, enterHandler, interest);
+    var chatHandler = new ChatHandler(sim, enterHandler, interest);
     var inventoryHandler = new InventoryHandler(sim, enterHandler);
     var tileHandler = new TileHandler(sim, enterHandler);
     var craftHandler = new CraftHandler(sim, enterHandler);
@@ -40,6 +41,7 @@ class Main {
     var dispatcher = new MessageDispatcher();
     dispatcher.register(MsgType.ENTER_ZONE, enterHandler.handle);
     dispatcher.register(MsgType.MOVE_INTENT, moveHandler.handle);
+    dispatcher.register(MsgType.CHAT, chatHandler.handle);
     dispatcher.register(MsgType.SELECT_ACTIVE_ITEM, inventoryHandler.handle);
     dispatcher.register(MsgType.USE_ITEM_ON_TILE, tileHandler.handle);
     dispatcher.register(MsgType.CRAFT, craftHandler.handleCraft);

@@ -70,6 +70,17 @@ class InterestManager {
     return observersWhoKnew;
   }
 
+  /** Observer IDs whose known-set currently contains `entityId` (excludes self). */
+  public function observersOf(entityId:Int):Array<Int> {
+    var out:Array<Int> = [];
+    for (obsId in known.keys()) {
+      if (obsId == entityId) continue;
+      var s = known.get(obsId);
+      if (s.exists(entityId)) out.push(obsId);
+    }
+    return out;
+  }
+
   static inline function chebyshev(a:Character, b:Character):Int {
     var dx = a.tileX - b.tileX; if (dx < 0) dx = -dx;
     var dy = a.tileY - b.tileY; if (dy < 0) dy = -dy;

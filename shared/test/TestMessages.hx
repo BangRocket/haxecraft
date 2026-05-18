@@ -9,6 +9,7 @@ import shared.proto.MsgHelloAck;
 import shared.proto.MsgLogin;
 import shared.proto.MsgLoginAck;
 import shared.proto.MsgError;
+import shared.proto.MsgChat;
 
 class TestMessages extends Test {
   function testHello() {
@@ -182,6 +183,19 @@ class TestMessages extends Test {
     Assert.equals(64, m2.objectTypeId);
     Assert.equals(514, m2.tileX);
     Assert.equals(513, m2.tileY);
+  }
+
+  function testChat() {
+    var m = new MsgChat();
+    m.channel = 2;
+    m.senderName = "Bob";
+    m.text = "waves.";
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = MsgChat.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(2, m2.channel);
+    Assert.equals("Bob", m2.senderName);
+    Assert.equals("waves.", m2.text);
   }
 
   function testInventory() {

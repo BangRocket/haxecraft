@@ -17,6 +17,7 @@ import shared.proto.MsgEnterZoneAck;
 import shared.proto.MsgMoveIntent;
 import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntitySpawn;
+import shared.proto.MsgChat;
 import shared.proto.MsgType;
 import shared.world.Direction;
 
@@ -36,6 +37,10 @@ class HeadlessClient {
   // SP2: counts from the zone-entry static-world burst.
   public var worldObjectCount(default, null):Int = 0;
   public var groundItemCount(default, null):Int = 0;
+
+  // Non-burst zone frames read during enterZone's burst-drain — buffered here
+  // so they aren't lost (e.g. an interest EntitySpawn arriving mid-burst).
+  var pendingZoneFrames:Array<{msgType:Int, payload:Bytes}> = [];
 
   public function new() {}
 
@@ -101,6 +106,7 @@ class HeadlessClient {
         var mt:Int = f.msgType;
         if (mt == (MsgType.WORLD_OBJECT_SPAWN : Int)) worldObjectCount++;
         else if (mt == (MsgType.GROUND_ITEM_SPAWN : Int)) groundItemCount++;
+        else pendingZoneFrames.push({ msgType: mt, payload: f.payload });
       } catch (_:haxe.io.Eof) {
         break;
       } catch (_:Dynamic) {
@@ -140,12 +146,41 @@ class HeadlessClient {
   /** Read whatever zone frames arrive within `durationS`, return them all.
       Used by tests to observe spawns/moves of other entities. **/
   public function drainFrames(durationS:Float):Array<{msgType:Int, payload:Bytes}> {
-    var out:Array<{msgType:Int, payload:Bytes}> = [];
+    var out:Array<{msgType:Int, payload:Bytes}> = pendingZoneFrames;
+    pendingZoneFrames = [];
     var deadline = haxe.Timer.stamp() + durationS;
     while (haxe.Timer.stamp() < deadline) {
       zone.setTimeout(0.05);
       try {
         var f = FrameCodec.readFrame(zone.input);
+        out.push({ msgType: (f.msgType : Int), payload: f.payload });
+      } catch (_:haxe.io.Eof) {
+        break;
+      } catch (_:Dynamic) {
+        // read timeout — keep polling until the deadline
+      }
+    }
+    return out;
+  }
+
+  /** Send a chat message: GLOBAL goes via the gateway socket, others via zone. **/
+  public function sendChat(channel:Int, text:String):Void {
+    var m = new MsgChat();
+    m.channel = channel;
+    m.senderName = "";
+    m.text = text;
+    var sock = (channel == (shared.proto.ChatChannel.GLOBAL : Int)) ? gateway : zone;
+    writeFrame(sock, MsgType.CHAT, m);
+  }
+
+  /** Like drainFrames, but reads the gateway socket (for global chat). **/
+  public function drainGatewayFrames(durationS:Float):Array<{msgType:Int, payload:Bytes}> {
+    var out:Array<{msgType:Int, payload:Bytes}> = [];
+    var deadline = haxe.Timer.stamp() + durationS;
+    while (haxe.Timer.stamp() < deadline) {
+      gateway.setTimeout(0.05);
+      try {
+        var f = FrameCodec.readFrame(gateway.input);
         out.push({ msgType: (f.msgType : Int), payload: f.payload });
       } catch (_:haxe.io.Eof) {
         break;

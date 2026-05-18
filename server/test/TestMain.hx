@@ -21,6 +21,7 @@ class TestMain {
     r.addCase(new TestLoginFlow());
     r.addCase(new TestZoneLifecycle());
     r.addCase(new TestZoneInterest());
+    r.addCase(new TestZoneChat());
     Report.create(r);
     r.run();
   }

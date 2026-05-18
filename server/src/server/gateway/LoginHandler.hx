@@ -19,11 +19,13 @@ class LoginHandler {
   var accountDal:AccountDal;
   var characterDal:CharacterDal;
   var sessions:SessionStore;
+  var players:GatewayPlayers;
 
-  public function new(accountDal:AccountDal, characterDal:CharacterDal, sessions:SessionStore) {
+  public function new(accountDal:AccountDal, characterDal:CharacterDal, sessions:SessionStore, players:GatewayPlayers) {
     this.accountDal = accountDal;
     this.characterDal = characterDal;
     this.sessions = sessions;
+    this.players = players;
   }
 
   public function handle(conn:ClientConnection, payload:Bytes):Void {
@@ -55,6 +57,7 @@ class LoginHandler {
     ack.sessionToken = sessions.mint(acct.id);
     ack.errorMsg = "";
     Sys.println('[gateway] conn ${conn.id} login OK user=${login.username} acct=${acct.id} char=${ch.id}');
+    players.add(conn, acct.username);
     var lo = new BytesOutput(); ack.serialize(lo);
     conn.sendFrame(MsgType.LOGIN_ACK, lo.getBytes());
 

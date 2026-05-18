@@ -78,4 +78,16 @@ class TestInterestManager extends Test {
     Assert.isTrue(observers.indexOf(1) >= 0);
     Assert.isFalse(im.knows(1, 2));
   }
+
+  function testObserversOfReturnsKnowers() {
+    var im = new InterestManager();
+    var a = ch(1, 0, 0);
+    var b = ch(2, 10, 0);
+    var c = ch(3, 500, 0);
+    im.update([a, b, c]);                 // a<->b mutually known; c far from both
+    var obs = im.observersOf(1);          // who knows entity 1?
+    Assert.isTrue(obs.indexOf(2) >= 0);   // b knows a
+    Assert.isFalse(obs.indexOf(3) >= 0);  // c does not
+    Assert.isFalse(obs.indexOf(1) >= 0);  // never includes self
+  }
 }
