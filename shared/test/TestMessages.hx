@@ -216,4 +216,30 @@ class TestMessages extends Test {
     var m2 = shared.proto.MsgSelectActiveItem.deserialize(new BytesInput(out.getBytes()));
     Assert.equals(4, m2.slot);
   }
+
+  function testUseItemOnTile() {
+    var m = new shared.proto.MsgUseItemOnTile();
+    m.tileX = 480;
+    m.tileY = 543;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgUseItemOnTile.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(480, m2.tileX);
+    Assert.equals(543, m2.tileY);
+  }
+
+  function testTileChange() {
+    var m = new shared.proto.MsgTileChange();
+    m.tileX = 100;
+    m.tileY = 200;
+    m.tileType = 16;
+    m.data = 3;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgTileChange.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(100, m2.tileX);
+    Assert.equals(200, m2.tileY);
+    Assert.equals(16, m2.tileType);
+    Assert.equals(3, m2.data);
+  }
 }

@@ -23,4 +23,7 @@ enum abstract MsgType(Int) to Int from Int {
   var INVENTORY = 32;
   var GROUND_ITEM_DESPAWN = 33;
   var SELECT_ACTIVE_ITEM = 34;
+  // SP4: interactive tiles
+  var USE_ITEM_ON_TILE = 35;
+  var TILE_CHANGE = 36;
 }
