@@ -10,6 +10,7 @@ class TestMain {
     r.addCase(new TestAccountDal());
     r.addCase(new TestCharacterDal());
     r.addCase(new TestZoneSimulator());
+    r.addCase(new TestInterestManager());
     r.addCase(new TestFrameBuffer());
     r.addCase(new TestSessionStore());
     r.addCase(new TestLoginFlow());
