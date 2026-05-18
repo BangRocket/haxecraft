@@ -10,6 +10,7 @@ import client.net.ClientDispatcher;
 import client.ui.LoginScreen;
 import client.ui.ConnectingZoneScreen;
 import client.ui.InventoryScreen;
+import client.ui.CraftingScreen;
 import shared.Constants;
 import shared.proto.FrameCodec;
 import shared.proto.MsgHello;
@@ -29,6 +30,8 @@ import shared.proto.MsgGroundItemDespawn;
 import shared.proto.MsgSelectActiveItem;
 import shared.proto.MsgUseItemOnTile;
 import shared.proto.MsgTileChange;
+import shared.proto.MsgCraft;
+import shared.proto.MsgPlaceFurniture;
 import shared.proto.MsgType;
 import sys.io.File;
 import shared.world.MapData;
@@ -67,6 +70,7 @@ class Main extends App {
   var inventoryOpen:Bool = false;
   var invSlots:Array<{itemTypeId:Int, count:Int}> = [];
   var invActiveSlot:Int = 0;
+  var craftingScreen:CraftingScreen;
 
   static function main() {
     new Main();
@@ -102,16 +106,53 @@ class Main extends App {
     if (state == IN_ZONE) {
       switch e.kind {
         case EKeyDown:
-          if (e.keyCode == hxd.Key.I) {
+          if (craftingScreen != null) {
+            // Crafting menu has key focus while open.
+            if (e.keyCode == hxd.Key.C) toggleCrafting();
+            else craftingScreen.handleKey(e.keyCode);
+          } else if (e.keyCode == hxd.Key.I) {
             toggleInventory();
+          } else if (e.keyCode == hxd.Key.C) {
+            toggleCrafting();
           } else if (e.keyCode == hxd.Key.SPACE) {
             useOnFacedTile();
+          } else if (e.keyCode == hxd.Key.P) {
+            placeFurniture();
           } else if (e.keyCode >= hxd.Key.NUMBER_1 && e.keyCode <= hxd.Key.NUMBER_9) {
             selectActiveSlot(e.keyCode - hxd.Key.NUMBER_1);
           }
         default:
       }
     }
+  }
+
+  function toggleCrafting():Void {
+    if (craftingScreen != null) {
+      craftingScreen.remove();
+      craftingScreen = null;
+      return;
+    }
+    craftingScreen = new CraftingScreen(s2d);
+    craftingScreen.onCraft = sendCraft;
+  }
+
+  function sendCraft(recipeId:Int):Void {
+    if (zoneConn == null) return;
+    var m = new MsgCraft();
+    m.recipeId = recipeId;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.CRAFT, out.getBytes());
+  }
+
+  /** Place the held furniture item on the faced tile (P). */
+  function placeFurniture():Void {
+    if (zoneConn == null || zoneRenderer == null) return;
+    var t = zoneRenderer.ownInteractTarget();
+    var m = new MsgPlaceFurniture();
+    m.tileX = t.x;
+    m.tileY = t.y;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.PLACE_FURNITURE, out.getBytes());
   }
 
   function onInventory(payload:Bytes):Void {
