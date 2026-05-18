@@ -21,11 +21,13 @@ class Main {
     Sys.println('[zone] populated: ${sim.worldObjects.length} objects, ${sim.groundItems.length} ground items');
     var enterHandler = new EnterZoneHandler(characterDal, sim);
     var moveHandler = new MoveIntentHandler(sim, enterHandler);
+    var inventoryHandler = new InventoryHandler(sim, enterHandler);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
     dispatcher.register(MsgType.ENTER_ZONE, enterHandler.handle);
     dispatcher.register(MsgType.MOVE_INTENT, moveHandler.handle);
+    dispatcher.register(MsgType.SELECT_ACTIVE_ITEM, inventoryHandler.handle);
 
     var tickInterval = 1.0 / Constants.TICK_HZ;
     var nextTickAt = Sys.time() + tickInterval;
@@ -43,6 +45,7 @@ class Main {
             var ch = sim.entityById(owned);
             if (ch != null) {
               characterDal.savePosition(ch.id, ch.tileX, ch.tileY);
+              characterDal.saveInventory(ch.id, ch.inventory.toRows());
               Sys.println('[zone] conn ${c.id} disconnected - saved char ${ch.id} at (${ch.tileX},${ch.tileY})');
 
               // Broadcast despawn to remaining entities BEFORE removing.
@@ -72,6 +75,7 @@ class Main {
       if (now >= nextTickAt) {
         sim.tick();
         moveHandler.broadcastMoves();
+        inventoryHandler.broadcastPickups();
         if (sim.shouldFlushNow()) sim.flushPositions();
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {

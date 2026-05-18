@@ -69,6 +69,7 @@ class EnterZoneHandler {
     sendAck(conn, ack);
 
     var runtime = new Character(ch.id, ch.name, conn, sx, sy);
+    runtime.inventory = Inventory.fromRows(characterDal.loadInventory(ch.id));
     sim.spawn(runtime);
     connToEntity.set(conn.id, ch.id);
     Sys.println('[zone] conn ${conn.id} spawned char=${ch.id} at (${ch.tileX},${ch.tileY})');
@@ -82,6 +83,9 @@ class EnterZoneHandler {
     var spOut = new haxe.io.BytesOutput(); sp.serialize(spOut);
     var spBytes = spOut.getBytes();
     conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, spBytes);
+
+    // SP3: send the joining client its inventory.
+    InventoryHandler.send(runtime);
 
     // Sync existing entities to this client + broadcast the new entity to existing clients.
     for (other in sim.allEntities()) {

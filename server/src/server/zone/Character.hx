@@ -12,6 +12,8 @@ class Character {
   /** Latest queued Direction (0..3) from a MoveIntent; -1 = nothing held.
       Applied and possibly retained by ZoneSimulator.tick(). */
   public var pendingDir:Int = -1;
+  /** Carried items (SP3). Loaded from the DB on zone entry. */
+  public var inventory:Inventory;
 
   public function new(id:Int, name:String, conn:ClientConnection, tileX:Int, tileY:Int) {
     this.id = id;
@@ -19,5 +21,6 @@ class Character {
     this.conn = conn;
     this.tileX = tileX;
     this.tileY = tileY;
+    this.inventory = new Inventory();
   }
 }

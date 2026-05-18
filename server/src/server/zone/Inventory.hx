@@ -60,4 +60,16 @@ class Inventory {
   public function isEmpty():Bool {
     return slots.length == 0;
   }
+
+  /** Flatten to plain {itemTypeId, count} rows — for the DB and the wire. */
+  public function toRows():Array<{itemTypeId:Int, count:Int}> {
+    return [for (s in slots) { itemTypeId: (s.itemType : Int), count: s.count }];
+  }
+
+  /** Rebuild an inventory from stored rows, preserving slot order. */
+  public static function fromRows(rows:Array<{itemTypeId:Int, count:Int}>):Inventory {
+    var inv = new Inventory();
+    for (r in rows) inv.slots.push(new ItemStack(r.itemTypeId, r.count));
+    return inv;
+  }
 }
