@@ -7,6 +7,8 @@ import engine.gfx.SpriteSheet;
 import engine.gfx.SpriteId;
 import shared.world.MapData;
 import shared.world.Direction;
+import shared.item.ItemType;
+import shared.item.ItemCategory;
 
 /**
  * Renders the zone into a fixed 320x240 Screen buffer, scaled to the window.
@@ -29,6 +31,13 @@ class ZoneRenderer {
   var ownEntityId:Int = 0;
   // Player body cells [TL,TR,BL,BR], keyed by "south"/"north"/"side0"/"side1".
   var playerSprites:Map<String, Array<SpriteId>> = new Map();
+
+  // SP2 static world content. Resources/tools render one 8x8 cell; furniture
+  // renders a 2x2 block ([TL,TR,BL,BR]).
+  var itemSprites:Map<Int, {id:SpriteId, colors:Int}> = new Map();
+  var furnitureSprites:Map<Int, {cells:Array<SpriteId>, colors:Int}> = new Map();
+  var groundItems:Array<GroundItemVisual> = [];
+  var worldObjects:Array<{id:Int, typeId:Int, tileX:Int, tileY:Int}> = [];
 
   public function new(scene:h2d.Scene, map:MapData, ownEntityId:Int) {
     this.map = map;
@@ -80,6 +89,25 @@ class ZoneRenderer {
     playerCells("north", 2);
     playerCells("side0", 4);
     playerCells("side1", 6);
+
+    // SP2: item & furniture sprites.
+    registry.registerEngineSheet("items", new SpriteSheet(loadPixels("res/sprites/sprites_items.png")));
+    for (it in SpriteCatalog.ALL_ITEMS) {
+      var e = SpriteCatalog.ITEM_TABLE.get((it : Int));
+      if (e == null) continue;
+      var key:Int = it;
+      if (it.category() == ItemCategory.FURNITURE) {
+        furnitureSprites.set(key, { colors: e.colors, cells: [
+          registry.defineSprite('obj_${key}_tl', e.sheet, e.col,     e.row),
+          registry.defineSprite('obj_${key}_tr', e.sheet, e.col + 1, e.row),
+          registry.defineSprite('obj_${key}_bl', e.sheet, e.col,     e.row + 1),
+          registry.defineSprite('obj_${key}_br', e.sheet, e.col + 1, e.row + 1),
+        ]});
+      } else {
+        itemSprites.set(key,
+          { id: registry.defineSprite('item_${key}', e.sheet, e.col, e.row), colors: e.colors });
+      }
+    }
   }
 
   /**
@@ -118,8 +146,47 @@ class ZoneRenderer {
       }
     }
 
+    drawGroundItems();
+    drawWorldObjects();
     drawEntities();
     endFrame();
+  }
+
+  public function addGroundItem(id:Int, itemTypeId:Int, count:Int, tileX:Int, tileY:Int):Void {
+    groundItems.push(new GroundItemVisual(id, itemTypeId, count, tileX, tileY));
+  }
+
+  public function addWorldObject(id:Int, objectTypeId:Int, tileX:Int, tileY:Int):Void {
+    worldObjects.push({ id: id, typeId: objectTypeId, tileX: tileX, tileY: tileY });
+  }
+
+  /** Ground items: one flat 8x8 cell sitting on the tile. */
+  function drawGroundItems():Void {
+    for (gi in groundItems) {
+      var spr = itemSprites.get((gi.itemType : Int));
+      if (spr == null) {
+        drawMissing(gi.tileX * TILE, gi.tileY * TILE);
+        continue;
+      }
+      screen.renderSprite(gi.tileX * TILE, gi.tileY * TILE, spr.id, spr.colors, 0, 0);
+    }
+  }
+
+  /** World objects: a 2x2 (16x16) furniture block, anchored like a player. */
+  function drawWorldObjects():Void {
+    for (o in worldObjects) {
+      var px = o.tileX * TILE - 4;
+      var py = o.tileY * TILE - 8;
+      var f = furnitureSprites.get(o.typeId);
+      if (f == null) {
+        drawMissing(o.tileX * TILE, o.tileY * TILE);
+        continue;
+      }
+      screen.renderSprite(px + 0, py + 0, f.cells[0], f.colors, 0, 0);
+      screen.renderSprite(px + 8, py + 0, f.cells[1], f.colors, 0, 0);
+      screen.renderSprite(px + 0, py + 8, f.cells[2], f.colors, 0, 0);
+      screen.renderSprite(px + 8, py + 8, f.cells[3], f.colors, 0, 0);
+    }
   }
 
   public function spawnEntity(id:Int, name:String, tileX:Int, tileY:Int):Void {
