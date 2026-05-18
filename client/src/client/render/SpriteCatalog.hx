@@ -32,7 +32,10 @@ class SpriteCatalog {
   public static var ALL_TILES(default, null):Array<TileType> = [
     TileType.GRASS, TileType.SAND, TileType.WATER, TileType.STONE,
     TileType.ROCK, TileType.TREE, TileType.DIRT, TileType.FLOWER,
-    TileType.LAVA, TileType.CACTUS
+    TileType.LAVA, TileType.CACTUS,
+    TileType.IRON_ORE, TileType.GOLD_ORE, TileType.GEM_ORE, TileType.HARD_ROCK,
+    TileType.FARMLAND, TileType.WHEAT, TileType.TREE_SAPLING,
+    TileType.CACTUS_SAPLING, TileType.HOLE
   ];
 
   /** TileType (as Int key) -> its flat terrain sprite. */
@@ -57,6 +60,26 @@ class SpriteCatalog {
                         colors: Color.get(10, 30, 151, GRASS_C) },
     (TileType.CACTUS : Int) => { sheet: "terrain", col: 8, row: 2,
                         colors: Color.get(20, 40, 50, SAND_C) },
+    // SP4 interactive tiles. Cells reuse known-good terrain cells with
+    // distinct palettes (art-matching refinement is a one-line change).
+    (TileType.IRON_ORE : Int)  => { sheet: "terrain", col: 0, row: 1,
+                        colors: Color.get(111, 222, 433, 544) },
+    (TileType.GOLD_ORE : Int)  => { sheet: "terrain", col: 0, row: 1,
+                        colors: Color.get(111, 222, 540, 553) },
+    (TileType.GEM_ORE : Int)   => { sheet: "terrain", col: 0, row: 1,
+                        colors: Color.get(111, 222, 405, 535) },
+    (TileType.HARD_ROCK : Int) => { sheet: "terrain", col: 0, row: 0,
+                        colors: Color.get(111, 111, 222, 222) },
+    (TileType.FARMLAND : Int)  => { sheet: "terrain", col: 0, row: 0,
+                        colors: Color.get(210, 210, 321, 321) },
+    (TileType.WHEAT : Int)     => { sheet: "terrain", col: 1, row: 1,
+                        colors: Color.get(210, 231, 552, 540) },
+    (TileType.TREE_SAPLING : Int) => { sheet: "terrain", col: 10, row: 1,
+                        colors: Color.get(10, 30, 151, 141) },
+    (TileType.CACTUS_SAPLING : Int) => { sheet: "terrain", col: 8, row: 2,
+                        colors: Color.get(20, 40, 50, 550) },
+    (TileType.HOLE : Int)      => { sheet: "terrain", col: 0, row: 0,
+                        colors: Color.get(0, 0, 111, 111) },
   ];
 
   /** Player body palette (legacy Player.render: Color.get(-1,100,220,532)). */

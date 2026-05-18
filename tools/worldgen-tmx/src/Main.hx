@@ -51,6 +51,10 @@ class Main {
           if (roll < 5)        tiles[idx] = (TileType.CACTUS : Int);
         } else if (t == (TileType.ROCK : Int)) {
           if (roll < 8)        tiles[idx] = (TileType.LAVA : Int);
+          else if (roll < 16)  tiles[idx] = (TileType.IRON_ORE : Int);
+          else if (roll < 21)  tiles[idx] = (TileType.GOLD_ORE : Int);
+          else if (roll < 23)  tiles[idx] = (TileType.GEM_ORE : Int);
+          else if (roll < 26)  tiles[idx] = (TileType.HARD_ROCK : Int);
         }
       }
     }
@@ -93,7 +97,7 @@ class Main {
     sb.add('<?xml version="1.0" encoding="UTF-8"?>\n');
     sb.add('<map version="1.10" orientation="orthogonal" renderorder="right-down" ');
     sb.add('width="$width" height="$height" tilewidth="8" tileheight="8" infinite="0">\n');
-    sb.add('  <tileset firstgid="1" name="terrain" tilewidth="8" tileheight="8" tilecount="10"/>\n');
+    sb.add('  <tileset firstgid="1" name="terrain" tilewidth="8" tileheight="8" tilecount="19"/>\n');
     sb.add('  <layer id="1" name="terrain" width="$width" height="$height">\n');
     sb.add('    <data encoding="csv">\n');
     for (y in 0...height) {
