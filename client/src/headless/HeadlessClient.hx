@@ -18,6 +18,8 @@ import shared.proto.MsgMoveIntent;
 import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntitySpawn;
 import shared.proto.MsgChat;
+import shared.proto.MsgSelectActiveItem;
+import shared.proto.MsgUseItemOnTile;
 import shared.proto.MsgType;
 import shared.world.Direction;
 
@@ -171,6 +173,21 @@ class HeadlessClient {
     m.text = text;
     var sock = (channel == (shared.proto.ChatChannel.GLOBAL : Int)) ? gateway : zone;
     writeFrame(sock, MsgType.CHAT, m);
+  }
+
+  /** Select the active inventory slot (SP3). **/
+  public function selectActiveSlot(slot:Int):Void {
+    var m = new MsgSelectActiveItem();
+    m.slot = slot;
+    writeFrame(zone, MsgType.SELECT_ACTIVE_ITEM, m);
+  }
+
+  /** Use the active item on a tile (SP4 gathering). **/
+  public function useItemOnTile(tileX:Int, tileY:Int):Void {
+    var m = new MsgUseItemOnTile();
+    m.tileX = tileX;
+    m.tileY = tileY;
+    writeFrame(zone, MsgType.USE_ITEM_ON_TILE, m);
   }
 
   /** Like drainFrames, but reads the gateway socket (for global chat). **/
