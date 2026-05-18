@@ -242,4 +242,24 @@ class TestMessages extends Test {
     Assert.equals(16, m2.tileType);
     Assert.equals(3, m2.data);
   }
+
+  function testCraft() {
+    var m = new shared.proto.MsgCraft();
+    m.recipeId = 12;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgCraft.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(12, m2.recipeId);
+  }
+
+  function testPlaceFurniture() {
+    var m = new shared.proto.MsgPlaceFurniture();
+    m.tileX = 480;
+    m.tileY = 544;
+    var out = new BytesOutput();
+    m.serialize(out);
+    var m2 = shared.proto.MsgPlaceFurniture.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(480, m2.tileX);
+    Assert.equals(544, m2.tileY);
+  }
 }

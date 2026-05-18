@@ -26,4 +26,7 @@ enum abstract MsgType(Int) to Int from Int {
   // SP4: interactive tiles
   var USE_ITEM_ON_TILE = 35;
   var TILE_CHANGE = 36;
+  // SP5: crafting
+  var CRAFT = 37;
+  var PLACE_FURNITURE = 38;
 }
