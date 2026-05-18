@@ -22,11 +22,13 @@ class Main {
     Sys.println('[zone] populated: ${sim.worldObjects.length} objects, ${sim.groundItems.length} ground items');
     var enterHandler = new EnterZoneHandler(characterDal, sim);
     var moveHandler = new MoveIntentHandler(sim, enterHandler, interest);
+    var chatHandler = new ChatHandler(sim, enterHandler, interest);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
     dispatcher.register(MsgType.ENTER_ZONE, enterHandler.handle);
     dispatcher.register(MsgType.MOVE_INTENT, moveHandler.handle);
+    dispatcher.register(MsgType.CHAT, chatHandler.handle);
 
     var tickInterval = 1.0 / Constants.TICK_HZ;
     var nextTickAt = Sys.time() + tickInterval;
