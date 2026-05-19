@@ -12,7 +12,17 @@ import shared.Constants;
 import shared.proto.MsgType;
 
 class Main {
+  static var shutdownRequested:Bool = false;
+
   public static function main() {
+    sys.thread.Thread.create(function() {
+      try {
+        while (true) Sys.stdin().readByte();
+      } catch (_:Dynamic) {
+        shutdownRequested = true;
+      }
+    });
+
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.DEFAULT_SERVER_PORT);
     var dispatcher = new MessageDispatcher();
     dispatcher.register(MsgType.HELLO, HelloHandler.handle);
@@ -27,7 +37,7 @@ class Main {
     var chatHandler = new GatewayChatHandler(players);
     dispatcher.register(MsgType.CHAT, chatHandler.handle);
 
-    while (true) {
+    while (!shutdownRequested) {
       srv.tickAccept();
       var i = 0;
       while (i < srv.connections.length) {
@@ -44,5 +54,10 @@ class Main {
       }
       Sys.sleep(0.01);
     }
+
+    Sys.println('[gateway] shutdown requested; closing sockets and db');
+    srv.close();
+    try db.close() catch (_:Dynamic) {}
+    Sys.println('[gateway] shutdown complete');
   }
 }
