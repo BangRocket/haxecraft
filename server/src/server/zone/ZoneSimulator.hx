@@ -17,8 +17,10 @@ class ZoneSimulator {
   public var map(default, null):MapData;
   var entities:Map<Int, Character> = new Map();
 
-  public var lastFlushTick:Int = 0;
   public static inline var FLUSH_TICK_INTERVAL:Int = 50;  // 5s at 10 Hz
+
+  /** Tick scheduler — drives the DB flush and (later) combat/respawn timers. */
+  public var scheduler(default, null):Scheduler = new Scheduler();
 
   /** Moves applied by the most recent tick(). The zone loop broadcasts these. */
   public var movesThisTick(default, null):Array<MoveResult> = [];
@@ -45,14 +47,7 @@ class ZoneSimulator {
     this.map = map;
     this.characterDal = characterDal;
     this.tileDal = tileDal;
-  }
-
-  public function shouldFlushNow():Bool {
-    return (currentTick - lastFlushTick) >= FLUSH_TICK_INTERVAL;
-  }
-
-  public function markFlushed():Void {
-    lastFlushTick = currentTick;
+    scheduler.every(FLUSH_TICK_INTERVAL, flushPositions);
   }
 
   public function flushPositions():Void {
@@ -67,7 +62,6 @@ class ZoneSimulator {
         Sys.println('[zone] flush save failed for char ${e.id}: $err');
       }
     }
-    markFlushed();
   }
 
   public function tick():Void {
@@ -107,6 +101,7 @@ class ZoneSimulator {
       }
     }
     growTiles();
+    scheduler.tick();
   }
 
   /** Advance growth on tiles near connected players (bounded scan). */
