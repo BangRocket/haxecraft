@@ -101,7 +101,6 @@ class Main {
         tileHandler.flush();
         var entityList = [for (e in sim.allEntities()) e];
         broadcastInterestDiffs(sim, interest.update(entityList));
-        if (sim.shouldFlushNow()) sim.flushPositions();
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {
           nextTickAt = now + tickInterval;
