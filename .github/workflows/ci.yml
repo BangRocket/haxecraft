@@ -18,7 +18,8 @@ jobs:
           sudo apt-get install -y \
             libpng-dev libturbojpeg-dev libjpeg-dev libvorbis-dev \
             libopenal-dev libsdl2-dev libmbedtls-dev libuv1-dev \
-            libsqlite3-dev zlib1g-dev
+            libsqlite3-dev zlib1g-dev \
+            libgl1-mesa-dev libglu1-mesa-dev
 
       - name: Build and install HashLink 1.15
         run: |
