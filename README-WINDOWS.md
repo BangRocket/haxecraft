@@ -80,7 +80,6 @@ PowerShell equivalents of the `.sh` runners (these call `haxe` directly, so
 ```powershell
 .\run-server.ps1      # MySQL + migrations + build + run server
 .\run-client.ps1      # build + run client
-.\run.ps1             # standalone game build (HashLink JIT)
 .\run-integration.ps1 # full build + integration tests
 ```
 
@@ -110,6 +109,3 @@ so `cl.exe` / `lib.exe` / `dumpbin.exe` resolve. It synthesizes import libs
 from each `.hdll`'s export table and copies the HashLink runtime DLLs into
 `bin\`. **This path has not yet been verified on a Windows host** — treat the
 first run as bring-up; the macOS/Linux `build_native.sh` is the tested one.
-
-`build_macos.sh` (the legacy standalone-game build) has no Windows equivalent
-and is unrelated to the MMO client.

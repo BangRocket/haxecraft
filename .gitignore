@@ -1,8 +1,4 @@
 # Build artifacts
-minicraft.hl
-minicraft
-haxecraft.hl
-haxecraft
 libhl.dylib
 out/
 bin/
@@ -19,7 +15,6 @@ tools/hl-stbtt/build/
 
 # Windows
 *.exe
-haxecraft.pdb
 
 # stbtt.hdll build intermediates (MSVC)
 tools/hl-stbtt/*.obj

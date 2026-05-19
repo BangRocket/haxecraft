@@ -44,11 +44,11 @@ uv run tools/atlas_tool/atlas_tool.py name \
 
 ## haxecraft note
 
-haxecraft currently registers sprites via `src/game/SpriteNames.hx`
-(Haxe constants calling `SpriteRegistry.defineSprite`), not via the JSON
-manifests that `preview` and `name` operate on. The `overlay` subcommand is
-the immediately useful one — run it on a sprite sheet to read off `(col, row)`
-coordinates while editing `SpriteNames.hx`.
+haxecraft currently registers sprites via
+`client/src/client/render/SpriteCatalog.hx` (Haxe constants feeding
+`SpriteRegistry`), not via the JSON manifests that `preview` and `name`
+operate on. The `overlay` subcommand is the immediately useful one — run it on
+a sprite sheet to read off `(col, row)` coordinates while editing the catalog.
 
 `preview` and `name` become useful if/when haxecraft switches to JSON-driven
 atlases via `AtlasLoader.loadManifest` (the code path exists but isn't wired
