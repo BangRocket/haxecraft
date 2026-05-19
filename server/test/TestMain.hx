@@ -12,6 +12,7 @@ class TestMain {
     r.addCase(new TestZoneTileDal());
     r.addCase(new TestZoneSimulator());
     r.addCase(new TestInterestManager());
+    r.addCase(new TestScheduler());
     r.addCase(new TestWorldPopulator());
     r.addCase(new TestInventory());
     r.addCase(new TestTileInteraction());
