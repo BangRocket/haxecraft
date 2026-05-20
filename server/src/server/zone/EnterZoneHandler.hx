@@ -146,23 +146,18 @@ class EnterZoneHandler {
     // SP3: send the joining client its inventory.
     InventoryHandler.send(runtime);
 
-    // SP2: send the zone's static world content to the joining client.
-    for (o in sim.worldObjects()) {
-      var os = new shared.proto.MsgWorldObjectSpawn();
-      os.objectId = o.serial;
-      os.objectTypeId = (o.itemType : Int);
-      os.tileX = o.tileX; os.tileY = o.tileY;
-      var oo = new BytesOutput(); os.serialize(oo);
-      conn.sendFrame(MsgType.WORLD_OBJECT_SPAWN, oo.getBytes());
-    }
-    for (gi in sim.groundItems()) {
-      var gs = new shared.proto.MsgGroundItemSpawn();
-      gs.worldItemId = gi.serial;
-      gs.itemTypeId = (gi.itemType : Int);
-      gs.count = gi.count;
-      gs.tileX = gi.tileX; gs.tileY = gi.tileY;
-      var go = new BytesOutput(); gs.serialize(go);
-      conn.sendFrame(MsgType.GROUND_ITEM_SPAWN, go.getBytes());
+    // SP2: send the zone's world items (ground items + placed furniture) to
+    // the joining client as unified MsgEntitySpawn frames.
+    for (it in sim.items) {
+      if (!it.inWorld()) continue;
+      var sp = new shared.proto.MsgEntitySpawn();
+      sp.entityId = it.serial;
+      sp.itemTypeId = (it.itemType : Int);
+      sp.count = it.count;
+      sp.tileX = it.tileX;
+      sp.tileY = it.tileY;
+      var o = new BytesOutput(); sp.serialize(o);
+      conn.sendFrame(MsgType.ENTITY_SPAWN, o.getBytes());
     }
   }
 

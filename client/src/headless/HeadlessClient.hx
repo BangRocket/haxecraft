@@ -22,6 +22,8 @@ import shared.proto.MsgSelectActiveItem;
 import shared.proto.MsgUseItemOnTile;
 import shared.proto.MsgType;
 import shared.world.Direction;
+import shared.item.ItemType;
+import shared.item.ItemCategory;
 
 /**
   Programmable client driving the M1 protocol synchronously. Not for high
@@ -97,7 +99,9 @@ class HeadlessClient {
       throw 'expected ENTITY_SPAWN got ${spawnFrame.msgType}';
     }
 
-    // SP2: drain the static-world spawn burst (world objects + ground items).
+    // SP2: drain the static-world spawn burst. After the wire collapse,
+    // furniture + ground items both arrive as ENTITY_SPAWN with item-range
+    // serials (top bit set) — categorize by the embedded itemTypeId.
     worldObjectCount = 0;
     groundItemCount = 0;
     var deadline = haxe.Timer.stamp() + 1.0;
@@ -106,9 +110,19 @@ class HeadlessClient {
       try {
         var f = FrameCodec.readFrame(zone.input);
         var mt:Int = f.msgType;
-        if (mt == (MsgType.WORLD_OBJECT_SPAWN : Int)) worldObjectCount++;
-        else if (mt == (MsgType.GROUND_ITEM_SPAWN : Int)) groundItemCount++;
-        else pendingZoneFrames.push({ msgType: mt, payload: f.payload });
+        if (mt == (MsgType.ENTITY_SPAWN : Int)) {
+          var sp = MsgEntitySpawn.deserialize(new BytesInput(f.payload));
+          if ((sp.entityId & 0x40000000) != 0 && sp.parentSerial == 0) {
+            var t:ItemType = sp.itemTypeId;
+            if (t.category() == ItemCategory.FURNITURE) worldObjectCount++;
+            else groundItemCount++;
+          } else {
+            // Mobile spawn (other players in interest range) — buffer for later.
+            pendingZoneFrames.push({ msgType: mt, payload: f.payload });
+          }
+        } else {
+          pendingZoneFrames.push({ msgType: mt, payload: f.payload });
+        }
       } catch (_:haxe.io.Eof) {
         break;
       } catch (_:Dynamic) {

@@ -153,36 +153,24 @@ class TestMessages extends Test {
     Assert.equals(200, m2.durationMs);
   }
 
-  function testGroundItemSpawn() {
-    var m = new shared.proto.MsgGroundItemSpawn();
-    m.worldItemId = 5;
+  function testEntitySpawnItemForm() {
+    // After the wire collapse, items spawn as MsgEntitySpawn with item-range
+    // serial (top bit set) and item-form fields filled.
+    var m = new shared.proto.MsgEntitySpawn();
+    m.entityId = 0x40000005;
     m.itemTypeId = 1;
     m.count = 3;
     m.tileX = 100;
     m.tileY = 200;
     var out = new BytesOutput();
     m.serialize(out);
-    var m2 = shared.proto.MsgGroundItemSpawn.deserialize(new BytesInput(out.getBytes()));
-    Assert.equals(5, m2.worldItemId);
+    var m2 = shared.proto.MsgEntitySpawn.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(0x40000005, m2.entityId);
     Assert.equals(1, m2.itemTypeId);
     Assert.equals(3, m2.count);
     Assert.equals(100, m2.tileX);
     Assert.equals(200, m2.tileY);
-  }
-
-  function testWorldObjectSpawn() {
-    var m = new shared.proto.MsgWorldObjectSpawn();
-    m.objectId = 2;
-    m.objectTypeId = 64;
-    m.tileX = 514;
-    m.tileY = 513;
-    var out = new BytesOutput();
-    m.serialize(out);
-    var m2 = shared.proto.MsgWorldObjectSpawn.deserialize(new BytesInput(out.getBytes()));
-    Assert.equals(2, m2.objectId);
-    Assert.equals(64, m2.objectTypeId);
-    Assert.equals(514, m2.tileX);
-    Assert.equals(513, m2.tileY);
+    Assert.equals(0, m2.parentSerial);   // world-placed
   }
 
   function testChat() {
@@ -201,25 +189,39 @@ class TestMessages extends Test {
   function testInventory() {
     var m = new shared.proto.MsgInventory();
     m.activeSlot = 2;
-    m.slots = [{ itemTypeId: 1, count: 7 }, { itemTypeId: 54, count: 1 }];
+    m.slots = [
+      { serial: 0x40000010, itemTypeId: 1, count: 7 },
+      { serial: 0x40000011, itemTypeId: 54, count: 1 }
+    ];
     var out = new BytesOutput();
     m.serialize(out);
     var m2 = shared.proto.MsgInventory.deserialize(new BytesInput(out.getBytes()));
     Assert.equals(2, m2.activeSlot);
     Assert.equals(2, m2.slots.length);
+    Assert.equals(0x40000010, m2.slots[0].serial);
     Assert.equals(1, m2.slots[0].itemTypeId);
     Assert.equals(7, m2.slots[0].count);
+    Assert.equals(0x40000011, m2.slots[1].serial);
     Assert.equals(54, m2.slots[1].itemTypeId);
     Assert.equals(1, m2.slots[1].count);
   }
 
-  function testGroundItemDespawn() {
-    var m = new shared.proto.MsgGroundItemDespawn();
-    m.worldItemId = 17;
+  function testEntityMoveReparent() {
+    // After the wire collapse, MsgEntityMove can carry a re-parent (item
+    // entered a mobile's inventory).
+    var m = new shared.proto.MsgEntityMove();
+    m.entityId = 0x40000020;
+    m.fromX = 50; m.fromY = 51;
+    m.toX = 0; m.toY = 0;
+    m.newParentSerial = 7;
+    m.newSlot = 2;
     var out = new BytesOutput();
     m.serialize(out);
-    var m2 = shared.proto.MsgGroundItemDespawn.deserialize(new BytesInput(out.getBytes()));
-    Assert.equals(17, m2.worldItemId);
+    var m2 = shared.proto.MsgEntityMove.deserialize(new BytesInput(out.getBytes()));
+    Assert.equals(0x40000020, m2.entityId);
+    Assert.equals(50, m2.fromX);
+    Assert.equals(7, m2.newParentSerial);
+    Assert.equals(2, m2.newSlot);
   }
 
   function testSelectActiveItem() {

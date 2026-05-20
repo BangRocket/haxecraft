@@ -166,6 +166,12 @@ class ZoneRenderer {
     worldObjects.push({ id: id, typeId: objectTypeId, tileX: tileX, tileY: tileY });
   }
 
+  public function removeWorldObject(id:Int):Void {
+    for (o in worldObjects) {
+      if (o.id == id) { worldObjects.remove(o); return; }
+    }
+  }
+
   /** Ground items: one flat 8x8 cell sitting on the tile. */
   function drawGroundItems():Void {
     for (gi in groundItems) {

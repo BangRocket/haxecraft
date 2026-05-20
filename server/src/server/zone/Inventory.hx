@@ -113,9 +113,10 @@ class Inventory {
 
   public function isEmpty():Bool return slots.length == 0;
 
-  /** Flatten to plain rows for MsgInventory and tests. */
-  public function toRows():Array<{itemTypeId:Int, count:Int}> {
-    return [for (s in slots) { itemTypeId: (s.itemType : Int), count: s.count }];
+  /** Flatten to plain rows for MsgInventory. Each row carries its serial so
+      the client can correlate later re-parent moves against specific slots. */
+  public function toRows():Array<{serial:Int, itemTypeId:Int, count:Int}> {
+    return [for (s in slots) { serial: s.serial, itemTypeId: (s.itemType : Int), count: s.count }];
   }
 
   function reindexFrom(start:Int):Void {

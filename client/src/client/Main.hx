@@ -27,11 +27,10 @@ import shared.proto.MsgEnterZoneAck;
 import shared.proto.MsgEntitySpawn;
 import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntityDespawn;
-import shared.proto.MsgGroundItemSpawn;
-import shared.proto.MsgWorldObjectSpawn;
 import shared.proto.MsgInventory;
-import shared.proto.MsgGroundItemDespawn;
 import shared.proto.MsgSelectActiveItem;
+import shared.item.ItemType;
+import shared.item.ItemCategory;
 import shared.proto.MsgUseItemOnTile;
 import shared.proto.MsgTileChange;
 import shared.proto.MsgCraft;
@@ -73,7 +72,7 @@ class Main extends App {
 
   var inventoryScreen:InventoryScreen;
   var inventoryOpen:Bool = false;
-  var invSlots:Array<{itemTypeId:Int, count:Int}> = [];
+  var invSlots:Array<{serial:Int, itemTypeId:Int, count:Int}> = [];
   var invActiveSlot:Int = 0;
   var craftingScreen:CraftingScreen;
 
@@ -93,11 +92,8 @@ class Main extends App {
     zoneDispatcher.on(MsgType.ENTITY_SPAWN, onEntitySpawn);
     zoneDispatcher.on(MsgType.ENTITY_MOVE, onEntityMove);
     zoneDispatcher.on(MsgType.ENTITY_DESPAWN, onEntityDespawn);
-    zoneDispatcher.on(MsgType.GROUND_ITEM_SPAWN, onGroundItemSpawn);
-    zoneDispatcher.on(MsgType.WORLD_OBJECT_SPAWN, onWorldObjectSpawn);
     zoneDispatcher.on(MsgType.CHAT, onChat);
     zoneDispatcher.on(MsgType.INVENTORY, onInventory);
-    zoneDispatcher.on(MsgType.GROUND_ITEM_DESPAWN, onGroundItemDespawn);
     zoneDispatcher.on(MsgType.TILE_CHANGE, onTileChange);
 
     loginScreen = new LoginScreen(s2d);
@@ -173,11 +169,6 @@ class Main extends App {
     invSlots = m.slots;
     invActiveSlot = m.activeSlot;
     if (inventoryScreen != null) inventoryScreen.setSlots(invSlots, invActiveSlot);
-  }
-
-  function onGroundItemDespawn(payload:Bytes):Void {
-    var m = MsgGroundItemDespawn.deserialize(new BytesInput(payload));
-    if (zoneRenderer != null) zoneRenderer.removeGroundItem(m.worldItemId);
   }
 
   function toggleInventory():Void {
@@ -313,31 +304,52 @@ class Main extends App {
     chatBox.onSubmit = onChatSubmit;
   }
 
+  /** Mobile-range serials live below ITEM_BIT (0x40000000); see server.zone.Serials. */
+  static inline function isMobileSerial(s:Int):Bool return s > 0 && (s & 0x40000000) == 0;
+
   function onEntitySpawn(payload:Bytes):Void {
     var m = MsgEntitySpawn.deserialize(new BytesInput(payload));
-    if (zoneRenderer != null) zoneRenderer.spawnEntity(m.entityId, m.name, m.tileX, m.tileY);
+    if (zoneRenderer == null) return;
+    if (isMobileSerial(m.entityId)) {
+      zoneRenderer.spawnEntity(m.entityId, m.name, m.tileX, m.tileY);
+    } else {
+      // Item kind. Carried items (parentSerial != 0) are not rendered in
+      // the world — the picker's own MsgInventory burst carries them.
+      if (m.parentSerial != 0) return;
+      var t:ItemType = m.itemTypeId;
+      if (t.category() == ItemCategory.FURNITURE) {
+        zoneRenderer.addWorldObject(m.entityId, m.itemTypeId, m.tileX, m.tileY);
+      } else {
+        zoneRenderer.addGroundItem(m.entityId, m.itemTypeId, m.count, m.tileX, m.tileY);
+      }
+    }
   }
 
   function onEntityMove(payload:Bytes):Void {
     var m = MsgEntityMove.deserialize(new BytesInput(payload));
-    if (zoneRenderer != null) zoneRenderer.moveEntity(m.entityId, m.toX, m.toY, m.durationMs);
+    if (zoneRenderer == null) return;
+    if (m.newParentSerial != 0) {
+      // Re-parent move: an item entered a mobile's inventory. Pull it out of
+      // the world render. The picker's local inventory model is updated by
+      // the subsequent MsgInventory refresh (sent only for the merge case
+      // today; non-merge pickups rely on the surviving MsgEntitySpawn data).
+      zoneRenderer.removeGroundItem(m.entityId);
+      zoneRenderer.removeWorldObject(m.entityId);
+      return;
+    }
+    // Tile-step move: only mobiles do this today.
+    zoneRenderer.moveEntity(m.entityId, m.toX, m.toY, m.durationMs);
   }
 
   function onEntityDespawn(payload:Bytes):Void {
     var m = MsgEntityDespawn.deserialize(new BytesInput(payload));
-    if (zoneRenderer != null) zoneRenderer.despawnEntity(m.entityId);
-  }
-
-  function onGroundItemSpawn(payload:Bytes):Void {
-    var m = MsgGroundItemSpawn.deserialize(new BytesInput(payload));
-    if (zoneRenderer != null)
-      zoneRenderer.addGroundItem(m.worldItemId, m.itemTypeId, m.count, m.tileX, m.tileY);
-  }
-
-  function onWorldObjectSpawn(payload:Bytes):Void {
-    var m = MsgWorldObjectSpawn.deserialize(new BytesInput(payload));
-    if (zoneRenderer != null)
-      zoneRenderer.addWorldObject(m.objectId, m.objectTypeId, m.tileX, m.tileY);
+    if (zoneRenderer == null) return;
+    if (isMobileSerial(m.entityId)) {
+      zoneRenderer.despawnEntity(m.entityId);
+    } else {
+      zoneRenderer.removeGroundItem(m.entityId);
+      zoneRenderer.removeWorldObject(m.entityId);
+    }
   }
 
   function onChatSubmit(raw:String):Void {

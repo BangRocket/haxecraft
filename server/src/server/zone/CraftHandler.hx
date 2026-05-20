@@ -6,7 +6,7 @@ import haxe.io.BytesOutput;
 import server.net.ClientConnection;
 import shared.proto.MsgCraft;
 import shared.proto.MsgPlaceFurniture;
-import shared.proto.MsgWorldObjectSpawn;
+import shared.proto.MsgEntitySpawn;
 import shared.proto.MsgType;
 
 /** Crafting + furniture-placement message handlers. */
@@ -45,15 +45,16 @@ class CraftHandler {
 
     InventoryHandler.send(m);
 
-    var sp = new MsgWorldObjectSpawn();
-    sp.objectId = obj.serial;
-    sp.objectTypeId = (obj.itemType : Int);
+    var sp = new MsgEntitySpawn();
+    sp.entityId = obj.serial;
+    sp.itemTypeId = (obj.itemType : Int);
+    sp.count = obj.count;
     sp.tileX = obj.tileX;
     sp.tileY = obj.tileY;
     var out = new BytesOutput(); sp.serialize(out);
     var bytes = out.getBytes();
     for (other in sim.allMobiles()) {
-      if (other.conn != null && other.conn.alive) other.conn.sendFrame(MsgType.WORLD_OBJECT_SPAWN, bytes);
+      if (other.conn != null && other.conn.alive) other.conn.sendFrame(MsgType.ENTITY_SPAWN, bytes);
     }
   }
 }

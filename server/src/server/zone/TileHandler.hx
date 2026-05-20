@@ -6,11 +6,11 @@ import haxe.io.BytesOutput;
 import server.net.ClientConnection;
 import shared.proto.MsgUseItemOnTile;
 import shared.proto.MsgTileChange;
-import shared.proto.MsgGroundItemSpawn;
+import shared.proto.MsgEntitySpawn;
 import shared.proto.MsgType;
 
 /** Tile interaction networking: the use-on-tile intent and the per-tick
-    broadcast of tile changes + drop spawns. */
+    broadcast of tile changes + item spawns (gathering drops, planting, etc). */
 class TileHandler {
   var sim:ZoneSimulator;
   var enterHandler:EnterZoneHandler;
@@ -33,7 +33,7 @@ class TileHandler {
     }
   }
 
-  /** Broadcast tile changes + drop spawns accumulated since the last flush. */
+  /** Broadcast tile changes + item spawns accumulated since the last flush. */
   public function flush():Void {
     if (sim.pendingTileChanges.length == 0 && sim.pendingItemSpawns.length == 0) return;
 
@@ -43,14 +43,14 @@ class TileHandler {
       var out = new BytesOutput(); m.serialize(out);
       broadcast(MsgType.TILE_CHANGE, out.getBytes());
     }
-    for (gi in sim.pendingItemSpawns) {
-      var m = new MsgGroundItemSpawn();
-      m.worldItemId = gi.serial;
-      m.itemTypeId = (gi.itemType : Int);
-      m.count = gi.count;
-      m.tileX = gi.tileX; m.tileY = gi.tileY;
-      var out = new BytesOutput(); m.serialize(out);
-      broadcast(MsgType.GROUND_ITEM_SPAWN, out.getBytes());
+    for (it in sim.pendingItemSpawns) {
+      var sp = new MsgEntitySpawn();
+      sp.entityId = it.serial;
+      sp.itemTypeId = (it.itemType : Int);
+      sp.count = it.count;
+      sp.tileX = it.tileX; sp.tileY = it.tileY;
+      var out = new BytesOutput(); sp.serialize(out);
+      broadcast(MsgType.ENTITY_SPAWN, out.getBytes());
     }
     sim.clearPending();
   }
