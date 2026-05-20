@@ -61,6 +61,7 @@ class Main {
     var inventoryHandler = new InventoryHandler(sim, enterHandler);
     var tileHandler = new TileHandler(sim, enterHandler);
     var craftHandler = new CraftHandler(sim, enterHandler);
+    var combatHandler = new CombatHandler(sim, enterHandler, interest);
 
     var srv = new TcpServer(Constants.DEFAULT_SERVER_HOST, Constants.ZONE_PORT);
     var dispatcher = new MessageDispatcher();
@@ -71,6 +72,7 @@ class Main {
     dispatcher.register(MsgType.USE_ITEM_ON_TILE, tileHandler.handle);
     dispatcher.register(MsgType.CRAFT, craftHandler.handleCraft);
     dispatcher.register(MsgType.PLACE_FURNITURE, craftHandler.handlePlace);
+    dispatcher.register(MsgType.ATTACK_TARGET, combatHandler.handle);
 
     var tickInterval = 1.0 / Constants.TICK_HZ;
     var nextTickAt = Sys.time() + tickInterval;
@@ -124,6 +126,7 @@ class Main {
         moveHandler.broadcastMoves();
         inventoryHandler.broadcastPickups();
         tileHandler.flush();
+        combatHandler.broadcastEvents();
         broadcastInterestDiffs(sim, interest.update(sim.grid, sim.allMobiles()));
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {

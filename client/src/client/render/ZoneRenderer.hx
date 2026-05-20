@@ -201,9 +201,11 @@ class ZoneRenderer {
     }
   }
 
-  public function spawnEntity(id:Int, name:String, tileX:Int, tileY:Int):Void {
+  public function spawnEntity(id:Int, name:String, tileX:Int, tileY:Int, hp:Int = 0, maxHp:Int = 0):Void {
     var v = new EntityVisual(id, name);
     v.spawnAt(tileX, tileY);
+    v.hp = hp;
+    v.maxHp = maxHp;
     entities.set(id, v);
   }
 
@@ -214,6 +216,24 @@ class ZoneRenderer {
   public function moveEntity(id:Int, toX:Int, toY:Int, durationMs:Int):Void {
     var v = entities.get(id);
     if (v != null) v.applyMove(toX, toY, durationMs);
+  }
+
+  /** Apply a combat event: update the defender's tracked HP. Visual tells
+      (floating damage numbers, on-sprite HP bars) land in a follow-up. */
+  public function applyCombatEvent(defenderSerial:Int, defenderHp:Int, hit:Bool, damage:Int):Void {
+    var v = entities.get(defenderSerial);
+    if (v != null) v.hp = defenderHp;
+    Sys.println('[combat] defender=$defenderSerial hit=$hit dmg=$damage hp=$defenderHp');
+  }
+
+  /** Serial of the mobile (if any) on the given tile; 0 = none.
+      Used by the F-key attack-target binding. */
+  public function mobileSerialAtTile(x:Int, y:Int):Int {
+    for (id in entities.keys()) {
+      var v = entities.get(id);
+      if (Std.int(v.toX) == x && Std.int(v.toY) == y) return id;
+    }
+    return 0;
   }
 
   /** The local player's interpolated tile position (for camera centering). */

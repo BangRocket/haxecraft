@@ -13,6 +13,10 @@ class EntityVisual {
   public var moveStartTime:Float = 0;
   public var moveDurationS:Float = 0;
   public var facing:Direction = SOUTH;
+  // Combat state (M3 SP1) — tracked by the client for HUD lookups even
+  // though visual HP rendering lands in a follow-up.
+  public var hp:Int = 0;
+  public var maxHp:Int = 0;
 
   public function new(id:Int, name:String) {
     this.id = id;

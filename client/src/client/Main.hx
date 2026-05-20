@@ -29,6 +29,8 @@ import shared.proto.MsgEntityMove;
 import shared.proto.MsgEntityDespawn;
 import shared.proto.MsgInventory;
 import shared.proto.MsgSelectActiveItem;
+import shared.proto.MsgAttackTarget;
+import shared.proto.MsgCombatEvent;
 import shared.item.ItemType;
 import shared.item.ItemCategory;
 import shared.proto.MsgUseItemOnTile;
@@ -95,6 +97,7 @@ class Main extends App {
     zoneDispatcher.on(MsgType.CHAT, onChat);
     zoneDispatcher.on(MsgType.INVENTORY, onInventory);
     zoneDispatcher.on(MsgType.TILE_CHANGE, onTileChange);
+    zoneDispatcher.on(MsgType.COMBAT_EVENT, onCombatEvent);
 
     loginScreen = new LoginScreen(s2d);
     loginScreen.onSubmit = onLoginSubmit;
@@ -127,6 +130,10 @@ class Main extends App {
             useOnFacedTile();
           } else if (e.keyCode == hxd.Key.P) {
             placeFurniture();
+          } else if (e.keyCode == hxd.Key.F) {
+            attackFacedEntity();
+          } else if (e.keyCode == hxd.Key.ESCAPE) {
+            sendAttackTarget(0);
           } else if (e.keyCode >= hxd.Key.NUMBER_1 && e.keyCode <= hxd.Key.NUMBER_9) {
             selectActiveSlot(e.keyCode - hxd.Key.NUMBER_1);
           }
@@ -188,6 +195,29 @@ class Main extends App {
     m.slot = slot;
     var out = new BytesOutput(); m.serialize(out);
     zoneConn.sendFrame(MsgType.SELECT_ACTIVE_ITEM, out.getBytes());
+  }
+
+  function onCombatEvent(payload:Bytes):Void {
+    var e = MsgCombatEvent.deserialize(new BytesInput(payload));
+    if (zoneRenderer != null) {
+      zoneRenderer.applyCombatEvent(e.defenderSerial, e.defenderHp, e.hit, e.damage);
+    }
+  }
+
+  function attackFacedEntity():Void {
+    if (zoneConn == null || zoneRenderer == null) return;
+    var t = zoneRenderer.ownInteractTarget();
+    var serial = zoneRenderer.mobileSerialAtTile(t.x, t.y);
+    if (serial == 0 || serial == ownEntityId) return;
+    sendAttackTarget(serial);
+  }
+
+  function sendAttackTarget(targetSerial:Int):Void {
+    if (zoneConn == null) return;
+    var m = new MsgAttackTarget();
+    m.targetSerial = targetSerial;
+    var out = new BytesOutput(); m.serialize(out);
+    zoneConn.sendFrame(MsgType.ATTACK_TARGET, out.getBytes());
   }
 
   function onTileChange(payload:Bytes):Void {
@@ -311,7 +341,7 @@ class Main extends App {
     var m = MsgEntitySpawn.deserialize(new BytesInput(payload));
     if (zoneRenderer == null) return;
     if (isMobileSerial(m.entityId)) {
-      zoneRenderer.spawnEntity(m.entityId, m.name, m.tileX, m.tileY);
+      zoneRenderer.spawnEntity(m.entityId, m.name, m.tileX, m.tileY, m.hp, m.maxHp);
     } else {
       // Item kind. Carried items (parentSerial != 0) are not rendered in
       // the world — the picker's own MsgInventory burst carries them.

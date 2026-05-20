@@ -12,6 +12,11 @@ typedef MoveResult = { entityId:Int, fromX:Int, fromY:Int, toX:Int, toY:Int };
 /** An item picked up during a tick; the caller broadcasts the despawn + inventory. */
 typedef PickupResult = { entity:Mobile, worldItemSerial:Int };
 
+/** A swing resolved during a tick; the caller turns these into MsgCombatEvent. */
+typedef CombatResult = {
+  attacker:Int, defender:Int, hit:Bool, damage:Int, defenderHp:Int
+};
+
 class ZoneSimulator {
   public var currentTick(default, null):Int = 0;
   public var map(default, null):MapData;
@@ -34,9 +39,13 @@ class ZoneSimulator {
   public var items(default, null):Map<Int, Item> = new Map();
 
   public static inline var FLUSH_TICK_INTERVAL:Int = 50;  // 5s at 10 Hz
+  public static inline var HIT_CHANCE_PERCENT:Int = 60;
+  public static inline var SWING_TICKS_FIST:Int = 15;     // 1.5 s at 10 Hz
+  public static inline var HP_REGEN_TICKS:Int = 40;       // 4 s at 10 Hz
 
   public var movesThisTick(default, null):Array<MoveResult> = [];
   public var pickupsThisTick(default, null):Array<PickupResult> = [];
+  public var combatEventsThisTick(default, null):Array<CombatResult> = [];
 
   /** Tile changes + item spawns since the last flush (interaction + growth). */
   public var pendingTileChanges(default, null):Array<{x:Int, y:Int, type:Int, data:Int}> = [];
@@ -58,6 +67,7 @@ class ZoneSimulator {
     this.tileDal = tileDal;
     this.grid = new SectorGrid(map.width, map.height);
     scheduler.every(FLUSH_TICK_INTERVAL, flushMobilePositions);
+    scheduler.every(HP_REGEN_TICKS, regenAllHp);
   }
 
   public function flushMobilePositions():Void {
@@ -76,6 +86,7 @@ class ZoneSimulator {
     currentTick++;
     movesThisTick = [];
     pickupsThisTick = [];
+    combatEventsThisTick = [];
     for (m in mobiles) {
       if (m.pendingDir < 0) continue;
       if (currentTick < m.nextMoveTick) continue;
@@ -106,7 +117,49 @@ class ZoneSimulator {
       }
     }
     growTiles();
+    resolveSwings();
     scheduler.tick();
+  }
+
+  /** Combat: every mobile with an active attackTarget and an elapsed
+      swing timer rolls hit/damage if its target is adjacent. Out-of-range
+      pauses (timer stays); a dead target clears the attacker's target. */
+  function resolveSwings():Void {
+    for (m in mobiles) {
+      if (m.attackTarget == 0) continue;
+      if (currentTick < m.nextSwingTick) continue;
+      var target = mobiles.get(m.attackTarget);
+      if (target == null || target.hp <= 0) {
+        m.attackTarget = 0;
+        continue;
+      }
+      var dx = m.tileX - target.tileX; if (dx < 0) dx = -dx;
+      var dy = m.tileY - target.tileY; if (dy < 0) dy = -dy;
+      if ((dx > dy ? dx : dy) > 1) continue;          // adjacency gate
+
+      var hit = Std.random(100) < HIT_CHANCE_PERCENT;
+      var dmg = hit ? 1 + Std.random(3) : 0;          // 1..3 on hit
+      if (hit) {
+        target.hp -= dmg;
+        if (target.hp <= 0) {
+          // SP1 death stub: reset HP. Real death lands in SP4.
+          target.hp = target.maxHp;
+          Sys.println('[combat] mobile ${target.serial} died (stub respawn)');
+        }
+      }
+      combatEventsThisTick.push({
+        attacker: m.serial, defender: target.serial,
+        hit: hit, damage: dmg, defenderHp: target.hp
+      });
+      m.nextSwingTick = currentTick + SWING_TICKS_FIST;
+    }
+  }
+
+  /** Passive HP regen — registered as a scheduler timer in the constructor. */
+  function regenAllHp():Void {
+    for (m in mobiles) {
+      if (m.hp < m.maxHp && m.hp > 0) m.hp++;
+    }
   }
 
   /** Advance growth on tiles near connected players (bounded scan). */

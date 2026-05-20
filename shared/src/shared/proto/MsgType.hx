@@ -27,4 +27,7 @@ enum abstract MsgType(Int) to Int from Int {
   var PLACE_FURNITURE = 38;
   // M2 SP2: chat
   var CHAT = 40;
+  // M3 SP1: combat
+  var ATTACK_TARGET = 41;
+  var COMBAT_EVENT = 42;
 }

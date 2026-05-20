@@ -204,6 +204,13 @@ class HeadlessClient {
     writeFrame(zone, MsgType.USE_ITEM_ON_TILE, m);
   }
 
+  /** Select or clear an attack target (M3 SP1). 0 = disengage. **/
+  public function attack(targetSerial:Int):Void {
+    var m = new shared.proto.MsgAttackTarget();
+    m.targetSerial = targetSerial;
+    writeFrame(zone, MsgType.ATTACK_TARGET, m);
+  }
+
   /** Like drainFrames, but reads the gateway socket (for global chat). **/
   public function drainGatewayFrames(durationS:Float):Array<{msgType:Int, payload:Bytes}> {
     var out:Array<{msgType:Int, payload:Bytes}> = [];
