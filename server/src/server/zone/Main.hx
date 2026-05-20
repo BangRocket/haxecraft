@@ -123,8 +123,7 @@ class Main {
         moveHandler.broadcastMoves();
         inventoryHandler.broadcastPickups();
         tileHandler.flush();
-        var entityList = [for (m in sim.allMobiles()) m];
-        broadcastInterestDiffs(sim, interest.update(entityList));
+        broadcastInterestDiffs(sim, interest.update(sim.grid, sim.allMobiles()));
         nextTickAt += tickInterval;
         if (now > nextTickAt + tickInterval) {
           nextTickAt = now + tickInterval;

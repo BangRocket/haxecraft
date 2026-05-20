@@ -23,6 +23,11 @@ class ZoneSimulator {
   /** Tick scheduler — drives the DB flush and (later) combat/respawn timers. */
   public var scheduler(default, null):Scheduler = new Scheduler();
 
+  /** Spatial index over world-placed entities. Tile lookups + AOI sweeps
+      go through here; the keyed-by-serial maps below are still authoritative
+      for "give me every mobile" iteration. */
+  public var grid(default, null):SectorGrid;
+
   /** Live mobiles, keyed by serial. */
   public var mobiles(default, null):Map<Int, Mobile> = new Map();
   /** Live items (both world-placed and carried), keyed by serial. */
@@ -51,6 +56,7 @@ class ZoneSimulator {
     this.mobileDal = mobileDal;
     this.itemDal = itemDal;
     this.tileDal = tileDal;
+    this.grid = new SectorGrid(map.width, map.height);
     scheduler.every(FLUSH_TICK_INTERVAL, flushMobilePositions);
   }
 
@@ -87,6 +93,7 @@ class ZoneSimulator {
       var fromX = m.tileX, fromY = m.tileY;
       m.tileX = nx;
       m.tileY = ny;
+      grid.moveMobile(m, fromX, fromY, nx, ny);
       m.nextMoveTick = currentTick + Constants.MOVE_TICKS;
       movesThisTick.push({ entityId: m.serial, fromX: fromX, fromY: fromY, toX: nx, toY: ny });
 
@@ -144,6 +151,7 @@ class ZoneSimulator {
     it.tileX = x;
     it.tileY = y;
     items.set(it.serial, it);
+    grid.addItem(it);
     pendingItemSpawns.push(it);
     if (itemDal != null) {
       try {
@@ -170,19 +178,16 @@ class ZoneSimulator {
   }
 
   /** The world-placed item on (x, y), or null. Does not return carried items. */
-  public function itemAt(x:Int, y:Int):Null<Item> {
-    for (it in items) {
-      if (it.inWorld() && it.tileX == x && it.tileY == y) return it;
-    }
-    return null;
-  }
+  public function itemAt(x:Int, y:Int):Null<Item> return grid.itemAt(x, y);
 
   public function spawn(m:Mobile):Void {
     mobiles.set(m.serial, m);
+    grid.addMobile(m);
     wireInventory(m);
   }
 
   public function despawn(serial:Int):Void {
+    grid.removeMobile(serial);
     mobiles.remove(serial);
   }
 
@@ -198,20 +203,10 @@ class ZoneSimulator {
 
   public function allMobiles():Iterator<Mobile> return mobiles.iterator();
 
-  public function entityAt(x:Int, y:Int):Null<Mobile> {
-    for (m in mobiles) {
-      if (m.tileX == x && m.tileY == y) return m;
-    }
-    return null;
-  }
+  public function entityAt(x:Int, y:Int):Null<Mobile> return grid.mobileAt(x, y);
 
   /** True if a blocking item (placed furniture) sits on (x, y). */
-  public function objectAt(x:Int, y:Int):Bool {
-    for (it in items) {
-      if (it.inWorld() && it.blocksMovement() && it.tileX == x && it.tileY == y) return true;
-    }
-    return false;
-  }
+  public function objectAt(x:Int, y:Int):Bool return grid.blockingItemAt(x, y);
 
   /** Iterate world-placed blocking items (placed furniture). */
   public function worldObjects():Iterator<Item> {
@@ -243,6 +238,7 @@ class ZoneSimulator {
   /** Load-time helper: register a world-placed item already in the DB. */
   public function attachWorldItem(it:Item):Void {
     items.set(it.serial, it);
+    grid.addItem(it);
   }
 
   /** Install persistence hooks on a mobile's inventory. */
@@ -250,6 +246,7 @@ class ZoneSimulator {
     var inv = m.inventory;
     var idal = itemDal;
     var mp = items;
+    var g = grid;
     inv.onAdd = function(it:Item) {
       mp.set(it.serial, it);
       if (idal != null) {
@@ -262,6 +259,10 @@ class ZoneSimulator {
     };
     inv.onReparent = function(it:Item) {
       mp.set(it.serial, it);
+      // Pickup case: the item just moved world -> carried. Deregister
+      // from the grid so itemAt no longer returns it. Reindex case (slot
+      // shift after removeCount): no-op since the item was never on the grid.
+      g.removeItem(it.serial);
       if (idal != null) {
         try {
           idal.reparentToMobile(it.serial, m.serial, it.slot);
@@ -281,6 +282,7 @@ class ZoneSimulator {
     };
     inv.onDestroy = function(it:Item) {
       mp.remove(it.serial);
+      g.removeItem(it.serial);
       if (idal != null) {
         try {
           idal.delete(it.serial);
