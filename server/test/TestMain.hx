@@ -13,6 +13,7 @@ class TestMain {
     r.addCase(new TestZoneSimulator());
     r.addCase(new TestInterestManager());
     r.addCase(new TestScheduler());
+    r.addCase(new TestSerials());
     r.addCase(new TestWorldPopulator());
     r.addCase(new TestInventory());
     r.addCase(new TestTileInteraction());
