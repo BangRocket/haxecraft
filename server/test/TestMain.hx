@@ -16,6 +16,7 @@ class TestMain {
     r.addCase(new TestItem());
     r.addCase(new TestWorldPopulator());
     r.addCase(new TestZoneBoot());
+    r.addCase(new TestSectorGrid());
     r.addCase(new TestInventory());
     r.addCase(new TestTileInteraction());
     r.addCase(new TestCrafting());
