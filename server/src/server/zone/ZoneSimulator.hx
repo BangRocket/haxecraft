@@ -65,6 +65,7 @@ class ZoneSimulator {
     for (m in mobiles) {
       try {
         mobileDal.savePosition(m.serial, m.tileX, m.tileY);
+        mobileDal.saveStatsAndHp(m.serial, m.str, m.dex, m.intel, m.hp, m.maxHp);
       } catch (err:Dynamic) {
         Sys.println('[zone] flush save failed for mobile ${m.serial}: $err');
       }

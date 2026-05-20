@@ -16,5 +16,7 @@ class MsgEntitySpawn implements Serializable {
   public var tileY:Int = 0;
   public var parentSerial:Int = 0;   // item only; 0 = world-placed
   public var slot:Int = 0;           // item only; meaningful when parentSerial != 0
+  public var hp:Int = 0;             // mobile only
+  public var maxHp:Int = 0;          // mobile only
   public function new() {}
 }

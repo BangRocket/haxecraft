@@ -15,6 +15,16 @@ class Mobile {
   public var pendingDir:Int = -1;
   public var inventory:Inventory;
 
+  // Combat state (M3 SP1).
+  public var str:Int = 50;
+  public var dex:Int = 50;
+  public var intel:Int = 50;     // `int` is reserved in Haxe
+  public var hp:Int;
+  public var maxHp:Int;
+  public var nextSwingTick:Int = 0;
+  /** 0 = not attacking; otherwise the target's serial. */
+  public var attackTarget:Int = 0;
+
   public function new(serial:Int, name:String, conn:Null<ClientConnection>,
                       tileX:Int, tileY:Int) {
     this.serial = serial;
@@ -22,6 +32,9 @@ class Mobile {
     this.conn = conn;
     this.tileX = tileX;
     this.tileY = tileY;
+    // Placeholder maxHp formula; SP2 will recompute on stat changes.
+    this.maxHp = 25 + Std.int(str / 2);
+    this.hp = this.maxHp;
     this.inventory = new Inventory(this);
   }
 }

@@ -112,6 +112,12 @@ class EnterZoneHandler {
     sendAck(conn, ack);
 
     var runtime = new Mobile(row.serial, row.name, conn, sx, sy);
+    // Hydrate persisted combat state.
+    runtime.str = row.str;
+    runtime.dex = row.dex;
+    runtime.intel = row.intel;
+    runtime.maxHp = row.maxHp;
+    runtime.hp = row.hp;
 
     // Load persisted carried items BEFORE spawn() so the persistence hooks
     // (installed by spawn) don't fire spurious DAL writes on load.
@@ -140,6 +146,8 @@ class EnterZoneHandler {
     sp.name = runtime.name;
     sp.tileX = runtime.tileX;
     sp.tileY = runtime.tileY;
+    sp.hp = runtime.hp;
+    sp.maxHp = runtime.maxHp;
     var spOut = new BytesOutput(); sp.serialize(spOut);
     conn.sendFrame(MsgType.ENTITY_SPAWN, spOut.getBytes());
 

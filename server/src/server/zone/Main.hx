@@ -89,6 +89,7 @@ class Main {
             if (m != null) {
               try {
                 mobileDal.savePosition(m.serial, m.tileX, m.tileY);
+                mobileDal.saveStatsAndHp(m.serial, m.str, m.dex, m.intel, m.hp, m.maxHp);
               } catch (err:Dynamic) {
                 Sys.println('[zone] disconnect save failed for mobile ${m.serial}: $err');
               }
@@ -146,6 +147,8 @@ class Main {
         sp.name = e.name;
         sp.tileX = e.tileX;
         sp.tileY = e.tileY;
+        sp.hp = e.hp;
+        sp.maxHp = e.maxHp;
         var o = new haxe.io.BytesOutput(); sp.serialize(o);
         observer.conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, o.getBytes());
       }
