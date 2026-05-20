@@ -4,8 +4,10 @@ import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import server.net.ClientConnection;
-import server.db.CharacterDal;
-import server.zone.Character;
+import server.db.MobileDal;
+import server.db.ItemDal;
+import server.db.AccountDal;
+import shared.Constants;
 import shared.proto.MsgEnterZone;
 import shared.proto.MsgEnterZoneAck;
 import shared.proto.MsgType;
@@ -13,12 +15,18 @@ import shared.security.HandoffToken;
 import shared.item.ItemType;
 
 class EnterZoneHandler {
-  var characterDal:CharacterDal;
+  var mobileDal:MobileDal;
+  var itemDal:ItemDal;
+  var accountDal:AccountDal;
   var sim:ZoneSimulator;
+  // conn.id -> mobile.serial
   var connToEntity:Map<Int, Int> = new Map();
 
-  public function new(characterDal:CharacterDal, sim:ZoneSimulator) {
-    this.characterDal = characterDal;
+  public function new(mobileDal:MobileDal, itemDal:ItemDal,
+                      accountDal:AccountDal, sim:ZoneSimulator) {
+    this.mobileDal = mobileDal;
+    this.itemDal = itemDal;
+    this.accountDal = accountDal;
     this.sim = sim;
   }
 
@@ -36,86 +44,125 @@ class EnterZoneHandler {
       return;
     }
 
-    var ch = characterDal.findByAccountId(parsed.accountId);
-    if (ch == null || ch.id != parsed.characterId) {
+    var row = mobileDal.findByAccountId(parsed.accountId);
+
+    // Autocreate path: token carried characterId=0 (gateway found no mobile).
+    if (row == null) {
+      if (parsed.characterId != 0) {
+        ack.success = false;
+        ack.errorMsg = "character not found";
+        Sys.println('[zone] conn ${conn.id} EnterZone REJECT (char missing acct=${parsed.accountId} char=${parsed.characterId})');
+        sendAck(conn, ack);
+        conn.close();
+        return;
+      }
+      var acct = accountDal.findById(parsed.accountId);
+      if (acct == null) {
+        ack.success = false;
+        ack.errorMsg = "account not found";
+        Sys.println('[zone] conn ${conn.id} EnterZone REJECT (no account ${parsed.accountId})');
+        sendAck(conn, ack);
+        conn.close();
+        return;
+      }
+      var newSerial = sim.serials.nextMobile();
+      try {
+        mobileDal.insert(newSerial, parsed.accountId, acct.username, 1,
+                         Constants.DEFAULT_SPAWN_X, Constants.DEFAULT_SPAWN_Y);
+      } catch (err:Dynamic) {
+        ack.success = false;
+        ack.errorMsg = "could not create character";
+        Sys.println('[zone] conn ${conn.id} autocreate failed: $err');
+        sendAck(conn, ack);
+        conn.close();
+        return;
+      }
+      Sys.println('[zone] autocreated mobile serial=$newSerial name=${acct.username}');
+      row = mobileDal.findByAccountId(parsed.accountId);
+    } else if (parsed.characterId != 0 && row.serial != parsed.characterId) {
       ack.success = false;
-      ack.errorMsg = "character not found";
-      Sys.println('[zone] conn ${conn.id} EnterZone REJECT (char missing acct=${parsed.accountId} char=${parsed.characterId})');
+      ack.errorMsg = "character mismatch";
+      Sys.println('[zone] conn ${conn.id} EnterZone REJECT (token char=${parsed.characterId} but found ${row.serial})');
       sendAck(conn, ack);
       conn.close();
       return;
     }
 
-    if (sim.entityById(ch.id) != null) {
+    if (sim.mobileBySerial(row.serial) != null) {
       ack.success = false;
       ack.errorMsg = "character already in zone";
-      Sys.println('[zone] conn ${conn.id} EnterZone REJECT (already in zone, char=${ch.id})');
+      Sys.println('[zone] conn ${conn.id} EnterZone REJECT (already in zone, mobile=${row.serial})');
       sendAck(conn, ack);
       conn.close();
       return;
     }
 
     // If saved position isn't walkable (procgen spawn in water/rock/tree), relocate.
-    var sx = ch.tileX, sy = ch.tileY;
+    var sx = row.tileX, sy = row.tileY;
     if (!sim.map.isWalkable(sx, sy) || sim.entityAt(sx, sy) != null) {
       var p = sim.map.findWalkableNear(sx, sy);
-      Sys.println('[zone] relocating char ${ch.id} from ($sx,$sy) -> (${p.x},${p.y})');
+      Sys.println('[zone] relocating mobile ${row.serial} from ($sx,$sy) -> (${p.x},${p.y})');
       sx = p.x; sy = p.y;
     }
 
     ack.success = true;
-    ack.entityId = ch.id;
+    ack.entityId = row.serial;
     ack.tileX = sx;
     ack.tileY = sy;
     sendAck(conn, ack);
 
-    var runtime = new Character(ch.id, ch.name, conn, sx, sy);
-    runtime.inventory = Inventory.fromRows(characterDal.loadInventory(ch.id));
+    var runtime = new Mobile(row.serial, row.name, conn, sx, sy);
+
+    // Load persisted carried items BEFORE spawn() so the persistence hooks
+    // (installed by spawn) don't fire spurious DAL writes on load.
+    for (r in itemDal.loadCarriedFor(row.serial)) {
+      var it = new Item(r.serial, r.itemTypeId, r.count);
+      it.slot = r.slot == null ? 0 : r.slot;
+      sim.attachCarriedItem(runtime, it);
+    }
+    sim.spawn(runtime);
+    connToEntity.set(conn.id, row.serial);
+    Sys.println('[zone] conn ${conn.id} spawned mobile=${row.serial} at ($sx,$sy)');
+
     // Bootstrap: an empty inventory gets the basic wood tool kit, so the
     // gather -> craft loop is reachable from a fresh start.
     if (runtime.inventory.isEmpty()) {
-      runtime.inventory.add(ItemType.WOOD_PICKAXE, 1);
-      runtime.inventory.add(ItemType.WOOD_AXE, 1);
-      runtime.inventory.add(ItemType.WOOD_SHOVEL, 1);
-      runtime.inventory.add(ItemType.WOOD_HOE, 1);
+      var kit = [ItemType.WOOD_PICKAXE, ItemType.WOOD_AXE, ItemType.WOOD_SHOVEL, ItemType.WOOD_HOE];
+      for (t in kit) {
+        var it = new Item(sim.serials.nextItem(), t, 1);
+        runtime.inventory.addFresh(it);
+      }
     }
-    sim.spawn(runtime);
-    connToEntity.set(conn.id, ch.id);
-    Sys.println('[zone] conn ${conn.id} spawned char=${ch.id} at (${ch.tileX},${ch.tileY})');
 
-    // Echo spawn back so client sees itself.
+    // Echo spawn back so the joiner sees itself.
     var sp = new shared.proto.MsgEntitySpawn();
-    sp.entityId = runtime.id;
+    sp.entityId = runtime.serial;
     sp.name = runtime.name;
     sp.tileX = runtime.tileX;
     sp.tileY = runtime.tileY;
-    var spOut = new haxe.io.BytesOutput(); sp.serialize(spOut);
-    var spBytes = spOut.getBytes();
-    conn.sendFrame(shared.proto.MsgType.ENTITY_SPAWN, spBytes);
+    var spOut = new BytesOutput(); sp.serialize(spOut);
+    conn.sendFrame(MsgType.ENTITY_SPAWN, spOut.getBytes());
 
     // SP3: send the joining client its inventory.
     InventoryHandler.send(runtime);
 
-    // Existing entities are synced to this client (and vice versa) by the
-    // per-tick InterestManager diff in the zone loop.
-
     // SP2: send the zone's static world content to the joining client.
-    for (o in sim.worldObjects) {
+    for (o in sim.worldObjects()) {
       var os = new shared.proto.MsgWorldObjectSpawn();
-      os.objectId = o.id;
-      os.objectTypeId = (o.objectType : Int);
+      os.objectId = o.serial;
+      os.objectTypeId = (o.itemType : Int);
       os.tileX = o.tileX; os.tileY = o.tileY;
-      var oo = new haxe.io.BytesOutput(); os.serialize(oo);
-      conn.sendFrame(shared.proto.MsgType.WORLD_OBJECT_SPAWN, oo.getBytes());
+      var oo = new BytesOutput(); os.serialize(oo);
+      conn.sendFrame(MsgType.WORLD_OBJECT_SPAWN, oo.getBytes());
     }
-    for (gi in sim.groundItems) {
+    for (gi in sim.groundItems()) {
       var gs = new shared.proto.MsgGroundItemSpawn();
-      gs.worldItemId = gi.id;
+      gs.worldItemId = gi.serial;
       gs.itemTypeId = (gi.itemType : Int);
       gs.count = gi.count;
       gs.tileX = gi.tileX; gs.tileY = gi.tileY;
-      var go = new haxe.io.BytesOutput(); gs.serialize(go);
-      conn.sendFrame(shared.proto.MsgType.GROUND_ITEM_SPAWN, go.getBytes());
+      var go = new BytesOutput(); gs.serialize(go);
+      conn.sendFrame(MsgType.GROUND_ITEM_SPAWN, go.getBytes());
     }
   }
 

@@ -5,7 +5,8 @@ import shared.item.ItemType;
 
 /**
  * Deterministically populates a zone with world objects and ground items.
- * Server-side, runs once at zone boot. No map/TMX change — placement is code.
+ * Server-side, runs once on a fresh DB; subsequent boots load persisted
+ * items via ItemDal.loadWorldFor.
  */
 class WorldPopulator {
   /** Furniture camp: one of each type, at fixed offsets from the spawn tile. */
@@ -29,22 +30,17 @@ class WorldPopulator {
   static inline var SEED = 0x5C2117E;
 
   public static function populate(sim:ZoneSimulator):Void {
-    // Anchor on a guaranteed-walkable tile near the nominal spawn — on the
-    // procgen map DEFAULT_SPAWN itself may land in water/rock.
     var anchor = sim.map.findWalkableNear(Constants.DEFAULT_SPAWN_X, Constants.DEFAULT_SPAWN_Y);
     var spawnX = anchor.x;
     var spawnY = anchor.y;
 
-    // World objects: a fixed furniture camp just off the spawn tile.
     for (slot in CAMP) {
       var tx = spawnX + slot.dx;
       var ty = spawnY + slot.dy;
-      // Procgen variance: skip a slot whose tile is not walkable terrain.
       if (!sim.map.isWalkable(tx, ty)) continue;
-      sim.addWorldObject(new WorldObject(sim.freshObjectId(), slot.t, tx, ty));
+      sim.spawnItem(slot.t, 1, tx, ty);
     }
 
-    // Ground items: deterministic scatter across walkable tiles near spawn.
     var rng = new SeededRng(SEED);
     var placed = 0;
     var attempts = 0;
@@ -56,7 +52,7 @@ class WorldPopulator {
       if (sim.objectAt(tx, ty)) continue;
       var t = SCATTER[rng.nextInt(SCATTER.length)];
       var count = t.stackable() ? 1 + rng.nextInt(5) : 1;
-      sim.addGroundItem(new GroundItem(sim.freshGroundItemId(), t, count, tx, ty));
+      sim.spawnItem(t, count, tx, ty);
       placed++;
     }
   }

@@ -5,7 +5,7 @@ import server.net.MessageDispatcher;
 import server.auth.HelloHandler;
 import server.db.DbClient;
 import server.db.AccountDal;
-import server.db.CharacterDal;
+import server.db.MobileDal;
 import server.gateway.LoginHandler;
 import server.auth.SessionStore;
 import shared.Constants;
@@ -19,10 +19,10 @@ class Main {
 
     var db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     var accountDal = new AccountDal(db);
-    var characterDal = new CharacterDal(db);
+    var mobileDal = new MobileDal(db);
     var sessions = new SessionStore();
     var players = new GatewayPlayers();
-    var loginHandler = new LoginHandler(accountDal, characterDal, sessions, players);
+    var loginHandler = new LoginHandler(accountDal, mobileDal, sessions, players);
     dispatcher.register(MsgType.LOGIN, loginHandler.handle);
     var chatHandler = new GatewayChatHandler(players);
     dispatcher.register(MsgType.CHAT, chatHandler.handle);

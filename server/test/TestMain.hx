@@ -8,13 +8,14 @@ class TestMain {
     var r = new Runner();
     r.addCase(new TestDbClient());
     r.addCase(new TestAccountDal());
-    r.addCase(new TestCharacterDal());
     r.addCase(new TestZoneTileDal());
     r.addCase(new TestZoneSimulator());
     r.addCase(new TestInterestManager());
     r.addCase(new TestScheduler());
     r.addCase(new TestSerials());
+    r.addCase(new TestItem());
     r.addCase(new TestWorldPopulator());
+    r.addCase(new TestZoneBoot());
     r.addCase(new TestInventory());
     r.addCase(new TestTileInteraction());
     r.addCase(new TestCrafting());

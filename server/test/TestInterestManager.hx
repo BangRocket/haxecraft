@@ -2,13 +2,13 @@ package;
 
 import utest.Assert;
 import utest.Test;
-import server.zone.Character;
+import server.zone.Mobile;
 import server.zone.InterestManager;
 import server.zone.InterestDiff;
 
 class TestInterestManager extends Test {
-  static function ch(id:Int, x:Int, y:Int):Character {
-    return new Character(id, 'e$id', null, x, y);
+  static function mob(serial:Int, x:Int, y:Int):Mobile {
+    return new Mobile(serial, 'm$serial', null, x, y);
   }
 
   static function diffFor(diffs:Array<InterestDiff>, observerId:Int):Null<InterestDiff> {
@@ -18,8 +18,8 @@ class TestInterestManager extends Test {
 
   function testFarApartNeverKnown() {
     var im = new InterestManager();
-    var a = ch(1, 0, 0);
-    var b = ch(2, 200, 0);
+    var a = mob(1, 0, 0);
+    var b = mob(2, 200, 0);
     var diffs = im.update([a, b]);
     Assert.equals(0, diffs.length);
     Assert.isFalse(im.knows(1, 2));
@@ -28,10 +28,10 @@ class TestInterestManager extends Test {
 
   function testEnterRangeProducesDiff() {
     var im = new InterestManager();
-    var a = ch(1, 0, 0);
-    var b = ch(2, 200, 0);
-    im.update([a, b]);            // far: no diff
-    b.tileX = 20;                 // now within SPAWN_EXTENT (32)
+    var a = mob(1, 0, 0);
+    var b = mob(2, 200, 0);
+    im.update([a, b]);
+    b.tileX = 20;
     var diffs = im.update([a, b]);
     var da = diffFor(diffs, 1);
     Assert.notNull(da);
@@ -41,13 +41,13 @@ class TestInterestManager extends Test {
 
   function testLeaveRangePastHysteresis() {
     var im = new InterestManager();
-    var a = ch(1, 0, 0);
-    var b = ch(2, 10, 0);
-    im.update([a, b]);            // known
-    b.tileX = 33;                 // inside 32..34 hysteresis band
+    var a = mob(1, 0, 0);
+    var b = mob(2, 10, 0);
+    im.update([a, b]);
+    b.tileX = 33;
     var d1 = im.update([a, b]);
-    Assert.isNull(diffFor(d1, 1)); // still known, no left event
-    b.tileX = 40;                 // past DESPAWN_EXTENT (34)
+    Assert.isNull(diffFor(d1, 1));
+    b.tileX = 40;
     var d2 = im.update([a, b]);
     var da = diffFor(d2, 1);
     Assert.notNull(da);
@@ -57,8 +57,8 @@ class TestInterestManager extends Test {
 
   function testHysteresisBandDoesNotEnter() {
     var im = new InterestManager();
-    var a = ch(1, 0, 0);
-    var b = ch(2, 33, 0);         // in the 32..34 band, never been known
+    var a = mob(1, 0, 0);
+    var b = mob(2, 33, 0);
     var diffs = im.update([a, b]);
     Assert.equals(0, diffs.length);
     Assert.isFalse(im.knows(1, 2));
@@ -71,9 +71,9 @@ class TestInterestManager extends Test {
 
   function testForgetReturnsObserversAndClears() {
     var im = new InterestManager();
-    var a = ch(1, 0, 0);
-    var b = ch(2, 10, 0);
-    im.update([a, b]);            // mutually known
+    var a = mob(1, 0, 0);
+    var b = mob(2, 10, 0);
+    im.update([a, b]);
     var observers = im.forget(2);
     Assert.isTrue(observers.indexOf(1) >= 0);
     Assert.isFalse(im.knows(1, 2));
@@ -81,13 +81,13 @@ class TestInterestManager extends Test {
 
   function testObserversOfReturnsKnowers() {
     var im = new InterestManager();
-    var a = ch(1, 0, 0);
-    var b = ch(2, 10, 0);
-    var c = ch(3, 500, 0);
-    im.update([a, b, c]);                 // a<->b mutually known; c far from both
-    var obs = im.observersOf(1);          // who knows entity 1?
-    Assert.isTrue(obs.indexOf(2) >= 0);   // b knows a
-    Assert.isFalse(obs.indexOf(3) >= 0);  // c does not
-    Assert.isFalse(obs.indexOf(1) >= 0);  // never includes self
+    var a = mob(1, 0, 0);
+    var b = mob(2, 10, 0);
+    var c = mob(3, 500, 0);
+    im.update([a, b, c]);
+    var obs = im.observersOf(1);
+    Assert.isTrue(obs.indexOf(2) >= 0);
+    Assert.isFalse(obs.indexOf(3) >= 0);
+    Assert.isFalse(obs.indexOf(1) >= 0);
   }
 }

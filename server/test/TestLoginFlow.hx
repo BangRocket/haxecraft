@@ -24,13 +24,15 @@ class TestLoginFlow extends Test {
   function setupClass() {
     db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     dal = new AccountDal(db);
-    db.exec("DELETE FROM characters WHERE name = ?", ["test_login_user"]);
+    db.exec("DELETE FROM items WHERE parent_serial IN (SELECT serial FROM mobiles WHERE name = ?)", ["test_login_user"]);
+    db.exec("DELETE FROM mobiles WHERE name = ?", ["test_login_user"]);
     db.exec("DELETE FROM accounts WHERE username = ?", ["test_login_user"]);
     dal.create("test_login_user", PasswordHash.hash("test_login_pw"));
   }
 
   function teardownClass() {
-    db.exec("DELETE FROM characters WHERE name = ?", ["test_login_user"]);
+    db.exec("DELETE FROM items WHERE parent_serial IN (SELECT serial FROM mobiles WHERE name = ?)", ["test_login_user"]);
+    db.exec("DELETE FROM mobiles WHERE name = ?", ["test_login_user"]);
     db.exec("DELETE FROM accounts WHERE username = ?", ["test_login_user"]);
     db.close();
   }

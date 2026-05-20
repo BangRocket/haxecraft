@@ -24,20 +24,20 @@ class InventoryHandler {
   public function handle(conn:ClientConnection, payload:Bytes):Void {
     var entId = enterHandler.entityIdForConn(conn);
     if (entId == null) return;
-    var ent = sim.entityById(entId);
-    if (ent == null) return;
+    var m = sim.mobileBySerial(entId);
+    if (m == null) return;
     var req = MsgSelectActiveItem.deserialize(new BytesInput(payload));
-    ent.inventory.activeSlot = req.slot;
+    m.inventory.activeSlot = req.slot;
   }
 
-  /** Send a character its full inventory. */
-  public static function send(ch:Character):Void {
-    if (ch.conn == null || !ch.conn.alive) return;
-    var m = new MsgInventory();
-    m.activeSlot = ch.inventory.activeSlot;
-    m.slots = ch.inventory.toRows();
-    var out = new BytesOutput(); m.serialize(out);
-    ch.conn.sendFrame(MsgType.INVENTORY, out.getBytes());
+  /** Send a mobile its full inventory. */
+  public static function send(m:Mobile):Void {
+    if (m.conn == null || !m.conn.alive) return;
+    var msg = new MsgInventory();
+    msg.activeSlot = m.inventory.activeSlot;
+    msg.slots = m.inventory.toRows();
+    var out = new BytesOutput(); msg.serialize(out);
+    m.conn.sendFrame(MsgType.INVENTORY, out.getBytes());
   }
 
   /** Despawn every item picked up this tick (broadcast) and resync the
@@ -45,12 +45,12 @@ class InventoryHandler {
   public function broadcastPickups():Void {
     for (p in sim.pickupsThisTick) {
       var dp = new MsgGroundItemDespawn();
-      dp.worldItemId = p.worldItemId;
+      dp.worldItemId = p.worldItemSerial;
       var dout = new BytesOutput(); dp.serialize(dout);
       var dbytes = dout.getBytes();
-      for (e in sim.allEntities()) {
-        if (e.conn != null && e.conn.alive) {
-          e.conn.sendFrame(MsgType.GROUND_ITEM_DESPAWN, dbytes);
+      for (m in sim.allMobiles()) {
+        if (m.conn != null && m.conn.alive) {
+          m.conn.sendFrame(MsgType.GROUND_ITEM_DESPAWN, dbytes);
         }
       }
       send(p.entity);

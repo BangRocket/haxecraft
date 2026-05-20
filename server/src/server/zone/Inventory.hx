@@ -1,28 +1,75 @@
 package server.zone;
 
 import shared.item.ItemType;
-import shared.item.ItemStack;
 
-/** A character's carried items — an ordered list of slots. Resources merge
-    into one slot per type; tools and furniture take a slot each. */
+/** A mobile's carried items, slot-ordered. Items are first-class records
+    with their own serial. Two add paths:
+
+      - `addFresh(item)` — for a newly-allocated item with no DB row yet
+        (crafting output, bootstrap kit). Stack merges bump an existing
+        slot's count and discard the new item silently; non-merge inserts
+        via `onAdd`.
+
+      - `addExisting(item)` — for an item that already has a DB row
+        (pickup from world, future inter-container move). Stack merges
+        bump the existing slot and destroy the incoming row via
+        `onDestroy`; non-merge re-parents via `onReparent`.
+
+    The simulator installs the four `on*` hooks to plumb persistence + wire
+    events. */
 class Inventory {
-  public var slots(default, null):Array<ItemStack> = [];
+  public var slots(default, null):Array<Item> = [];
   public var activeSlot:Int = 0;
+  public var owner(default, null):Mobile;
 
-  public function new() {}
+  public var onAdd:Item -> Void = function(_) {};
+  public var onSlotCountChanged:Item -> Void = function(_) {};
+  public var onDestroy:Item -> Void = function(_) {};
+  public var onReparent:Item -> Void = function(_) {};
 
-  /** Add `count` of an item. Stackable types merge into an existing slot. */
-  public function add(itemType:ItemType, count:Int = 1):Void {
-    if (count <= 0) return;
-    if (itemType.stackable()) {
-      for (s in slots) {
-        if (s.itemType == itemType) { s.count += count; return; }
-      }
-    }
-    slots.push(new ItemStack(itemType, count));
+  public function new(owner:Mobile) {
+    this.owner = owner;
   }
 
-  /** Total held count of an item type across all slots. */
+  /** Add a freshly-allocated item with no DB row yet. Stack-merge of a
+      stackable type bumps the existing slot's count and discards the
+      incoming item silently (no DB delete needed — it was never persisted). */
+  public function addFresh(item:Item):Void {
+    if (item.itemType.stackable()) {
+      for (s in slots) {
+        if (s.itemType == item.itemType) {
+          s.count += item.count;
+          onSlotCountChanged(s);
+          return;
+        }
+      }
+    }
+    item.parent = owner;
+    item.slot = slots.length;
+    slots.push(item);
+    onAdd(item);
+  }
+
+  /** Add an item that already has a DB row (e.g. a ground item being picked
+      up). Stack-merge of a stackable type bumps the existing slot and
+      destroys the incoming row; non-merge re-parents it. */
+  public function addExisting(item:Item):Void {
+    if (item.itemType.stackable()) {
+      for (s in slots) {
+        if (s.itemType == item.itemType) {
+          s.count += item.count;
+          onSlotCountChanged(s);
+          onDestroy(item);
+          return;
+        }
+      }
+    }
+    item.parent = owner;
+    item.slot = slots.length;
+    slots.push(item);
+    onReparent(item);
+  }
+
   public function countOf(itemType:ItemType):Int {
     var n = 0;
     for (s in slots) if (s.itemType == itemType) n += s.count;
@@ -33,7 +80,8 @@ class Inventory {
     return countOf(itemType) >= count;
   }
 
-  /** Remove `count` of an item type. No-op + false if not enough is held. */
+  /** Remove `count` of `itemType`. Slots that empty are destroyed via
+      `onDestroy`; subsequent slots reindex via `onReparent`. */
   public function removeCount(itemType:ItemType, count:Int):Bool {
     if (!has(itemType, count)) return false;
     var remaining = count;
@@ -44,32 +92,39 @@ class Inventory {
         var take = (s.count < remaining) ? s.count : remaining;
         s.count -= take;
         remaining -= take;
-        if (s.count <= 0) { slots.splice(i, 1); continue; }
+        if (s.count <= 0) {
+          slots.splice(i, 1);
+          onDestroy(s);
+          reindexFrom(i);
+          continue;
+        } else {
+          onSlotCountChanged(s);
+        }
       }
       i++;
     }
     return true;
   }
 
-  /** The slot the player currently has selected, or null. */
-  public function activeItem():Null<ItemStack> {
+  public function activeItem():Null<Item> {
     if (activeSlot < 0 || activeSlot >= slots.length) return null;
     return slots[activeSlot];
   }
 
-  public function isEmpty():Bool {
-    return slots.length == 0;
-  }
+  public function isEmpty():Bool return slots.length == 0;
 
-  /** Flatten to plain {itemTypeId, count} rows — for the DB and the wire. */
+  /** Flatten to plain rows for MsgInventory and tests. */
   public function toRows():Array<{itemTypeId:Int, count:Int}> {
     return [for (s in slots) { itemTypeId: (s.itemType : Int), count: s.count }];
   }
 
-  /** Rebuild an inventory from stored rows, preserving slot order. */
-  public static function fromRows(rows:Array<{itemTypeId:Int, count:Int}>):Inventory {
-    var inv = new Inventory();
-    for (r in rows) inv.slots.push(new ItemStack(r.itemTypeId, r.count));
-    return inv;
+  function reindexFrom(start:Int):Void {
+    for (i in start...slots.length) {
+      var s = slots[i];
+      if (s.slot != i) {
+        s.slot = i;
+        onReparent(s);
+      }
+    }
   }
 }

@@ -20,9 +20,8 @@ class MoveIntentHandler {
     this.interest = interest;
   }
 
-  /** Records the latest held direction on the entity. The move itself is
-      applied in ZoneSimulator.tick() so the step cadence stays tick-aligned
-      — see broadcastMoves(). */
+  /** Records the latest held direction on the mobile. The move itself is
+      applied in ZoneSimulator.tick() so the step cadence stays tick-aligned. */
   public function handle(conn:ClientConnection, payload:Bytes):Void {
     var entId = enterHandler.entityIdForConn(conn);
     if (entId == null) {
@@ -30,15 +29,14 @@ class MoveIntentHandler {
       conn.close();
       return;
     }
-    var ent = sim.entityById(entId);
-    if (ent == null) return;
+    var m = sim.mobileBySerial(entId);
+    if (m == null) return;
 
     var req = MsgMoveIntent.deserialize(new BytesInput(payload));
-    ent.pendingDir = (req.dir : Int);
+    m.pendingDir = (req.dir : Int);
   }
 
-  /** Broadcasts every move ZoneSimulator applied this tick. Call once per
-      tick, immediately after sim.tick(). */
+  /** Broadcasts every move ZoneSimulator applied this tick. */
   public function broadcastMoves():Void {
     var moves = sim.movesThisTick;
     if (moves.length == 0) return;
@@ -53,9 +51,9 @@ class MoveIntentHandler {
       var out = new BytesOutput(); ev.serialize(out);
       var bytes = out.getBytes();
 
-      for (e in sim.allEntities()) {
-        if (e.conn != null && e.conn.alive && interest.knows(e.id, mv.entityId)) {
-          e.conn.sendFrame(MsgType.ENTITY_MOVE, bytes);
+      for (m in sim.allMobiles()) {
+        if (m.conn != null && m.conn.alive && interest.knows(m.serial, mv.entityId)) {
+          m.conn.sendFrame(MsgType.ENTITY_MOVE, bytes);
         }
       }
     }

@@ -5,7 +5,7 @@ import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import server.net.ClientConnection;
 import server.db.AccountDal;
-import server.db.CharacterDal;
+import server.db.MobileDal;
 import server.auth.SessionStore;
 import shared.Constants;
 import shared.proto.MsgLogin;
@@ -17,13 +17,13 @@ import shared.security.HandoffToken;
 
 class LoginHandler {
   var accountDal:AccountDal;
-  var characterDal:CharacterDal;
+  var mobileDal:MobileDal;
   var sessions:SessionStore;
   var players:GatewayPlayers;
 
-  public function new(accountDal:AccountDal, characterDal:CharacterDal, sessions:SessionStore, players:GatewayPlayers) {
+  public function new(accountDal:AccountDal, mobileDal:MobileDal, sessions:SessionStore, players:GatewayPlayers) {
     this.accountDal = accountDal;
-    this.characterDal = characterDal;
+    this.mobileDal = mobileDal;
     this.sessions = sessions;
     this.players = players;
   }
@@ -43,20 +43,18 @@ class LoginHandler {
       return;
     }
 
-    // Auth success — ensure a character exists, then mint a handoff.
-    var ch = characterDal.findByAccountId(acct.id);
-    if (ch == null) {
-      var newId = characterDal.autoCreate(acct.id, acct.username);
-      ch = characterDal.findByAccountId(acct.id);
-      Sys.println('[gateway] autocreated character id=$newId name=${acct.username}');
-    }
+    // Auth success — mint a handoff. The zone owns serial allocation, so if
+    // the account has no mobile yet the token carries characterId=0 and the
+    // zone autocreates on first EnterZone.
+    var mobile = mobileDal.findByAccountId(acct.id);
+    var characterIdForToken = mobile == null ? 0 : mobile.serial;
 
-    var token = HandoffToken.mint(acct.id, ch.id, Constants.HANDOFF_TTL_SECONDS);
+    var token = HandoffToken.mint(acct.id, characterIdForToken, Constants.HANDOFF_TTL_SECONDS);
 
     ack.success = true;
     ack.sessionToken = sessions.mint(acct.id);
     ack.errorMsg = "";
-    Sys.println('[gateway] conn ${conn.id} login OK user=${login.username} acct=${acct.id} char=${ch.id}');
+    Sys.println('[gateway] conn ${conn.id} login OK user=${login.username} acct=${acct.id} char=$characterIdForToken');
     players.add(conn, acct.username);
     var lo = new BytesOutput(); ack.serialize(lo);
     conn.sendFrame(MsgType.LOGIN_ACK, lo.getBytes());

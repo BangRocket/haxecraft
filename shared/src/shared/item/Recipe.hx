@@ -6,10 +6,10 @@ class Recipe {
   public var station:CraftStation;
   public var output:ItemType;
   public var outputCount:Int;
-  public var inputs:Array<ItemStack>;
+  public var inputs:Array<RecipeInput>;
 
   public function new(id:Int, station:CraftStation, output:ItemType,
-      outputCount:Int, inputs:Array<ItemStack>) {
+      outputCount:Int, inputs:Array<RecipeInput>) {
     this.id = id;
     this.station = station;
     this.output = output;

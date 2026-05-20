@@ -22,7 +22,8 @@ class TestZoneChat extends Test {
     db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     accountDal = new AccountDal(db);
     for (u in [userA, userB]) {
-      db.exec("DELETE FROM characters WHERE name = ?", [u]);
+      db.exec("DELETE FROM items WHERE parent_serial IN (SELECT serial FROM mobiles WHERE name = ?)", [u]);
+      db.exec("DELETE FROM mobiles WHERE name = ?", [u]);
       db.exec("DELETE FROM accounts  WHERE username = ?", [u]);
       accountDal.create(u, PasswordHash.hash(pw));
     }
@@ -31,7 +32,8 @@ class TestZoneChat extends Test {
   function teardownClass() {
     if (db != null) {
       for (u in [userA, userB]) {
-        db.exec("DELETE FROM characters WHERE name = ?", [u]);
+        db.exec("DELETE FROM items WHERE parent_serial IN (SELECT serial FROM mobiles WHERE name = ?)", [u]);
+        db.exec("DELETE FROM mobiles WHERE name = ?", [u]);
         db.exec("DELETE FROM accounts  WHERE username = ?", [u]);
       }
       db.close();
@@ -41,7 +43,7 @@ class TestZoneChat extends Test {
   // PRECONDITION: gateway + zone running on 127.0.0.1:7777/7778.
 
   function plant(name:String, x:Int, y:Int):Void {
-    db.exec("UPDATE characters SET tile_x = ?, tile_y = ? WHERE name = ?", [x, y, name]);
+    db.exec("UPDATE mobiles SET tile_x = ?, tile_y = ? WHERE name = ?", [x, y, name]);
   }
 
   function loginClient(user:String):HeadlessClient {

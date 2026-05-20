@@ -9,57 +9,58 @@ import shared.item.ItemType;
 /** A tile step applied during a tick; the caller turns these into MsgEntityMove. */
 typedef MoveResult = { entityId:Int, fromX:Int, fromY:Int, toX:Int, toY:Int };
 
-/** A ground item picked up during a tick; the caller despawns + resyncs. */
-typedef PickupResult = { entity:Character, worldItemId:Int };
+/** An item picked up during a tick; the caller broadcasts the despawn + inventory. */
+typedef PickupResult = { entity:Mobile, worldItemSerial:Int };
 
 class ZoneSimulator {
   public var currentTick(default, null):Int = 0;
   public var map(default, null):MapData;
-  var entities:Map<Int, Character> = new Map();
+  public var zoneId(default, null):Int;
 
-  public static inline var FLUSH_TICK_INTERVAL:Int = 50;  // 5s at 10 Hz
+  /** Serial allocator (mobile + item ranges). */
+  public var serials(default, null):Serials;
 
   /** Tick scheduler — drives the DB flush and (later) combat/respawn timers. */
   public var scheduler(default, null):Scheduler = new Scheduler();
 
-  /** Moves applied by the most recent tick(). The zone loop broadcasts these. */
+  /** Live mobiles, keyed by serial. */
+  public var mobiles(default, null):Map<Int, Mobile> = new Map();
+  /** Live items (both world-placed and carried), keyed by serial. */
+  public var items(default, null):Map<Int, Item> = new Map();
+
+  public static inline var FLUSH_TICK_INTERVAL:Int = 50;  // 5s at 10 Hz
+
   public var movesThisTick(default, null):Array<MoveResult> = [];
-
-  /** Static world content (SP2). Ground items never block; objects do. */
-  public var groundItems(default, null):Array<GroundItem> = [];
-  public var worldObjects(default, null):Array<WorldObject> = [];
-
-  /** Items picked up by the most recent tick(). The zone loop broadcasts these. */
   public var pickupsThisTick(default, null):Array<PickupResult> = [];
 
   /** Tile changes + item spawns since the last flush (interaction + growth). */
   public var pendingTileChanges(default, null):Array<{x:Int, y:Int, type:Int, data:Int}> = [];
-  public var pendingItemSpawns(default, null):Array<GroundItem> = [];
+  public var pendingItemSpawns(default, null):Array<Item> = [];
 
-  var nextGroundItemId:Int = 1;
-  var nextObjectId:Int = 1;
+  var mobileDal:Null<server.db.MobileDal>;
+  var itemDal:Null<server.db.ItemDal>;
+  var tileDal:Null<server.db.ZoneTileDal>;
 
-  var characterDal:server.db.CharacterDal;
-  var tileDal:server.db.ZoneTileDal;
-
-  public function new(map:MapData, ?characterDal:server.db.CharacterDal,
-      ?tileDal:server.db.ZoneTileDal) {
+  public function new(map:MapData, serials:Serials, zoneId:Int = 1,
+                      ?mobileDal:server.db.MobileDal,
+                      ?itemDal:server.db.ItemDal,
+                      ?tileDal:server.db.ZoneTileDal) {
     this.map = map;
-    this.characterDal = characterDal;
+    this.serials = serials;
+    this.zoneId = zoneId;
+    this.mobileDal = mobileDal;
+    this.itemDal = itemDal;
     this.tileDal = tileDal;
-    scheduler.every(FLUSH_TICK_INTERVAL, flushPositions);
+    scheduler.every(FLUSH_TICK_INTERVAL, flushMobilePositions);
   }
 
-  public function flushPositions():Void {
-    if (characterDal == null) return;
-    for (e in entities) {
-      // A DB write must never crash the zone (e.g. the character row was
-      // removed out from under a live session).
+  public function flushMobilePositions():Void {
+    if (mobileDal == null) return;
+    for (m in mobiles) {
       try {
-        characterDal.savePosition(e.id, e.tileX, e.tileY);
-        characterDal.saveInventory(e.id, e.inventory.toRows());
+        mobileDal.savePosition(m.serial, m.tileX, m.tileY);
       } catch (err:Dynamic) {
-        Sys.println('[zone] flush save failed for char ${e.id}: $err');
+        Sys.println('[zone] flush save failed for mobile ${m.serial}: $err');
       }
     }
   }
@@ -68,36 +69,32 @@ class ZoneSimulator {
     currentTick++;
     movesThisTick = [];
     pickupsThisTick = [];
-    // Apply each entity's queued move once its per-step cooldown has elapsed.
-    // Intents that arrive mid-cooldown stay queued (not dropped), so a held
-    // direction steps on an exact, steady cadence instead of stuttering.
-    for (e in entities) {
-      if (e.pendingDir < 0) continue;
-      if (currentTick < e.nextMoveTick) continue;  // cooldown — keep the intent
+    for (m in mobiles) {
+      if (m.pendingDir < 0) continue;
+      if (currentTick < m.nextMoveTick) continue;
 
-      var dir:Direction = cast e.pendingDir;
-      e.pendingDir = -1;  // consume
+      var dir:Direction = cast m.pendingDir;
+      m.pendingDir = -1;
 
       var dx = dir.dx();
       var dy = dir.dy();
       if (dx == 0 && dy == 0) continue;
 
-      var nx = e.tileX + dx;
-      var ny = e.tileY + dy;
+      var nx = m.tileX + dx;
+      var ny = m.tileY + dy;
       if (!canStep(nx, ny)) continue;
 
-      var fromX = e.tileX, fromY = e.tileY;
-      e.tileX = nx;
-      e.tileY = ny;
-      e.nextMoveTick = currentTick + Constants.MOVE_TICKS;
-      movesThisTick.push({ entityId: e.id, fromX: fromX, fromY: fromY, toX: nx, toY: ny });
+      var fromX = m.tileX, fromY = m.tileY;
+      m.tileX = nx;
+      m.tileY = ny;
+      m.nextMoveTick = currentTick + Constants.MOVE_TICKS;
+      movesThisTick.push({ entityId: m.serial, fromX: fromX, fromY: fromY, toX: nx, toY: ny });
 
-      // SP3: walking onto a ground item picks it up.
-      var gi = groundItemAt(nx, ny);
-      if (gi != null) {
-        e.inventory.add(gi.itemType, gi.count);
-        groundItems.remove(gi);
-        pickupsThisTick.push({ entity: e, worldItemId: gi.id });
+      // SP3: walking onto a non-blocking ground item picks it up.
+      var gi = itemAt(nx, ny);
+      if (gi != null && !gi.blocksMovement()) {
+        m.inventory.addExisting(gi);   // hooks handle items map + DAL
+        pickupsThisTick.push({ entity: m, worldItemSerial: gi.serial });
       }
     }
     growTiles();
@@ -107,9 +104,9 @@ class ZoneSimulator {
   /** Advance growth on tiles near connected players (bounded scan). */
   function growTiles():Void {
     var seen = new Map<Int, Bool>();
-    for (e in entities) {
-      for (ty in (e.tileY - 16)...(e.tileY + 17)) {
-        for (tx in (e.tileX - 16)...(e.tileX + 17)) {
+    for (m in mobiles) {
+      for (ty in (m.tileY - 16)...(m.tileY + 17)) {
+        for (tx in (m.tileX - 16)...(m.tileX + 17)) {
           if (tx < 0 || ty < 0 || tx >= map.width || ty >= map.height) continue;
           var key = ty * map.width + tx;
           if (seen.exists(key)) continue;
@@ -133,7 +130,6 @@ class ZoneSimulator {
       if (d < 50 && Std.random(2) == 0) {
         var nd = d + 1;
         map.setTileData(x, y, nd);
-        // Broadcast only at the visual growth stages to limit wire traffic.
         if (nd == 10 || nd == 20 || nd == 30 || nd == 40 || nd == 50) {
           pendingTileChanges.push({ x: x, y: y, type: t, data: nd });
         }
@@ -141,15 +137,22 @@ class ZoneSimulator {
     }
   }
 
-  public function freshGroundItemId():Int return nextGroundItemId++;
-  public function freshObjectId():Int return nextObjectId++;
-
-  /** Create a ground item with a fresh id; records it for spawn broadcast. */
-  public function spawnGroundItem(itemType:ItemType, count:Int, x:Int, y:Int):GroundItem {
-    var gi = new GroundItem(nextGroundItemId++, itemType, count, x, y);
-    groundItems.push(gi);
-    pendingItemSpawns.push(gi);
-    return gi;
+  /** Spawn a world-placed item (ground item or placed furniture). Allocates
+      a serial, inserts the row, queues the spawn broadcast, returns the Item. */
+  public function spawnItem(itemType:ItemType, count:Int, x:Int, y:Int):Item {
+    var it = new Item(serials.nextItem(), itemType, count);
+    it.tileX = x;
+    it.tileY = y;
+    items.set(it.serial, it);
+    pendingItemSpawns.push(it);
+    if (itemDal != null) {
+      try {
+        itemDal.insertWorld(it.serial, (itemType : Int), count, zoneId, x, y);
+      } catch (err:Dynamic) {
+        Sys.println('[zone] insertWorld failed for item ${it.serial}: $err');
+      }
+    }
+    return it;
   }
 
   /** Mutate a tile's type + data, record a change for broadcast, and
@@ -161,68 +164,130 @@ class ZoneSimulator {
     if (tileDal != null) tileDal.upsert(x, y, (type : Int), data);
   }
 
-  /** Clear the pending tile/item event lists (after the zone loop flushes them). */
   public function clearPending():Void {
     pendingTileChanges = [];
     pendingItemSpawns = [];
   }
 
-  /** The ground item on (x, y), or null. */
-  public function groundItemAt(x:Int, y:Int):Null<GroundItem> {
-    for (g in groundItems) {
-      if (g.tileX == x && g.tileY == y) return g;
+  /** The world-placed item on (x, y), or null. Does not return carried items. */
+  public function itemAt(x:Int, y:Int):Null<Item> {
+    for (it in items) {
+      if (it.inWorld() && it.tileX == x && it.tileY == y) return it;
     }
     return null;
   }
 
-  public function spawn(ch:Character):Void {
-    entities.set(ch.id, ch);
+  public function spawn(m:Mobile):Void {
+    mobiles.set(m.serial, m);
+    wireInventory(m);
   }
 
-  public function despawn(id:Int):Void {
-    entities.remove(id);
+  public function despawn(serial:Int):Void {
+    mobiles.remove(serial);
   }
 
-  public function entityById(id:Int):Null<Character> {
-    return entities.get(id);
+  public function mobileBySerial(serial:Int):Null<Mobile> {
+    return mobiles.get(serial);
   }
 
-  public function entityCount():Int {
+  public function mobileCount():Int {
     var n = 0;
-    for (_ in entities) n++;
+    for (_ in mobiles) n++;
     return n;
   }
 
-  public function allEntities():Iterator<Character> {
-    return entities.iterator();
-  }
+  public function allMobiles():Iterator<Mobile> return mobiles.iterator();
 
-  public function entityAt(x:Int, y:Int):Null<Character> {
-    for (e in entities) {
-      if (e.tileX == x && e.tileY == y) return e;
+  public function entityAt(x:Int, y:Int):Null<Mobile> {
+    for (m in mobiles) {
+      if (m.tileX == x && m.tileY == y) return m;
     }
     return null;
   }
 
-  public function addGroundItem(gi:GroundItem):Void {
-    groundItems.push(gi);
-  }
-
-  public function addWorldObject(wo:WorldObject):Void {
-    worldObjects.push(wo);
-  }
-
-  /** True if a world object occupies (x, y). */
+  /** True if a blocking item (placed furniture) sits on (x, y). */
   public function objectAt(x:Int, y:Int):Bool {
-    for (o in worldObjects) {
-      if (o.tileX == x && o.tileY == y) return true;
+    for (it in items) {
+      if (it.inWorld() && it.blocksMovement() && it.tileX == x && it.tileY == y) return true;
     }
     return false;
   }
 
-  /** Unified walkability: walkable terrain, no player, no world object.
-      Ground items never block. */
+  /** Iterate world-placed blocking items (placed furniture). */
+  public function worldObjects():Iterator<Item> {
+    var arr:Array<Item> = [];
+    for (it in items) if (it.inWorld() && it.blocksMovement()) arr.push(it);
+    return arr.iterator();
+  }
+
+  /** Iterate world-placed non-blocking items (ground items). */
+  public function groundItems():Iterator<Item> {
+    var arr:Array<Item> = [];
+    for (it in items) if (it.inWorld() && !it.blocksMovement()) arr.push(it);
+    return arr.iterator();
+  }
+
+  /** Unified walkability: walkable terrain, no mobile, no blocking item. */
   public function canStep(x:Int, y:Int):Bool {
     return map.isWalkable(x, y) && entityAt(x, y) == null && !objectAt(x, y);
+  }
+
+  /** Load-time helper: attach a pre-existing carried item to a mobile
+      without firing persistence (the row already exists). */
+  public function attachCarriedItem(m:Mobile, it:Item):Void {
+    it.parent = m;
+    m.inventory.slots.push(it);
+    items.set(it.serial, it);
+  }
+
+  /** Load-time helper: register a world-placed item already in the DB. */
+  public function attachWorldItem(it:Item):Void {
+    items.set(it.serial, it);
+  }
+
+  /** Install persistence hooks on a mobile's inventory. */
+  function wireInventory(m:Mobile):Void {
+    var inv = m.inventory;
+    var idal = itemDal;
+    var mp = items;
+    inv.onAdd = function(it:Item) {
+      mp.set(it.serial, it);
+      if (idal != null) {
+        try {
+          idal.insertCarried(it.serial, (it.itemType : Int), it.count, m.serial, it.slot);
+        } catch (err:Dynamic) {
+          Sys.println('[zone] insertCarried failed for item ${it.serial}: $err');
+        }
+      }
+    };
+    inv.onReparent = function(it:Item) {
+      mp.set(it.serial, it);
+      if (idal != null) {
+        try {
+          idal.reparentToMobile(it.serial, m.serial, it.slot);
+        } catch (err:Dynamic) {
+          Sys.println('[zone] reparentToMobile failed for item ${it.serial}: $err');
+        }
+      }
+    };
+    inv.onSlotCountChanged = function(it:Item) {
+      if (idal != null) {
+        try {
+          idal.updateCount(it.serial, it.count);
+        } catch (err:Dynamic) {
+          Sys.println('[zone] updateCount failed for item ${it.serial}: $err');
+        }
+      }
+    };
+    inv.onDestroy = function(it:Item) {
+      mp.remove(it.serial);
+      if (idal != null) {
+        try {
+          idal.delete(it.serial);
+        } catch (err:Dynamic) {
+          Sys.println('[zone] item delete failed for ${it.serial}: $err');
+        }
+      }
+    };
   }
 }

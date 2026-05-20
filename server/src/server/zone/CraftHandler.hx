@@ -19,41 +19,41 @@ class CraftHandler {
     this.enterHandler = enterHandler;
   }
 
-  function actor(conn:ClientConnection):Null<Character> {
+  function actor(conn:ClientConnection):Null<Mobile> {
     var entId = enterHandler.entityIdForConn(conn);
     if (entId == null) return null;
-    return sim.entityById(entId);
+    return sim.mobileBySerial(entId);
   }
 
   /** MsgCraft — craft a recipe at a nearby station. */
   public function handleCraft(conn:ClientConnection, payload:Bytes):Void {
-    var ent = actor(conn);
-    if (ent == null) return;
+    var m = actor(conn);
+    if (m == null) return;
     var req = MsgCraft.deserialize(new BytesInput(payload));
-    if (Crafting.craft(sim, ent, req.recipeId)) {
-      InventoryHandler.send(ent);  // inputs consumed, output added
+    if (Crafting.craft(sim, m, req.recipeId)) {
+      InventoryHandler.send(m);
     }
   }
 
   /** MsgPlaceFurniture — place the held furniture item into the world. */
   public function handlePlace(conn:ClientConnection, payload:Bytes):Void {
-    var ent = actor(conn);
-    if (ent == null) return;
+    var m = actor(conn);
+    if (m == null) return;
     var req = MsgPlaceFurniture.deserialize(new BytesInput(payload));
-    var obj = Crafting.place(sim, ent, req.tileX, req.tileY);
+    var obj = Crafting.place(sim, m, req.tileX, req.tileY);
     if (obj == null) return;
 
-    InventoryHandler.send(ent);  // furniture item consumed
+    InventoryHandler.send(m);
 
     var sp = new MsgWorldObjectSpawn();
-    sp.objectId = obj.id;
-    sp.objectTypeId = (obj.objectType : Int);
+    sp.objectId = obj.serial;
+    sp.objectTypeId = (obj.itemType : Int);
     sp.tileX = obj.tileX;
     sp.tileY = obj.tileY;
     var out = new BytesOutput(); sp.serialize(out);
     var bytes = out.getBytes();
-    for (e in sim.allEntities()) {
-      if (e.conn != null && e.conn.alive) e.conn.sendFrame(MsgType.WORLD_OBJECT_SPAWN, bytes);
+    for (other in sim.allMobiles()) {
+      if (other.conn != null && other.conn.alive) other.conn.sendFrame(MsgType.WORLD_OBJECT_SPAWN, bytes);
     }
   }
 }

@@ -4,7 +4,6 @@ import utest.Assert;
 import utest.Test;
 import server.db.DbClient;
 import server.db.AccountDal;
-import server.db.CharacterDal;
 import shared.security.PasswordHash;
 import shared.world.Direction;
 import HeadlessClient;
@@ -12,22 +11,22 @@ import HeadlessClient;
 class TestZoneLifecycle extends Test {
   var db:DbClient;
   var accountDal:AccountDal;
-  var characterDal:CharacterDal;
   var username:String = "test_zone_walker";
   var password:String = "test_pw";
 
   function setupClass() {
     db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     accountDal = new AccountDal(db);
-    characterDal = new CharacterDal(db);
-    db.exec("DELETE FROM characters WHERE name = ?", [username]);
+    db.exec("DELETE FROM items WHERE parent_serial IN (SELECT serial FROM mobiles WHERE name = ?)", [username]);
+    db.exec("DELETE FROM mobiles WHERE name = ?", [username]);
     db.exec("DELETE FROM accounts  WHERE username = ?", [username]);
     accountDal.create(username, PasswordHash.hash(password));
   }
 
   function teardownClass() {
     if (db != null) {
-      db.exec("DELETE FROM characters WHERE name = ?", [username]);
+      db.exec("DELETE FROM items WHERE parent_serial IN (SELECT serial FROM mobiles WHERE name = ?)", [username]);
+      db.exec("DELETE FROM mobiles WHERE name = ?", [username]);
       db.exec("DELETE FROM accounts  WHERE username = ?", [username]);
       db.close();
     }

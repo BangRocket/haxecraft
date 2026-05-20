@@ -8,15 +8,15 @@ package shared.item;
 class RecipeBook {
   public static var ALL(default, null):Array<Recipe> = build();
 
-  static inline function stk(t:ItemType, c:Int):ItemStack {
-    return new ItemStack(t, c);
+  static inline function stk(t:ItemType, c:Int):RecipeInput {
+    return { itemType: t, count: c };
   }
 
   static function build():Array<Recipe> {
     var list:Array<Recipe> = [];
     var id = 1;
     inline function add(station:CraftStation, output:ItemType, outCount:Int,
-        inputs:Array<ItemStack>):Void {
+        inputs:Array<RecipeInput>):Void {
       list.push(new Recipe(id++, station, output, outCount, inputs));
     }
 

@@ -24,18 +24,16 @@ class TileHandler {
   public function handle(conn:ClientConnection, payload:Bytes):Void {
     var entId = enterHandler.entityIdForConn(conn);
     if (entId == null) return;
-    var ent = sim.entityById(entId);
-    if (ent == null) return;
+    var m = sim.mobileBySerial(entId);
+    if (m == null) return;
     var req = MsgUseItemOnTile.deserialize(new BytesInput(payload));
-    // Reach: the target tile must be on or next to the actor.
-    if (Math.abs(req.tileX - ent.tileX) > 1 || Math.abs(req.tileY - ent.tileY) > 1) return;
-    if (TileInteraction.apply(sim, ent, req.tileX, req.tileY)) {
-      InventoryHandler.send(ent);  // planting may have consumed a resource
+    if (Math.abs(req.tileX - m.tileX) > 1 || Math.abs(req.tileY - m.tileY) > 1) return;
+    if (TileInteraction.apply(sim, m, req.tileX, req.tileY)) {
+      InventoryHandler.send(m);  // planting may have consumed a resource
     }
   }
 
-  /** Broadcast tile changes + drop spawns accumulated since the last flush.
-      Call once per tick, after sim.tick(). */
+  /** Broadcast tile changes + drop spawns accumulated since the last flush. */
   public function flush():Void {
     if (sim.pendingTileChanges.length == 0 && sim.pendingItemSpawns.length == 0) return;
 
@@ -47,7 +45,7 @@ class TileHandler {
     }
     for (gi in sim.pendingItemSpawns) {
       var m = new MsgGroundItemSpawn();
-      m.worldItemId = gi.id;
+      m.worldItemId = gi.serial;
       m.itemTypeId = (gi.itemType : Int);
       m.count = gi.count;
       m.tileX = gi.tileX; m.tileY = gi.tileY;
@@ -58,8 +56,8 @@ class TileHandler {
   }
 
   function broadcast(msgType:Int, bytes:Bytes):Void {
-    for (e in sim.allEntities()) {
-      if (e.conn != null && e.conn.alive) e.conn.sendFrame(msgType, bytes);
+    for (m in sim.allMobiles()) {
+      if (m.conn != null && m.conn.alive) m.conn.sendFrame(msgType, bytes);
     }
   }
 }
