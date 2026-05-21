@@ -149,22 +149,16 @@ class Main {
       Sys.sleep(0.001);
     }
 
-    Sys.println('[zone] shutdown requested; saving ${srv.connections.length} connected character(s)...');
-    var saved = 0;
-    for (c in srv.connections) {
-      var owned = enterHandler.entityIdForConn(c);
-      if (owned == null) continue;
-      var ch = sim.entityById(owned);
-      if (ch == null) continue;
-      try {
-        characterDal.savePosition(ch.id, ch.tileX, ch.tileY);
-        characterDal.saveInventory(ch.id, ch.inventory.toRows());
-        saved++;
-      } catch (err:Dynamic) {
-        Sys.println('[zone] shutdown save failed for char ${ch.id}: $err');
-      }
+    Sys.println('[zone] shutdown requested; flushing ${sim.mobileCount()} mobile(s)...');
+    // Position + stats/HP persist via flushMobilePositions; inventories
+    // and item state already persist on every mutation through the
+    // inventory hooks installed in ZoneSimulator.wireInventory.
+    try {
+      sim.flushMobilePositions();
+    } catch (err:Dynamic) {
+      Sys.println('[zone] shutdown flush failed: $err');
     }
-    Sys.println('[zone] saved $saved character(s); closing sockets and db');
+    Sys.println('[zone] flushed; closing sockets and db');
     srv.close();
     try db.close() catch (_:Dynamic) {}
     Sys.println('[zone] shutdown complete');
