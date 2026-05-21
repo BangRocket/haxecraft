@@ -56,8 +56,10 @@ class SpriteCatalog {
                         colors: Color.get(444, 444, 333, 333) },
     (TileType.LAVA : Int)   => { sheet: "terrain", col: 0, row: 0,
                         colors: Color.get(500, 500, 520, 550) },
-    (TileType.TREE : Int)   => { sheet: "terrain", col: 10, row: 1,
-                        colors: Color.get(10, 30, 151, GRASS_C) },
+    // TREE base is just grass — the 16x16 canopy/trunk is rendered as an
+    // overlay (see TREE_OVERLAY_CELLS + ZoneRenderer.drawTrees).
+    (TileType.TREE : Int)   => { sheet: "terrain", col: 0, row: 0,
+                        colors: Color.get(GRASS_C, GRASS_C, GRASS_C + 111, GRASS_C + 111) },
     (TileType.CACTUS : Int) => { sheet: "terrain", col: 8, row: 2,
                         colors: Color.get(20, 40, 50, SAND_C) },
     // SP4 interactive tiles. Cells reuse known-good terrain cells with
@@ -74,8 +76,9 @@ class SpriteCatalog {
                         colors: Color.get(210, 210, 321, 321) },
     (TileType.WHEAT : Int)     => { sheet: "terrain", col: 1, row: 1,
                         colors: Color.get(210, 231, 552, 540) },
-    (TileType.TREE_SAPLING : Int) => { sheet: "terrain", col: 10, row: 1,
-                        colors: Color.get(10, 30, 151, 141) },
+    // Sapling renders as grass-with-flower until a proper sapling cell exists.
+    (TileType.TREE_SAPLING : Int) => { sheet: "terrain", col: 1, row: 1,
+                        colors: Color.get(10, GRASS_C, 350, 141) },
     (TileType.CACTUS_SAPLING : Int) => { sheet: "terrain", col: 8, row: 2,
                         colors: Color.get(20, 40, 50, 550) },
     (TileType.HOLE : Int)      => { sheet: "terrain", col: 0, row: 0,
@@ -84,6 +87,50 @@ class SpriteCatalog {
 
   /** Player body palette (legacy Player.render: Color.get(-1,100,220,532)). */
   public static var PLAYER_COLORS(default, null):Int = Color.get(-1, 100, 220, 532);
+
+  /**
+   * Tree overlay cells — 4 x 8x8 cells composing the 16x16 canopy+trunk
+   * drawn over each TREE tile, ported from legacy TreeTile.render.
+   *
+   * Per quadrant (TL, TR, BL, BR) there are two variants:
+   *   - EDGE: the quadrant faces away from same-type neighbours (forest edge
+   *     or standalone tree) — shows canopy/leaves/trunk silhouette.
+   *   - INTERIOR: the quadrant faces into a same-type cluster (all three
+   *     relevant neighbours are TREE) — shows the interior trunk-seam pattern.
+   *
+   * ZoneRenderer.drawTrees picks edge vs interior per quadrant from 8 neighbour
+   * checks. Cells live on the terrain sheet; palettes use grass as background.
+   */
+  public static var TREE_OVERLAY_EDGE_CELLS(default, null):Array<TileSprite> = [
+    // TL: LEAVES_TOP @ (9,0), foliage palette
+    { sheet: "terrain", col: 9,  row: 0, colors: Color.get(10, 30, 151, GRASS_C) },
+    // TR: CANOPY_TR  @ (10,0), foliage palette
+    { sheet: "terrain", col: 10, row: 0, colors: Color.get(10, 30, 151, GRASS_C) },
+    // BL: LEAVES_BL  @ (9,1), bark1 palette (lighter bark/leaves blend)
+    { sheet: "terrain", col: 9,  row: 1, colors: Color.get(10, 30, 430, GRASS_C) },
+    // BR: TRUNK_BR   @ (10,3), bark2 palette (darker bark)
+    { sheet: "terrain", col: 10, row: 3, colors: Color.get(10, 30, 320, GRASS_C) },
+  ];
+
+  public static var TREE_OVERLAY_INTERIOR_CELLS(default, null):Array<TileSprite> = [
+    // TL: LEAVES_FULL @ (10,1), foliage palette
+    { sheet: "terrain", col: 10, row: 1, colors: Color.get(10, 30, 151, GRASS_C) },
+    // TR: TRUNK       @ (10,2), bark2 palette
+    { sheet: "terrain", col: 10, row: 2, colors: Color.get(10, 30, 320, GRASS_C) },
+    // BL: TRUNK       @ (10,2), bark2 palette
+    { sheet: "terrain", col: 10, row: 2, colors: Color.get(10, 30, 320, GRASS_C) },
+    // BR: LEAVES_FULL @ (10,1), foliage palette
+    { sheet: "terrain", col: 10, row: 1, colors: Color.get(10, 30, 151, GRASS_C) },
+  ];
+
+  /**
+   * The "back-tree fill" cell: a uniformly solid 8x8 foliage cell with zero
+   * trunk pixels. (10,1) LEAVES_FULL bleeds trunk pattern through; (12,1) at
+   * the centre of the big-tree shape is fully solid mid-gray and is the
+   * intended fill for occluded back-tree quadrants.
+   */
+  public static var TREE_OVERLAY_BACK_CELL(default, null):TileSprite =
+    { sheet: "terrain", col: 12, row: 1, colors: Color.get(10, 30, 151, GRASS_C) };
 
   /** True if every TileType has a TILE_TABLE entry. */
   public static function isComplete():Bool {

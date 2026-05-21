@@ -27,6 +27,17 @@ class ZoneRenderer {
   // Resolved terrain sprites, keyed by TileType-as-Int.
   var tileSprites:Map<Int, {id:SpriteId, colors:Int}> = new Map();
 
+  // Tree overlay cells, two variants per quadrant [TL, TR, BL, BR]:
+  //   treeEdge: shown when the quadrant faces away from same-type neighbours
+  //   treeInterior: shown when all three relevant neighbours are also TREE
+  //   treeBack: the "behind" fill — a clean solid foliage cell (12,1) used
+  //             when a tree is occluded by an orthogonal neighbour
+  // (See SpriteCatalog.TREE_OVERLAY_EDGE_CELLS / TREE_OVERLAY_INTERIOR_CELLS /
+  //  TREE_OVERLAY_BACK_CELL.)
+  var treeEdge:Array<{id:SpriteId, colors:Int}> = [];
+  var treeInterior:Array<{id:SpriteId, colors:Int}> = [];
+  var treeBack:{id:SpriteId, colors:Int};
+
   var entities:Map<Int, EntityVisual> = new Map();
   var ownEntityId:Int = 0;
   // Player body cells [TL,TR,BL,BR], keyed by "south"/"north"/"side0"/"side1".
@@ -73,6 +84,23 @@ class ZoneRenderer {
       var id = registry.defineSprite("tile_" + (tt : Int), e.sheet, e.col, e.row);
       tileSprites.set((tt : Int), {id: id, colors: e.colors});
     }
+
+    var quads = ["tl", "tr", "bl", "br"];
+    for (i in 0...SpriteCatalog.TREE_OVERLAY_EDGE_CELLS.length) {
+      var c = SpriteCatalog.TREE_OVERLAY_EDGE_CELLS[i];
+      var id = registry.defineSprite('tree_edge_${quads[i]}', c.sheet, c.col, c.row);
+      treeEdge.push({id: id, colors: c.colors});
+    }
+    for (i in 0...SpriteCatalog.TREE_OVERLAY_INTERIOR_CELLS.length) {
+      var c = SpriteCatalog.TREE_OVERLAY_INTERIOR_CELLS[i];
+      var id = registry.defineSprite('tree_int_${quads[i]}', c.sheet, c.col, c.row);
+      treeInterior.push({id: id, colors: c.colors});
+    }
+    var bc = SpriteCatalog.TREE_OVERLAY_BACK_CELL;
+    treeBack = {
+      id: registry.defineSprite("tree_back_fill", bc.sheet, bc.col, bc.row),
+      colors: bc.colors,
+    };
 
     // Player body: 4 cells (TL,TR,BL,BR) per direction+phase. The legacy
     // player sheet uses sheet-local rows 0 (top) and 1 (bottom); column
@@ -146,10 +174,57 @@ class ZoneRenderer {
       }
     }
 
+    drawTrees(tx0 - 1, ty0 - 1, tx1 + 1, ty1 + 1);
     drawGroundItems();
     drawWorldObjects();
     drawEntities();
     endFrame();
+  }
+
+  /**
+   * Overlay 16x16 tree visuals on every visible TREE tile. The canopy/trunk
+   * is composed of 4 x 8x8 cells anchored at (tileX*8 - 4, tileY*8 - 8) so
+   * the foliage extends one half-tile above and to either side of the tile,
+   * matching the player/furniture anchor convention.
+   *
+   * Per-quadrant variant selection:
+   *   - INTERIOR (legacy 3-neighbour rule): trunk-seam pattern inside a forest.
+   *   - BACK (orthogonal-only neighbour): LEAVES_FULL — continuous foliage
+   *     when a tree sits directly above/below another, so the back tree's
+   *     canopy reads as a contiguous mass instead of an isolated edge.
+   *   - EDGE: forest edge / standalone tree.
+   * The BACK sprite for every quadrant is LEAVES_FULL with the foliage
+   * palette, which is exactly `treeInterior[0]` (and `[3]`).
+   */
+  function drawTrees(tx0:Int, ty0:Int, tx1:Int, ty1:Int):Void {
+    var tree:Int = (shared.world.TileType.TREE : Int);
+    inline function isTree(tx:Int, ty:Int):Bool return map.tileAt(tx, ty) == tree;
+    var back = treeBack; // solid foliage at (12,1) — no trunk pattern
+    for (ty in ty0...ty1 + 1) {
+      for (tx in tx0...tx1 + 1) {
+        if (!isTree(tx, ty)) continue;
+        var u  = isTree(tx,     ty - 1);
+        var l  = isTree(tx - 1, ty);
+        var r  = isTree(tx + 1, ty);
+        var d  = isTree(tx,     ty + 1);
+        var ul = isTree(tx - 1, ty - 1);
+        var ur = isTree(tx + 1, ty - 1);
+        var dl = isTree(tx - 1, ty + 1);
+        var dr = isTree(tx + 1, ty + 1);
+
+        var tl = (u && ul && l) ? treeInterior[0] : (u ? back : treeEdge[0]);
+        var tr = (u && ur && r) ? treeInterior[1] : (u ? back : treeEdge[1]);
+        var bl = (d && dl && l) ? treeInterior[2] : (d ? back : treeEdge[2]);
+        var br = (d && dr && r) ? treeInterior[3] : (d ? back : treeEdge[3]);
+
+        var px = tx * TILE - 4;
+        var py = ty * TILE - 8;
+        screen.renderSprite(px + 0, py + 0, tl.id, tl.colors, 0, 0);
+        screen.renderSprite(px + 8, py + 0, tr.id, tr.colors, 0, 0);
+        screen.renderSprite(px + 0, py + 8, bl.id, bl.colors, 0, 0);
+        screen.renderSprite(px + 8, py + 8, br.id, br.colors, 0, 0);
+      }
+    }
   }
 
   public function addGroundItem(id:Int, itemTypeId:Int, count:Int, tileX:Int, tileY:Int):Void {

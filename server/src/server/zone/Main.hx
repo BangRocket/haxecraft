@@ -12,7 +12,19 @@ import shared.Constants;
 import shared.proto.MsgType;
 
 class Main {
+  static var shutdownRequested:Bool = false;
+
   public static function main() {
+    // Watch stdin for EOF; the run-server.sh wrapper closes the fifo writer
+    // on Ctrl-C so we can drain and persist instead of being SIGKILL'd.
+    sys.thread.Thread.create(function() {
+      try {
+        while (true) Sys.stdin().readByte();
+      } catch (_:Dynamic) {
+        shutdownRequested = true;
+      }
+    });
+
     var db = new DbClient("127.0.0.1", 3306, "haxecraft", "haxecraft", "dev_local_only");
     var counterDal = new SerialCounterDal(db);
     var accountDal = new AccountDal(db);
@@ -77,7 +89,7 @@ class Main {
     var tickInterval = 1.0 / Constants.TICK_HZ;
     var nextTickAt = Sys.time() + tickInterval;
 
-    while (true) {
+    while (!shutdownRequested) {
       srv.tickAccept();
       var i = 0;
       while (i < srv.connections.length) {
@@ -136,6 +148,26 @@ class Main {
 
       Sys.sleep(0.001);
     }
+
+    Sys.println('[zone] shutdown requested; saving ${srv.connections.length} connected character(s)...');
+    var saved = 0;
+    for (c in srv.connections) {
+      var owned = enterHandler.entityIdForConn(c);
+      if (owned == null) continue;
+      var ch = sim.entityById(owned);
+      if (ch == null) continue;
+      try {
+        characterDal.savePosition(ch.id, ch.tileX, ch.tileY);
+        characterDal.saveInventory(ch.id, ch.inventory.toRows());
+        saved++;
+      } catch (err:Dynamic) {
+        Sys.println('[zone] shutdown save failed for char ${ch.id}: $err');
+      }
+    }
+    Sys.println('[zone] saved $saved character(s); closing sockets and db');
+    srv.close();
+    try db.close() catch (_:Dynamic) {}
+    Sys.println('[zone] shutdown complete');
   }
 
   static function broadcastInterestDiffs(sim:ZoneSimulator, diffs:Array<InterestDiff>):Void {
